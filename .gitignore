@@ -1,0 +1,35 @@
+storage/
+tex_storage/
+.DS_Store/
+.DS_Store
+.vscode/
+slr/
+
+*.pdf
+
+## LaTeX build/auxiliary files
+*.aux
+*.blg
+*.bcf
+*.bbl
+*.fls
+*.log
+*.out
+*.gz
+*.fdb_latexmk
+*.run.xml
+*.bcf
+*.bcf-SAVE-ERROR
+*.bib.bak
+
+## latexmk / arara
+*.latexmk
+*.dpth
+*.md5
+*.synctex
+
+## Temporary/editor swap files sometimes created during compilation runs
+*.tmp
+*.bak
+*~
+
