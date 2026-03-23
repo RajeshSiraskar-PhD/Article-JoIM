@@ -1,13 +1,14 @@
 % ------------------------------------------------------------------------------------------------
 % Journal of Intelligent Manufacturing
 % LaTeX Template V. 3.1 December 2024
-% Ver. 0.1 - First draft
+% Ver. 0.3 - Added SLR from UM
 % ------------------------------------------------------------------------------------------------
 \PassOptionsToPackage{hypertexnames=false}{hyperref}
 \documentclass[refree,sn-basic]{sn-jnl} % Basic Springer Nature Reference Style
 
 %% Standard Packages
 \usepackage{graphicx}%
+\usepackage{pgfplots} % \pgfplotsset{compat=1.18}
 \usepackage{multirow}%
 \usepackage{amsmath,amssymb,amsfonts}%
 \usepackage{amsthm}%
@@ -38,7 +39,7 @@
 
 \begin{document}
 
-\title[AutoRL for PdM on the Edge]{AutoRL for Predictive Maintenance on the Edge: A Comparative Study of REINFORCE with Attention Mechanisms for Milling Tool Replacement - V.0.1}
+\title[AutoRL for PdM on the Edge]{AutoRL for Predictive Maintenance on the Edge: A Comparative Study of REINFORCE with Attention Mechanisms for Milling Tool Replacement - V.0.3 (UM-SLR)}
 
 
 \author[1,4]{\fnm{Rajesh} \sur{Siraskar} \sfx{(\href{https://orcid.org/0000-0003-2341-8787}{ORCID: 0000-0003-2341-8787}})}\email{rajesh.siraskar@gmail.com}
@@ -53,7 +54,7 @@
 \affil[3]{Swinburne University of Technology, Hawthorn VIC 3122, Australia}
 \affil[4]{\orgdiv{CTO Office}, \orgname{Birlasoft Ltd.}, \orgaddress{\city{Pune}, \postcode{411057}, \state{Maharashtra}, \country{India}}}
 
-\abstract{Industry~4.0 maintenance systems increasingly rely on edge-computing deployments where stringent limits on memory, latency, and energy consumption favor computationally light learning methods. In this work we study \emph{AutoRL}, an automated reinforcement learning (RL) pipeline that trains and evaluates maintenance agents for a milling machine tool-replacement task, with particular focus on whether the na\"{i}ve Monte-Carlo policy-gradient algorithm \textsc{REINFORCE} can be competitive with more advanced methods such as \textsc{PPO}. The contribution is threefold: (i) an end-to-end AutoRL training and multi-round evaluation framework, (ii) a Gymnasium-compatible predictive-maintenance environment that hides tool wear from observations to enforce inference from sensor signals alone, and (iii) a systematic comparison across four RL algorithms (\textsc{A2C}, \textsc{DQN}, \textsc{PPO}, \textsc{REINFORCE}) and four attention mechanisms (Nadaraya--Watson, Temporal, Multi-Head, Self-Attention) integrated as Stable-Baselines3 feature extractors.
+\abstract{Industry 4.0 maintenance systems increasingly rely on edge-computing deployments where stringent limits on memory, latency, and energy consumption favor computationally light learning methods. In this work we study \emph{AutoRL}, an automated reinforcement learning (RL) pipeline that trains and evaluates maintenance agents for a milling machine tool-replacement task, with particular focus on the computationally light na\"{i}ve Monte-Carlo policy-gradient algorithm \textsc{REINFORCE} can be competitive with more advanced methods such as \textsc{PPO}. The contribution is threefold: (i) an end-to-end AutoRL training and multi-round evaluation framework, (ii) a Gymnasium-compatible predictive-maintenance environment that hides tool wear from observations to enforce inference from sensor signals alone, and (iii) a systematic comparison across four RL algorithms (\textsc{A2C}, \textsc{DQN}, \textsc{PPO}, \textsc{REINFORCE}) and four attention mechanisms (Nadaraya--Watson, Temporal, Multi-Head, Self-Attention) integrated as Stable-Baselines3 feature extractors.
 
 Across 48 trained agents (3 training files $\times$ 4 algorithms $\times$ 4 attention mechanisms) and 20 evaluation rounds per configuration, tested on six unseen files, \textsc{REINFORCE} paired with temporal or multi-head attention is consistently among the top-performing configurations and is statistically superior to A2C and DQN baselines in unseen-only panels (one-tailed Welch $t$-tests, $\alpha=0.05$). Against PPO, the evidence is schema-dependent, and results support \textsc{REINFORCE} as a lightweight, competitive alternative when combined with attention-based inductive biases aligned with edge and sustainability constraints.}
 
@@ -113,6 +114,47 @@ AutoRL refers to automating choices that otherwise require expert RL knowledge: 
 
 \subsection{Attention mechanisms for PdM}
 Attention mechanisms reweight inputs to focus computation on the most relevant parts of an observation, and have become a standard architectural primitive in modern deep learning \cite{Vaswani2017Attention}. In PdM, attention can be interpreted as a structured inductive bias that emphasizes salient sensor channels or degradation stages. The present study builds on prior PdM attention work that introduced a Nadaraya--Watson estimator based attention mechanism as a lightweight option aligned with edge constraints \cite{Siraskar2024NWAttention}.
+
+
+%% $$$
+%% UM - SLR
+%% $$$
+\section{\textcolor{red}{UNDERMIND} REINFORCE with Attention for PdM} \label{sec:reinforce_attention_pdm}
+
+Predictive maintenance in Industry 4.0 has moved beyond failure prediction toward prescriptive maintenance, where the central problem is to decide when to inspect, defer, repair, or replace under uncertainty \cite{Com20,Ans19,Sir23,Zha24b}. This shift makes reinforcement learning a natural methodological fit because maintenance is a sequential control problem rather than a purely predictive one. At the same time, many PdM deployments are expected to operate close to the asset or within IIoT pipelines, where memory, latency, and engineering overhead remain binding constraints \cite{Com20,Pan23,Njo24}. The literature therefore supports a simple premise for the present study: in edge-aware PdM, the best method is not automatically the deepest one.
+
+\subsection{RL for edge-oriented PdM}
+
+A first layer of evidence shows that lightweight reinforcement learning is already credible in maintenance optimization. Non-deep or relatively simple RL formulations learn useful maintenance policies across multi-state machines, condition-based maintenance, and repairable multi-component systems \cite{Wan14,Ads20,You20}. Recent review work by Siraskar et al. consolidates this wider result and identifies REINFORCE as an underexplored but legitimate PdM direction \cite{Sir23}. This matters because it shifts the burden of proof. A REINFORCE-based method does not need to justify reinforcement learning itself. It only needs to justify why a lighter policy-gradient learner is sufficient for the target maintenance setting.
+
+A second layer of evidence comes from edge-oriented PdM and IIoT deployment studies. Deep RL can perform strongly in richer resource-management and maintenance environments \cite{Ong22,Ong22b}, but the same literature also reveals the cost of that power. Transfer learning is introduced to reduce DRL training wall time by 58\% in IIoT-based manufacturing \cite{Ong22b}, while edge PdM deployment studies repeatedly report memory, pruning, quantization, and toolchain constraints before modern DNNs can run on microcontrollers or TinyML stacks \cite{Pan23,Njo24}. For the present review, the main implication is not that deep RL is ineffective. It is that complexity must earn its place once deployment realism is treated as part of the evaluation criterion.
+
+\subsection{The case for REINFORCE}
+
+Within this edge-aware framing, REINFORCE becomes a serious PdM candidate because it keeps the policy learner simple while preserving direct policy optimization. The most important direct anchor is Siraskar et al., who show that na”ive REINFORCE can be empirically competitive for predictive maintenance \cite{Sir25}. That result stands on top of a broader maintenance literature in which simpler RL methods already solve useful decision problems without a large algorithmic stack \cite{Wan14,Ads20,You20}. In literature-review terms, REINFORCE is therefore best positioned not as a universal replacement for PPO, DQN, or other deep methods, but as a defensible lightweight baseline whose value rises when deployment feasibility matters.
+
+\subsection{The case for attention in PdM}
+
+Attention mechanisms provide the missing representational argument. In predictive maintenance, attention is already well established for remaining useful life estimation, degradation tracking, and multi-sensor health modeling \cite{Che20b,Che21e,Cha22,Luc23}. Importantly, this literature is not only about predictive accuracy. De Luca et al. show that an attention-based PdM model can offer a useful effectiveness-efficiency compromise for IoT execution \cite{Luc23}. Xia et al. move attention closer to action support by coupling self-attention with rolling predictive maintenance decisions \cite{Xia22}. The cumulative implication is that attention is a credible way to compress long and noisy sensor histories into a more decision-relevant state representation.
+
+\begin{table}[t] \centering \small \begin{tabular}{p{0.21\textwidth} p{0.24\textwidth} p{0.24\textwidth} p{0.21\textwidth}} \hline Evidence layer & Core papers & What is already supported & What remains open \\ \hline Edge-aware RL for PdM & \cite{Wan14,Ads20,You20,Ong22,Ong22b} & RL is suitable for maintenance decision making, and deployment constraints matter for method choice & Whether a lightweight policy-gradient method can retain enough performance under edge-oriented conditions \\ REINFORCE in PdM & \cite{Sir25,Sir23} & REINFORCE is a legitimate PdM method and now has direct empirical support & Whether representation quality limits a na”ive REINFORCE policy in richer sensor settings \\ Attention in PdM & \cite{Che20b,Che21e,Cha22,Luc23,Xia22} & Attention improves temporal and sensor-wise representation in prognostics and related PdM tasks & Whether those representational gains transfer cleanly to maintenance-action learning \\ Attention plus RL for maintenance actions & \cite{Zha23d,Zha23f,Guo26} & Attention can strengthen maintenance decision learning under temporal complexity and partial observability & Existing evidence uses heavier DRL, DQN, PPO, SAC, or MARL rather than REINFORCE \\ \hline \end{tabular} \caption{Evidence chain leading to the present study. The literature is strong on the two components and on adjacent combinations, but still thin at their exact intersection.} \label{tab:evidence_chain} \end{table}
+
+\subsection{The case for REINFORCE with attention}
+
+The bridge from attention-based representation to maintenance-action learning has begun to appear, but it is still dominated by heavier deep RL designs. Transformer-driven prescriptive maintenance, counterfactual-attention multi-agent RL, and transformer-augmented DQN all show that attention can improve maintenance decision learning under temporal complexity, partial observability, or joint scheduling demands \cite{Zha23d,Zha23f,Guo26}. Yet these studies do not use REINFORCE. In parallel, Siraskar et al. provide direct evidence that REINFORCE can already be competitive in predictive maintenance without attention \cite{Sir25}. Taken together, these two strands create a narrow and coherent research opening: attention can strengthen state representation, while REINFORCE preserves a lightweight policy learner.
+
+\begin{figure}[t] \centering \begin{tikzpicture} \begin{axis}[ ybar, bar width=10pt, width=0.95\linewidth, height=5.3cm, ymin=0, ymax=35, ylabel={Papers in current corpus}, symbolic x coords={Exact target,REINFORCE related,Attention plus RL,Attention only,RL only}, xtick=data, nodes near coords, nodes near coords align={vertical}, enlarge x limits=0.06, x tick label style={rotate=25,anchor=east,font=\footnotesize}, y tick label style={font=\footnotesize}, ylabel style={font=\footnotesize}, every axis plot/.append style={fill=black!65}] \addplot coordinates {(Exact target,0) (REINFORCE related,8) (Attention plus RL,7) (Attention only,31) (RL only,24)}; \end{axis} \end{tikzpicture} \caption{Evidence density in the current project corpus. The exact target combination is absent, while adjacent clusters are clearly populated. The counts reflect topic-level grouping in the present search corpus rather than a claim about the entire global literature.} \label{fig:evidence_sparsity} \end{figure}
+
+Figure~\ref{fig:evidence_sparsity} makes the evidence structure visible. Within the current project corpus, adjacent clusters are well populated, but the exact REINFORCE plus attention combination for maintenance-action PdM is absent. This absence should be read as a bounded gap claim rather than a universal first-ever claim. Even so, the literature is strong enough to support the present study as a natural extension of prior REINFORCE work by Siraskar et al. \cite{Sir25} and of the broader attention-based PdM literature \cite{Luc23,Zha23d}. The resulting journal-grade conclusion is clear: REINFORCE with attention is not a speculative combination. It is a methodologically conservative next step that joins an edge-compatible policy learner with a representation mechanism already shown to be useful in predictive maintenance.
+\\
+\textbf{\textcolor{red}{UNDERMIND}}
+
+%% $$$
+%% UM - SLR
+%% $$$
+
+
+
 
 \section{Foundations: PdM as an MDP/POMDP and RL algorithms}
 \label{sec:foundations}
