@@ -1,9 +1,10 @@
 % ------------------------------------------------------------------------------------------------
 % Journal of Intelligent Manufacturing
-% Ver. 0.7 - Figures added
+% LaTeX Template V. 3.1 December 2024
+% Ver. 0.3 - Added SLR from UM
 % ------------------------------------------------------------------------------------------------
 \PassOptionsToPackage{hypertexnames=false}{hyperref}
-\documentclass[sn-basic]{sn-jnl} % Basic Springer Nature Reference Style
+\documentclass[refree,sn-basic]{sn-jnl} % Basic Springer Nature Reference Style
 
 %% Standard Packages
 \usepackage{graphicx}%
@@ -21,8 +22,6 @@
 \usepackage{algorithmicx}%
 \usepackage{algpseudocode}%
 \usepackage{listings}%
-\usepackage{setspace}
-\onehalfspacing
 % hyperref is loaded by sn-jnl; options are passed above
 
 \graphicspath{{figures/}}
@@ -40,7 +39,7 @@
 
 \begin{document}
 
-\title[Lightweight RL for Edge PdM]{V0.6-Lightweight Reinforcement Learning for Edge Predictive Maintenance: An Empirical Study of REINFORCE with Attention Mechanisms for Milling Tool Replacement}
+\title[AutoRL for PdM on the Edge]{AutoRL for Predictive Maintenance on the Edge: A Comparative Study of REINFORCE with Attention Mechanisms for Milling Tool Replacement - V.0.3 (UM-SLR)}
 
 
 \author[1,4]{\fnm{Rajesh} \sur{Siraskar} \sfx{(\href{https://orcid.org/0000-0003-2341-8787}{ORCID: 0000-0003-2341-8787}})}\email{rajesh.siraskar@gmail.com}
@@ -55,29 +54,30 @@
 \affil[3]{Swinburne University of Technology, Hawthorn VIC 3122, Australia}
 \affil[4]{\orgdiv{CTO Office}, \orgname{Birlasoft Ltd.}, \orgaddress{\city{Pune}, \postcode{411057}, \state{Maharashtra}, \country{India}}}
 
-\abstract{\textcolor{red}{v.0.7} Industry 4.0 maintenance systems increasingly rely on edge-computing deployments where stringent limits on memory, latency, and energy consumption favor computationally light learning methods. This paper evaluates whether the na\"{i}ve Monte-Carlo policy-gradient algorithm \textsc{REINFORCE} can serve as a \emph{lightweight} yet competitive reinforcement learning (RL) approach for edge-deployable predictive maintenance (PdM), particularly when combined with attention-based feature extraction.
+\abstract{Industry 4.0 maintenance systems increasingly rely on edge-computing deployments where stringent limits on memory, latency, and energy consumption favor computationally light learning methods. In this work we study \emph{AutoRL}, an automated reinforcement learning (RL) pipeline that trains and evaluates maintenance agents for a milling machine tool-replacement task, with particular focus on the computationally light na\"{i}ve Monte-Carlo policy-gradient algorithm \textsc{REINFORCE} can be competitive with more advanced methods such as \textsc{PPO}. The contribution is threefold: (i) an end-to-end AutoRL training and multi-round evaluation framework, (ii) a Gymnasium-compatible predictive-maintenance environment that hides tool wear from observations to enforce inference from sensor signals alone, and (iii) a systematic comparison across four RL algorithms (\textsc{A2C}, \textsc{DQN}, \textsc{PPO}, \textsc{REINFORCE}) and four attention mechanisms (Nadaraya--Watson, Temporal, Multi-Head, Self-Attention) integrated as Stable-Baselines3 feature extractors.
 
-Time replacement of a milling-machine tool is the subject of our study. We compare four RL algorithms (\textsc{A2C}, \textsc{DQN}, \textsc{PPO}, \textsc{REINFORCE}) and four attention mechanisms (Nadaraya--Watson, temporal, multi-head, self-attention) as feature enrichers. A simple 'AutoRL' pipeline is used to run standardized sweeps and multi-round evaluations developed as a convinience mechanism for industrial practioners.
+Across 48 trained agents (3 training files $\times$ 4 algorithms $\times$ 4 attention mechanisms) and 20 evaluation rounds per configuration, tested on six unseen files, \textsc{REINFORCE} paired with temporal or multi-head attention is consistently among the top-performing configurations and is statistically superior to A2C and DQN baselines in unseen-only panels (one-tailed Welch $t$-tests, $\alpha=0.05$). Against PPO, the evidence is schema-dependent, and results support \textsc{REINFORCE} as a lightweight, competitive alternative when combined with attention-based inductive biases aligned with edge and sustainability constraints.}
 
-We develop a custom PdM environment that is adaptable to different milling machine types and settings. We used IEEE public dataset and data collected at the University to demonstrate adaptabilty of our design. Evaluating \textcolor{red}{48} trained agents showing that REINFORCE is statistically superior to A2C and DQN baselines, and competitive against PPO. The results support \textsc{REINFORCE} as a lightweight, competitive alternative when combined with attention-based mechanisms.}
-
-\keywords{Predictive maintenance, Industry 4.0, Edge computing, Reinforcement Learning, REINFORCE, Attention mechanisms, Sustainable AI, AutoRL}
+\keywords{Predictive maintenance, Industry 4.0, Edge computing, Reinforcement learning, REINFORCE, PPO, Attention mechanisms, Milling machine, Sustainable AI}
 
 \maketitle
 
 \section{Introduction}
-Predictive maintenance (PdM) aims to intervene \emph{before} functional failure while maximizing asset utilization and protecting product quality. In Industry~4.0 deployments, manufacturing equipment with sensors, generate rich telemetry streams that enable condition-aware decision support and prescriptive control \cite{Zonta2020, Compare2020}. In practical deployments, PdM must increasingly operate at the \emph{edge} with the maintenance controllers in close proximity of the machines. This allows reduced latency and bandwidth requirement and increased reliability thereby reducing operational risk associated with centralized compute.
+Predictive maintenance (PdM) aims to intervene \emph{before} functional failure while maximizing asset utilization and protecting product quality. In Industry~4.0 deployments, sensorized manufacturing assets generate rich telemetry streams that enable condition-aware decision support and prescriptive control \cite{Zonta2020, Compare2020}. In practical deployments, PdM must increasingly operate at the \emph{edge}---near machines and shop-floor controllers---to meet latency, bandwidth, and reliability constraints, and to reduce operational risk associated with centralized compute.
 
-Edge deployment imposes hard resource limits (compute cycles, memory footprint, and energy), motivating \emph{lightweight} ML/RL models and training procedures. These constraints directly offer sustainability benefits: lower compute and shorter training runs reduce electricity consumption and associated carbon emissions, which is increasingly relevant in corporate carbon accounting and Industry~5.0 initiatives. Recent work in ``Green AI'' emphasizes reporting and minimizing computational cost as a first-class metric alongside accuracy \cite{Schwartz2020, Strubell2019}.\\
+Edge deployment imposes hard resource limits (compute cycles, memory footprint, and energy), motivating \emph{lightweight} ML/RL models and training procedures. These constraints directly relate to sustainability considerations: lower compute and shorter training runs reduce electricity consumption and associated carbon emissions, which is increasingly relevant in corporate carbon accounting and Industry~5.0 initiatives. Recent work in ``Green AI'' emphasizes reporting and minimizing computational cost as a first-class metric alongside accuracy \cite{Schwartz2020, Strubell2019}.
 
-With this, we attempt to explore the key research question: Can simple, computationally light RL algorithms such as \textsc{REINFORCE} be competitive with more advanced policy-optimization methods (e.g., \textsc{PPO}) for PdM decision-making, especially when augmented with attention-based feature extraction?
+In this setting, a key research question emerges:
+\begin{quote}
+\emph{Can simple, computationally light RL algorithms such as \textsc{REINFORCE} be competitive with more advanced policy-optimization methods (e.g., \textsc{PPO}) for PdM decision-making, especially when augmented with attention-based feature extraction?}
+\end{quote}
 
-This study builds on prior findings that na\"{i}ve \textsc{REINFORCE} can perform strongly for PdM in untuned regimes \cite{Siraskar2025}. It also leverages prior work applying a Nadaraya--Watson estimator as a lightweight attention mechanism for PdM, motivated by edge constraints \cite{Siraskar2024}.
+This study builds on prior findings that na\"{i}ve \textsc{REINFORCE} can perform strongly for PdM in untuned regimes and that automated RL frameworks can help industrial practitioners explore algorithm--hyperparameter design spaces \cite{Siraskar2025}. It also leverages prior work applying a Nadaraya--Watson estimator as a lightweight attention mechanism for PdM, motivated by edge constraints \cite{Siraskar2024}.
 
-AutoRL is positioned here as a practitioner-oriented \emph{implementation mechanism}: it standardizes training and evaluation across a grid of algorithmic choices and hyperparameters, producing comparable artefacts (dashboards, heatmaps, and hypothesis-test summaries) for model selection when exhaustive manual tuning is not feasible due to limited compute budgets and limited RL expertise \cite{Schwartz2020, Strubell2019, Faust2019, Mussi2022}.
+AutoRL is designed as a practical experimentation platform to (i) train multiple RL agents over a grid of algorithmic choices and hyperparameters, (ii) evaluate agents on multiple test files using prognostic-aware metrics, and (iii) generate standardized analysis artefacts (dashboards, heatmaps, and hypothesis-test summaries) for model selection.
 
 \textbf{Research objectives and hypotheses.}
-The study addresses the following research objectives (RO): (RO1) compare RL algorithms suitable for edge-oriented PdM, (RO2) evaluate whether \textsc{REINFORCE} is a competitive lightweight baseline (and when it is not), (RO3) assess attention mechanisms as inductive biases that can improve lightweight RL under partial observability, (RO4--RO5) design a Gymnasium-compatible RL environment that generalizes across sensor schemas, and (RO6) provide an AutoRL-style sweep and reporting pipeline as a practitioner convenience for standardized experimentation when manual tuning is impractical.
+The study addresses the following research objectives (RO): (RO1) compare RL algorithms suitable for PdM, (RO2) implement an AutoRL pipeline to automatically generate RL agents for PdM, (RO3) design for industrial practitioners by reducing the need to understand RL or hyperparameter tuning, (RO4--RO5) design a Gymnasium-compatible RL environment that generalizes across sensor schemas, and (RO6--RO7) study edge constraints (and related sustainability motivations) and attention mechanisms for improving lightweight RL.
 
 We test three hypotheses:
 \begin{itemize}
@@ -89,73 +89,11 @@ We test three hypotheses:
 \textbf{Contributions.}
 This paper contributes:
 \begin{itemize}
-        \item \textbf{Lightweight RL evidence for edge PdM:} an empirical comparison showing when \textsc{REINFORCE} is competitive against \textsc{A2C}, \textsc{DQN}, and \textsc{PPO} on a milling tool-replacement PdM task under partial observability.
-        \item \textbf{Attention mechanisms as inductive bias for lightweight RL:} Nadaraya--Watson, temporal attention, multi-head attention, and self-attention implemented as feature extractors for RL policies.
+        \item \textbf{AutoRL pipeline for practitioners:} batch training and evaluation with checkpointed recovery to support large experiment grids.
         \item \textbf{A schema-adaptive Gymnasium environment:} a milling-tool PdM environment that hides wear from observations, enabling realistic partial observability across different sensor schemas \cite{Foundation2023}.
-        \item \textbf{Practitioner convenience mechanism (AutoRL):} batch training and multi-round evaluation with checkpointed recovery and standardized reporting to reduce the burden of manual tuning and ad-hoc experimentation.
+        \item \textbf{Attention mechanisms implemented as lightweight feature extractors:} Nadaraya--Watson, temporal attention, multi-head attention, and self-attention integrated into RL policies.
+        \item \textbf{Empirical evaluation across SIT and IEEE schemas} with multi-round evaluation on unseen data and hypothesis testing at $\alpha=0.05$.
 \end{itemize}
-
-\section{Milling machine data}
-\cite{PHMdata2010} is a public dataset from the 2010 PHM Society Conference Data Challenge, This dataset is from the challenge and focused on RUL estimation for a high-speed CNC milling machine cutters using dynamometer, accelerometer, and acoustic emission data
-
-Used 5 of the 6 datasets. Records c1, c4 and c6 are training data, and records c2, c3, and c5 are test data:.       
-
-Machine information: Spindle speed of the cutter was 10400 RPM; feed rate was 1555 mm/min; Y depth of cut (radial) was 0.125 mm; Z depth of cut (axial) was 0.2 mm. Data was acquired at 50 KHz/channel.
-
-Data columns:
-1: Force (N) in X dimension
-2: Force (N) in Y dimension
-3: Force (N) in Z dimension
-4: Vibration (g) in X dimension
-5: Vibration (g) in Y dimension
-6: Vibration (g) in Z  dimension
-7: AE-RMS (V)
-
-
-\begin{figure}[t]
-  \centering
-
-  \begin{subfigure}[t]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{IEEE_06_SensorPlot.png}
-    \caption{IEEE schema features.}
-    \label{fig:schema_ieee}
-  \end{subfigure}\hfill
-  \begin{subfigure}[t]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{SIT_20_SensorPlot.png}
-    \caption{SIT schema features.}
-    \label{fig:schema_sit}
-  \end{subfigure}
-
-  \caption{IEEE and SIT schema feature plots: Representational plots depicting differences in sensor features, value ranges, and variations.}
-  \label{fig:schema_feature_plots_ieee_sit}
-\end{figure}
-
-\begin{figure}[t]
-        \centering
-        \includegraphics[width=0.48\textwidth]{IEEE_06_SensorPlot.png}\hfill
-        \includegraphics[width=0.48\textwidth]{SIT_20_SensorPlot.png}
-        \caption{IEEE and SIT schema feature plots: Representational plots - depicting the difference in features (sensor data) and value ranges and variations. \textbf{(a)} IEEE schema features. \textbf{(b)} SIT schema features.}
-        \label{fig:schema_feature_plots_ieee_sit}
-\end{figure}
-
-\begin{figure}[t]
-        \centering
-        \includegraphics[width=0.48\textwidth]{PPO_MH_SIT_8_10.png}\hfill
-        \includegraphics[width=0.48\textwidth]{PPO_NW_SIT_8_10.png}
-        \caption{PPO trained PdM agents - evaluated on unseen data. \textbf{(a)} PPO with Multi-Head attention. \textbf{(b)} PPO with Nadaraya--Watson attention.}
-        \label{fig:ppo_unseen_mh_nw}
-\end{figure}
-
-\begin{figure}[t]
-        \centering
-        \includegraphics[width=0.48\textwidth]{REINFORCE_MH_SIT_12_10.png}\hfill
-        \includegraphics[width=0.48\textwidth]{REINFORCE_NW_SIT_12_12.png}
-        \caption{REINFORCE trained PdM agents - evaluated on unseen data. \textbf{(a)} REINFORCE with Multi-Head attention. \textbf{(b)} REINFORCE with Nadaraya--Watson attention.}
-        \label{fig:reinforce_unseen_mh_nw}
-\end{figure}
-
 
 \section{Background and related work}
 \subsection{PdM, Industry~4.0, and edge constraints}
@@ -196,7 +134,7 @@ A third quantitative anchor comes from edge deployment studies that make the mem
 \end{table}
 
 \subsection{AutoRL and practitioner-centered experimentation}
-AutoRL refers to automating choices that otherwise require expert RL knowledge: algorithm selection, hyperparameter tuning, reward shaping, and robust evaluation. Prior work emphasizes that automation can improve performance and reproducibility, and can lower the barrier for non-expert adoption \cite{Faust2019, Mussi2022}. In industrial PdM settings, the motivation is pragmatic: practitioners often cannot afford extensive manual hyperparameter tuning cycles (time, compute, and expertise), so standardized sweeps and reporting become a credible adoption path, especially when compute cost is treated as a first-class concern \cite{Schwartz2020, Strubell2019}.
+AutoRL refers to automating choices that otherwise require expert RL knowledge: algorithm selection, hyperparameter tuning, reward shaping, and robust evaluation. Prior work emphasizes that automation can improve performance and reproducibility, and can lower the barrier for non-expert adoption \cite{Faust2019, Mussi2022}. For industrial practitioners, this design goal is particularly important: the tool should help them select a high-performing agent without requiring deep understanding of RL internals.
 
 \subsection{Attention mechanisms for PdM}
 Attention mechanisms reweight inputs to focus computation on the most relevant parts of an observation, and have become a standard architectural primitive in modern deep learning \cite{Vaswani2017}. In PdM, attention can be interpreted as a structured inductive bias that emphasizes salient sensor channels or degradation stages. The present study builds on prior PdM attention work that introduced a Nadaraya--Watson estimator based attention mechanism as a lightweight option aligned with edge constraints \cite{Siraskar2024}.
@@ -397,7 +335,7 @@ DQN learns an action-value function $Q_\theta(s,a)$ and minimizes a temporal-dif
 Experience replay and target-network updates stabilize learning, but partial observability can degrade performance without explicit memory.
 
 \subsubsection{Why REINFORCE can be edge-suited}
-When deployment constraints are first-order requirements, algorithmic simplicity can translate to smaller policies and lower training/inference overhead. In sweep-based experimentation (including AutoRL-style grids), simpler learners can also reduce total compute when many configurations must be compared. This does not guarantee superior reward, but it shifts the burden of proof: if a lightweight method is statistically competitive on PdM metrics, it may be preferable for edge-first deployments \cite{Schwartz2020, Njor2024}.
+In an AutoRL setting, algorithmic simplicity can translate to lower total compute when sweeping many configurations. This does not guarantee superior reward, but it shifts the burden of proof: if a lightweight method is statistically competitive on PdM metrics, it may be preferable for edge-first deployments \cite{Schwartz2020, Njor2024}.
 
 \section{Problem formulation: asymmetric costs and decision rationale}
 \label{sec:problem}
@@ -419,7 +357,7 @@ PdM decisions are inherently asymmetric. A late replacement can cause defective 
         \end{tabular}
 \end{table}
 
-\section{AutoRL as a practitioner convenience: standardized sweeps and reporting}
+\section{AutoRL pipeline for practitioner-centered experimentation}
 \label{sec:autorl}
 The AutoRL pipeline is implemented as a CLI batch runner (\texttt{code/batch\_train.py}) that supports training, evaluation, and reporting across a grid of algorithms, hyperparameters, and attention mechanisms. The pipeline is designed to be practitioner-friendly in two ways:
 \begin{itemize}
@@ -787,7 +725,7 @@ H2 is supported structurally by the environment design (Section~\ref{sec:env}) a
 The PdM task studied here has a small action space and terminates on replacement; accordingly, the control problem can resemble learning a decision boundary over sensor-derived features. When partial observability dominates the difficulty (Section~\ref{sec:pomdp}), representation quality can matter more than optimizer sophistication.
 
 \subsection{Implications for industrial practitioners}
-The primary practical implication is that a lightweight policy-gradient learner (\textsc{REINFORCE}), when paired with appropriate attention-based feature extraction, can be a credible choice for edge-first PdM deployments where model footprint and operational simplicity matter. AutoRL is therefore framed as a \emph{convenience layer}: it reduces reliance on RL expertise by automating algorithm/attention sweeps and exposing standardized result artefacts (dashboards, heatmaps, and hypothesis-test summaries) for selection and auditing.
+AutoRL reduces reliance on RL expertise by automating algorithm/attention sweeps and exposing standardized result artefacts (dashboards, heatmaps, and hypothesis-test summaries).
 
 \subsection{Edge compute and sustainability framing}
 This paper does not directly measure energy consumption. However, the combination of AutoRL-style sweeps and edge deployment makes compute-efficiency a meaningful engineering constraint. In this context, if REINFORCE achieves equal or better PdM outcomes than heavier baselines, it supports a defensible ``Green AI'' argument: prefer the simplest method that meets the operational objective \cite{Schwartz2020, Strubell2019}.
@@ -802,7 +740,7 @@ This paper does not directly measure energy consumption. However, the combinatio
 
 \section{Conclusions and future work}
 \label{sec:conclusion}
-This paper presented an empirical study of \textsc{REINFORCE} with attention mechanisms for milling-machine tool-replacement PdM under edge-oriented constraints, using a schema-adaptive Gymnasium environment and multi-round evaluation on unseen data. Results across SIT and IEEE schemas, supported by hypothesis tests at $\alpha=0.05$, show that \textsc{REINFORCE} is a strong candidate for edge-first PdM, and that attention mechanisms---especially multi-head attention---can further improve performance and robustness. AutoRL is used as an implementation mechanism to standardize sweeps and reporting rather than as the core research contribution.
+This paper presented an AutoRL pipeline and a schema-adaptive Gymnasium PdM environment for milling-machine tool replacement. Empirical results across SIT and IEEE schemas, supported by hypothesis tests at $\alpha=0.05$, show that REINFORCE is a strong candidate for edge-first PdM, and that attention mechanisms---especially multi-head attention---can further improve performance and robustness.
 
 Future work should (i) measure inference latency and energy on representative edge devices, (ii) incorporate richer maintenance costs and partial observability models, and (iii) evaluate robustness under sensor drift and cross-machine domain shift.
 
