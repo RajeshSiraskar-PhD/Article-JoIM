@@ -1,6 +1,7 @@
 % ------------------------------------------------------------------------------------------------
 % Journal of Intelligent Manufacturing
 % Ver. 0.7 - Figures added
+% To-Do: SIT machine set up and some tool-wear images
 % ------------------------------------------------------------------------------------------------
 \PassOptionsToPackage{hypertexnames=false}{hyperref}
 \documentclass[sn-basic]{sn-jnl} % Basic Springer Nature Reference Style
@@ -24,21 +25,22 @@
 \usepackage{algpseudocode}%
 \usepackage{listings}%
 \usepackage{setspace}
-\onehalfspacing
-% hyperref is loaded by sn-jnl; options are passed above
-
+\usepackage{xcolor}
 \graphicspath{{figures/}}
 
-\lstset{
-        basicstyle=\ttfamily\footnotesize,
-        columns=fullflexible,
-        breaklines=true,
-        frame=single,
-        xleftmargin=0.5em,
-        xrightmargin=0.5em,
-        aboveskip=0.8em,
-        belowskip=0.8em
-}
+\pagecolor[rgb]{0.08,0.08,0.10}
+\color[rgb]{0.90,0.90,0.90}
+\onehalfspacing
+% \lstset{
+%         basicstyle=\ttfamily\footnotesize,
+%         columns=fullflexible,
+%         breaklines=true,
+%         frame=single,
+%         xleftmargin=0.5em,
+%         xrightmargin=0.5em,
+%         aboveskip=0.8em,
+%         belowskip=0.8em
+% }
 
 \begin{document}
 
@@ -113,10 +115,36 @@ Data columns:
 6: Vibration (g) in Z  dimension
 7: AE-RMS (V)
 
-
 \begin{figure}[t]
   \centering
 
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{Tool_New_Insert.png}
+    \caption{A tool-insert without wear}
+    \label{fig:tool_new}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{Tool_Worn Annotated.png}
+    \caption{Tool-insert showing wear and how flank-wear (VB) is defined}
+    \label{fig:tool_worn}
+  \end{subfigure}
+  \caption{Milling tool inserts - Digital images using tool-makers microscope}
+  \label{fig:tool_images}
+\end{figure}
+
+\begin{figure}[t]
+        \centering
+        \includegraphics[width=0.48\textwidth]{dummy.pdf}\hfill
+        \includegraphics[width=0.48\textwidth]{dummy.pdf}
+        \caption{setup}
+        \label{fig:machine-set-up}
+\end{figure}
+
+
+\begin{figure}[t]
+  \centering
   \begin{subfigure}[t]{0.48\textwidth}
     \centering
     \includegraphics[width=\linewidth]{IEEE_06_SensorPlot.png}
@@ -136,27 +164,17 @@ Data columns:
 
 \begin{figure}[t]
         \centering
-        \includegraphics[width=0.48\textwidth]{IEEE_06_SensorPlot.png}\hfill
-        \includegraphics[width=0.48\textwidth]{SIT_20_SensorPlot.png}
-        \caption{IEEE and SIT schema feature plots: Representational plots - depicting the difference in features (sensor data) and value ranges and variations. \textbf{(a)} IEEE schema features. \textbf{(b)} SIT schema features.}
-        \label{fig:schema_feature_plots_ieee_sit}
-\end{figure}
-
-\begin{figure}[t]
-        \centering
         \includegraphics[width=0.48\textwidth]{PPO_MH_SIT_8_10.png}\hfill
         \includegraphics[width=0.48\textwidth]{PPO_NW_SIT_8_10.png}
         \caption{PPO trained PdM agents - evaluated on unseen data. \textbf{(a)} PPO with Multi-Head attention. \textbf{(b)} PPO with Nadaraya--Watson attention.}
         \label{fig:ppo_unseen_mh_nw}
 \end{figure}
 
-\begin{figure}[t]
-        \centering
-        \includegraphics[width=0.48\textwidth]{REINFORCE_MH_SIT_12_10.png}\hfill
-        \includegraphics[width=0.48\textwidth]{REINFORCE_NW_SIT_12_12.png}
-        \caption{REINFORCE trained PdM agents - evaluated on unseen data. \textbf{(a)} REINFORCE with Multi-Head attention. \textbf{(b)} REINFORCE with Nadaraya--Watson attention.}
-        \label{fig:reinforce_unseen_mh_nw}
-\end{figure}
+\section{Training strategy}
+\huge\textcolor{red}{move later}
+\normalsize
+ - One - evaluate on rest\\
+ - Single dataset - often combined of multiple experiments - but industrial practioners so did not combine.\\
 
 
 \section{Background and related work}
@@ -579,6 +597,62 @@ In this codebase, the softmax normalization is across the \emph{batch} dimension
 
 \section{Experimental design}
 \label{sec:experiment}
+
+\subsection{\textcolor{red}{Machine description}}
+
+Parameter/ Equipment used: Specification/Values\\
+-------------
+Machine : Vertical Milling Centre (VMC) Jyoti NVU PX10 \\
+Vibration Sensor : vbr1/d0-3v (Micro detectors)\\
+Sensors used: Vibration, Dynamometer, Current\\
+Tool wear measurement: Radical Tool makers Microscope\\
+Data Acquisition: National Instruments (NI) data acquisition system\\
+Cutting Tool: Inserted End-mill Cutter (material-Tungsten Carbide)\\
+Spindle Speed (rpm): 800, 900, 1000, 1100, 1200 \\
+Feed Rate (mm/min): 20, 25, 30, 35, 40\\
+Maximum allowable flank wear (mm): 0.32 mm\\
+
+%% $$$ 
+
+\begin{figure}[h]
+        \centering
+        \includegraphics[width=0.305\linewidth]{Expt_Setup_MillingMachine.png}
+        \includegraphics[width=0.45\linewidth]{Expt_Setup_Vibration_and_Dynamometer.png}
+        \caption{Experimental setups}
+        \label{fig:expt-setup-1}
+\end{figure}
+
+\begin{figure}[h]
+        \centering
+        \includegraphics[width=0.45\textwidth]{Expt_Setup_DACS.png}
+        \includegraphics[width=0.445\textwidth]{Expt_Setup_Microscope.png}
+        \caption{Experimental setups - measurement}
+        \label{fig:expt-setup-2}
+\end{figure}
+
+\begin{table}[h!]
+    \centering
+    \caption{Progressive tool wear. Images taken using tool-makers microscope}
+    \label{tab:wearimages}
+    \begin{tabular}{|r|r|c|}
+        \hline
+        Runs & Wear $VB_{max}\mu$m & Tool condition\\
+        \hline
+         0 &   0.00 & \includegraphics[width=0.3\linewidth]{tw-1.jpg} \\ \hline
+         5 & 119.71 & \includegraphics[width=0.3\linewidth]{tw-2.jpg} \\ \hline
+        10 & 170.07 & \includegraphics[width=0.3\linewidth]{tw-3.jpg} \\ \hline
+        15 & 212.21 & \includegraphics[width=0.3\linewidth]{tw-4.jpg} \\ \hline
+        20 & 236.50 & \includegraphics[width=0.3\linewidth]{tw-5.jpg} \\ \hline
+        25 & 254.74 & \includegraphics[width=0.3\linewidth]{tw-6.jpg} \\ \hline
+        30 & 280.29 & \includegraphics[width=0.3\linewidth]{tw-7.jpg} \\ \hline
+        35 & 303.65 & \includegraphics[width=0.3\linewidth]{tw-8.jpg} \\ \hline
+    \end{tabular}
+\end{table}
+
+
+NUAA IdeahouseDatasetc - Eight  (Four-cutting forces, two vibrations, two current/power)\\
+In-house Experimental Dataset : Six (Three-cutting forces, two vibrations, One current)\\
+
 \subsection{Datasets and generalization protocol}
 The study uses two sensor schemas: (i) SIT (production-oriented schema with eight sensor channels), and (ii) IEEE (benchmark schema with force, vibration, and acoustic emission channels). Generalization is evaluated via a one-vs-all protocol: agents are trained on training file(s) within a schema and evaluated on remaining unseen files within the same schema.
 
@@ -666,6 +740,70 @@ Figure~\ref{fig:analysis_sit} and Figure~\ref{fig:analysis_ieee} provide consoli
         \includegraphics[width=0.95\textwidth,height=0.80\textheight,keepaspectratio]{_Heatmap_IEEE.jpg}
         \caption{IEEE one-vs-all generalization heatmap: trained models (rows) evaluated on unseen test files (columns).}
         \label{fig:heatmap_ieee}
+\end{figure}
+
+%% IEEE REINFORCE + Attention
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[t]{\textwidth}
+    \centering
+    \includegraphics[width=0.8\linewidth]{REINFORCE_NW_IEEE_04_06.png}
+    \caption{REINFORCE with Nadaraya--Watson attention}
+    \label{fig:IEEE_RF_NW}
+  \end{subfigure}
+  \begin{subfigure}[t]{\textwidth}
+    \centering
+    \includegraphics[width=0.8\linewidth]{REINFORCE_TP_IEEE_06_01.png}
+    \caption{REINFORCE with Temporal attention}
+    \label{fig:IEEE_RF_TP}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{\textwidth}
+    \centering
+    \includegraphics[width=0.8\linewidth]{REINFORCE_SA_IEEE_01_04.png}
+    \caption{REINFORCE with Self-Attention}
+    \label{fig:IEEE_RF_SA}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{\textwidth}
+    \centering
+    \includegraphics[width=0.8\linewidth]{REINFORCE_MH_IEEE_04_01.png}
+    \caption{REINFORCE with Multi-Head attention}
+    \label{fig:IEEE_RF_MH}
+  \end{subfigure}
+
+  \caption{Sample evaluation plots showing REINFORCE with different attention mechanisms, on the IEEE dataset.}
+  \label{fig:IEEE_RF_with_Attention}
+\end{figure}
+
+ %% SIT REINFORCE + Attention
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[t]{\textwidth}
+    \centering
+    \includegraphics[width=0.8\linewidth]{REINFORCE_NW_SIT_12_10.png}
+    \caption{REINFORCE with Nadaraya--Watson attention}
+    \label{fig:SIT_RF_NW}
+  \end{subfigure}
+  \begin{subfigure}[t]{\textwidth}
+    \centering
+    \includegraphics[width=0.8\linewidth]{REINFORCE_TP_SIT_12_10.png}
+    \caption{REINFORCE with Temporal attention}
+    \label{fig:SIT_RF_TP}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{\textwidth}
+    \centering
+    \includegraphics[width=0.8\linewidth]{REINFORCE_SA_SIT_12_10.png}
+    \caption{REINFORCE with Self-Attention}
+    \label{fig:SIT_RF_SA}
+  \end{subfigure}
+  \begin{subfigure}[t]{\textwidth}
+    \centering
+    \includegraphics[width=0.8\linewidth]{REINFORCE_MH_SIT_12_10.png}
+    \caption{REINFORCE with Multi-Head attention}
+    \label{fig:SIT_RF_MH}
+  \end{subfigure}
+
+  \caption{Sample evaluation plots showing REINFORCE with different attention mechanisms, on the SIT dataset.}
+  \label{fig:SIT_RF_with_Attention}
 \end{figure}
 
 \subsection{Hypothesis tests (H1): REINFORCE vs A2C/DQN/PPO}
