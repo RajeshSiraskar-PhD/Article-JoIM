@@ -1,7 +1,6 @@
 % ------------------------------------------------------------------------------------------------
 % Journal of Intelligent Manufacturing
-% Ver. 0.7 - Figures added
-% To-Do: SIT machine set up and some tool-wear images
+% Ver. 0.8 - Machine set-up section
 % ------------------------------------------------------------------------------------------------
 \PassOptionsToPackage{hypertexnames=false}{hyperref}
 \documentclass[sn-basic]{sn-jnl} % Basic Springer Nature Reference Style
@@ -524,6 +523,18 @@ In this codebase, the softmax normalization is across the \emph{batch} dimension
 \end{algorithmic}
 \end{algorithm}
 
+
+%% $$$ MISPLACED
+\textcolor{red}{MIS PLACED -- figure}
+\begin{figure}[t]
+        \centering
+        \includegraphics[width=0.48\textwidth]{PPO_MH_SIT_8_10.png}\hfill
+        \includegraphics[width=0.48\textwidth]{PPO_NW_SIT_8_10.png}
+        \caption{PPO trained PdM agents - evaluated on unseen data. \textbf{(a)} PPO with Multi-Head attention. \textbf{(b)} PPO with Nadaraya--Watson attention.}
+        \label{fig:ppo_unseen_mh_nw}
+\end{figure}
+
+
 %% $$$ 
 \section{Experimental design} \label{sec:experiment} 
 
@@ -533,6 +544,7 @@ units -- Force and N Newtons, Vibration in G, AE-RMS (acoustic_emission_rms) in 
 
 FEATURES; 
 schema IEEE - features = ['force_x', 'force_y', 'force_z', 'vibration_x', 'vibration_y', 'vibration_z', 'acoustic_emission_rms']
+
 schema SIT - features = ['Vib_Spindle', 'Vib_Table', 'Sound_Spindle', 'Sound_table', 'X_Load_Cell', 'Y_Load_Cell', 'Z_Load_Cell', 'Current']
             
 \subsubsection{SIT data: In-house, University, machine and measurement setup}
@@ -586,10 +598,9 @@ Maximum allowable flank wear (mm): 0.32 mm\\
     \end{tabular}
 \end{table}
 
-\subsubsection{SIT data: Measured values and units}
 
-\section{Milling machine data}
 
+\textbf{SIT machine set up}
 \begin{figure}[t]
   \centering
   \begin{subfigure}[t]{0.48\textwidth}
@@ -608,20 +619,7 @@ Maximum allowable flank wear (mm): 0.32 mm\\
   \label{fig:tool_images}
 \end{figure}
 
-\cite{PHMdata2010} is a public dataset from the 2010 PHM Society Conference Data Challenge, This dataset is from the challenge and focused on RUL estimation for a high-speed CNC milling machine cutters using dynamometer, accelerometer, and acoustic emission data
 
-Used 5 of the 6 datasets. Records c1, c4 and c6 are training data, and records c2, c3, and c5 are test data:.       
-
-Machine information: Spindle speed of the cutter was 10400 RPM; feed rate was 1555 mm/min; Y depth of cut (radial) was 0.125 mm; Z depth of cut (axial) was 0.2 mm. Data was acquired at 50 KHz/channel.
-
-IEEE Data columns:
-1: Force (N) in X dimension
-2: Force (N) in Y dimension
-3: Force (N) in Z dimension
-4: Vibration (g) in X dimension
-5: Vibration (g) in Y dimension
-6: Vibration (g) in Z  dimension
-7: AE-RMS (V)
 
 \begin{figure}[t]
   \centering
@@ -642,15 +640,25 @@ IEEE Data columns:
   \label{fig:schema_feature_plots_ieee_sit}
 \end{figure}
 
-\begin{figure}[t]
-        \centering
-        \includegraphics[width=0.48\textwidth]{PPO_MH_SIT_8_10.png}\hfill
-        \includegraphics[width=0.48\textwidth]{PPO_NW_SIT_8_10.png}
-        \caption{PPO trained PdM agents - evaluated on unseen data. \textbf{(a)} PPO with Multi-Head attention. \textbf{(b)} PPO with Nadaraya--Watson attention.}
-        \label{fig:ppo_unseen_mh_nw}
-\end{figure}
 
+\subsubsection{IEEE data}
 
+\cite{PHMdata2010} is a public dataset from the 2010 PHM Society Conference Data Challenge, This dataset is from the challenge and focused on RUL estimation for a high-speed CNC milling machine cutters using dynamometer, accelerometer, and acoustic emission data
+
+Used 5 of the 6 datasets. Records c1, c4 and c6 are training data, and records c2, c3, and c5 are test data:.       
+
+Machine information: Spindle speed of the cutter was 10400 RPM; feed rate was 1555 mm/min; Y depth of cut (radial) was 0.125 mm; Z depth of cut (axial) was 0.2 mm. Data was acquired at 50 KHz/channel.
+
+IEEE Data columns:
+1: Force (N) in X dimension
+2: Force (N) in Y dimension
+3: Force (N) in Z dimension
+4: Vibration (g) in X dimension
+5: Vibration (g) in Y dimension
+6: Vibration (g) in Z  dimension
+7: AE-RMS (V)
+
+MOER information of IEEE machine 
 A high speed CNC machine (Röders Tech RFM760) with
 spindle speed up to 42,000 rpm was selected for the
 experiment. The workpiece material used in the machining
@@ -691,13 +699,6 @@ Column 6: Vibration (g) in Z dimension
 Column 7: AE-RMS (V)
 
 Some background on the apparatus and experimental setup can be found here, and in the references in that paper. The spindle speed of the cutter was 10400 RPM; feed rate was 1555 mm/min; Y depth of cut (radial) was 0.125 mm; Z depth of cut (axial) was 0.2 mm. Data was acquired at 50 KHz/channel.
-
-Dataset Files
-Files have not been uploaded for this dataset
-Advertisement
-
-
-
 
 \subsection{Datasets and generalization protocol}
 The study uses two sensor schemas: (i) SIT (production-oriented schema with eight sensor channels), and (ii) IEEE (benchmark schema with force, vibration, and acoustic emission channels). Generalization is evaluated via a one-vs-all protocol: agents are trained on training file(s) within a schema and evaluated on remaining unseen files within the same schema.
