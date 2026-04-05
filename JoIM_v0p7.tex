@@ -99,77 +99,6 @@ This paper contributes:
         \item \textbf{Practitioner convenience mechanism (AutoRL):} batch training and multi-round evaluation with checkpointed recovery and standardized reporting to reduce the burden of manual tuning and ad-hoc experimentation.
 \end{itemize}
 
-\section{Milling machine data}
-\cite{PHMdata2010} is a public dataset from the 2010 PHM Society Conference Data Challenge, This dataset is from the challenge and focused on RUL estimation for a high-speed CNC milling machine cutters using dynamometer, accelerometer, and acoustic emission data
-
-Used 5 of the 6 datasets. Records c1, c4 and c6 are training data, and records c2, c3, and c5 are test data:.       
-
-Machine information: Spindle speed of the cutter was 10400 RPM; feed rate was 1555 mm/min; Y depth of cut (radial) was 0.125 mm; Z depth of cut (axial) was 0.2 mm. Data was acquired at 50 KHz/channel.
-
-Data columns:
-1: Force (N) in X dimension
-2: Force (N) in Y dimension
-3: Force (N) in Z dimension
-4: Vibration (g) in X dimension
-5: Vibration (g) in Y dimension
-6: Vibration (g) in Z  dimension
-7: AE-RMS (V)
-
-\begin{figure}[t]
-  \centering
-
-  \begin{subfigure}[t]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{Tool_New_Insert.png}
-    \caption{A tool-insert without wear}
-    \label{fig:tool_new}
-  \end{subfigure}\hfill
-  \begin{subfigure}[t]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{Tool_Worn Annotated.png}
-    \caption{Tool-insert showing wear and how flank-wear (VB) is defined}
-    \label{fig:tool_worn}
-  \end{subfigure}
-  \caption{Milling tool inserts - Digital images using tool-makers microscope}
-  \label{fig:tool_images}
-\end{figure}
-
-\begin{figure}[t]
-        \centering
-        \includegraphics[width=0.48\textwidth]{dummy.pdf}\hfill
-        \includegraphics[width=0.48\textwidth]{dummy.pdf}
-        \caption{setup}
-        \label{fig:machine-set-up}
-\end{figure}
-
-
-\begin{figure}[t]
-  \centering
-  \begin{subfigure}[t]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{IEEE_06_SensorPlot.png}
-    \caption{IEEE schema features.}
-    \label{fig:schema_ieee}
-  \end{subfigure}\hfill
-  \begin{subfigure}[t]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\linewidth]{SIT_20_SensorPlot.png}
-    \caption{SIT schema features.}
-    \label{fig:schema_sit}
-  \end{subfigure}
-
-  \caption{IEEE and SIT schema feature plots: Representational plots depicting differences in sensor features, value ranges, and variations.}
-  \label{fig:schema_feature_plots_ieee_sit}
-\end{figure}
-
-\begin{figure}[t]
-        \centering
-        \includegraphics[width=0.48\textwidth]{PPO_MH_SIT_8_10.png}\hfill
-        \includegraphics[width=0.48\textwidth]{PPO_NW_SIT_8_10.png}
-        \caption{PPO trained PdM agents - evaluated on unseen data. \textbf{(a)} PPO with Multi-Head attention. \textbf{(b)} PPO with Nadaraya--Watson attention.}
-        \label{fig:ppo_unseen_mh_nw}
-\end{figure}
-
 \section{Training strategy}
 \huge\textcolor{red}{move later}
 \normalsize
@@ -595,10 +524,26 @@ In this codebase, the softmax normalization is across the \emph{batch} dimension
 \end{algorithmic}
 \end{algorithm}
 
-\section{Experimental design}
-\label{sec:experiment}
+%% $$$ 
+\section{Experimental design} \label{sec:experiment} 
 
-\subsection{\textcolor{red}{Machine description}}
+\textcolor{red}{Machine description}
+
+
+if schema == 'IEEE':
+            # IEEE sensor features ONLY (exclude Time, tool_wear, ACTION_CODE)
+            # Agent must learn to predict maintenance from sensor readings alone
+            features = ['force_x', 'force_y', 'force_z', 
+                       'vibration_x', 'vibration_y', 'vibration_z', 
+                       'acoustic_emission_rms']
+            return features
+        elif schema == 'SIT':
+            # SIT sensor features ONLY (exclude Time, tool_wear, ACTION_CODE)
+            features = ['Vib_Spindle', 'Vib_Table', 'Sound_Spindle', 'Sound_table', 
+                       'X_Load_Cell', 'Y_Load_Cell', 'Z_Load_Cell', 'Current']
+            return features
+            
+\subsubsection{SIT data: In-house, University, machine and measurement setup}
 
 Parameter/ Equipment used: Specification/Values\\
 -------------
@@ -612,13 +557,11 @@ Spindle Speed (rpm): 800, 900, 1000, 1100, 1200 \\
 Feed Rate (mm/min): 20, 25, 30, 35, 40\\
 Maximum allowable flank wear (mm): 0.32 mm\\
 
-%% $$$ 
-
 \begin{figure}[h]
         \centering
         \includegraphics[width=0.305\linewidth]{Expt_Setup_MillingMachine.png}
         \includegraphics[width=0.45\linewidth]{Expt_Setup_Vibration_and_Dynamometer.png}
-        \caption{Experimental setups}
+        \caption{Experimental setup - Machine and sensors}
         \label{fig:expt-setup-1}
 \end{figure}
 
@@ -626,7 +569,7 @@ Maximum allowable flank wear (mm): 0.32 mm\\
         \centering
         \includegraphics[width=0.45\textwidth]{Expt_Setup_DACS.png}
         \includegraphics[width=0.445\textwidth]{Expt_Setup_Microscope.png}
-        \caption{Experimental setups - measurement}
+        \caption{Experimental setups - Measurement instruments}
         \label{fig:expt-setup-2}
 \end{figure}
 
@@ -649,15 +592,123 @@ Maximum allowable flank wear (mm): 0.32 mm\\
     \end{tabular}
 \end{table}
 
+\subsubsection{SIT data: Measured values and units}
+
+\section{Milling machine data}
+
+\begin{figure}[t]
+  \centering
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{Tool_New_Insert.png}
+    \caption{A tool-insert without wear}
+    \label{fig:tool_new}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{Tool_Worn Annotated.png}
+    \caption{Tool-insert showing wear and how flank-wear (VB) is defined}
+    \label{fig:tool_worn}
+  \end{subfigure}
+  \caption{Milling tool inserts - Digital images using tool-makers microscope}
+  \label{fig:tool_images}
+\end{figure}
+
+\cite{PHMdata2010} is a public dataset from the 2010 PHM Society Conference Data Challenge, This dataset is from the challenge and focused on RUL estimation for a high-speed CNC milling machine cutters using dynamometer, accelerometer, and acoustic emission data
+
+Used 5 of the 6 datasets. Records c1, c4 and c6 are training data, and records c2, c3, and c5 are test data:.       
+
+Machine information: Spindle speed of the cutter was 10400 RPM; feed rate was 1555 mm/min; Y depth of cut (radial) was 0.125 mm; Z depth of cut (axial) was 0.2 mm. Data was acquired at 50 KHz/channel.
+
+Data columns:
+1: Force (N) in X dimension
+2: Force (N) in Y dimension
+3: Force (N) in Z dimension
+4: Vibration (g) in X dimension
+5: Vibration (g) in Y dimension
+6: Vibration (g) in Z  dimension
+7: AE-RMS (V)
+
+\begin{figure}[t]
+  \centering
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{IEEE_06_SensorPlot.png}
+    \caption{IEEE schema features.}
+    \label{fig:schema_ieee}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{SIT_20_SensorPlot.png}
+    \caption{SIT schema features.}
+    \label{fig:schema_sit}
+  \end{subfigure}
+
+  \caption{IEEE and SIT schema feature plots: Representational plots depicting differences in sensor features, value ranges, and variations.}
+  \label{fig:schema_feature_plots_ieee_sit}
+\end{figure}
+
+\begin{figure}[t]
+        \centering
+        \includegraphics[width=0.48\textwidth]{PPO_MH_SIT_8_10.png}\hfill
+        \includegraphics[width=0.48\textwidth]{PPO_NW_SIT_8_10.png}
+        \caption{PPO trained PdM agents - evaluated on unseen data. \textbf{(a)} PPO with Multi-Head attention. \textbf{(b)} PPO with Nadaraya--Watson attention.}
+        \label{fig:ppo_unseen_mh_nw}
+\end{figure}
+
+
+A high speed CNC machine (Röders Tech RFM760) with
+spindle speed up to 42,000 rpm was selected for the
+experiment. The workpiece material used in the machining
+test was stainless steel (HRC52). The workpieces were cu
+
+ThreeKistler piezo accelerometers were mounted on the
+workpiece to measure the machine tool vibrations of cutting
+process in X, Y, Z direction respectively. A Kistler acoustic
+emission (AE) sensor was mounted on the workpiece to
+monitor the high frequency stress wave generated by the
+cutting process.
+The outputs of these sensors were conditioned through
+corresponding signal conditioning accessories such as
+charge amplifiers or couplers. The voltage signals were
+captured by a NI DAQ PCI 1200 board with 12KHz
+frequency. The DAQ board generates 16-bit digitized data
+and directly streamed to a hard disk of an Intel Core 2 Quad
+2.66GHz based industrial PC with 8GB RAM.
+Eight channels of signals (force_x, force_y, force_z,acce_x, acce_y, acce_z, AE_RMS, AE) were captured bythe DAQ card with an accumulated sampling rate of
+12kHz*8 = 96kHz 
+
 
 NUAA IdeahouseDatasetc - Eight  (Four-cutting forces, two vibrations, two current/power)\\
 In-house Experimental Dataset : Six (Three-cutting forces, two vibrations, One current)\\
+Abstract
+The PHM Data Challenge is a competition open to all potential conference attendees. This dataset is from the challenge and focused on RUL estimation for a high-speed CNC milling machine cutters using dynamometer, accelerometer, and acoustic emission data.
+
+Instructions:
+There are six individual cutter records, c1…c6, however, the competition only realized c1, c4 and c6 for training.
+
+Each training record contains one “wear” file that lists wear after each cut in 10^-3 mm, and a folder with approximately 300 individual data acquisition files (one for each cut). The data acquisition files are in .csv format, with seven columns, corresponding to:
+Column 1: Force (N) in X dimension
+Column 2: Force (N) in Y dimension
+Column 3: Force (N) in Z dimension
+Column 4: Vibration (g) in X dimension
+Column 5: Vibration (g) in Y dimension
+Column 6: Vibration (g) in Z dimension
+Column 7: AE-RMS (V)
+
+Some background on the apparatus and experimental setup can be found here, and in the references in that paper. The spindle speed of the cutter was 10400 RPM; feed rate was 1555 mm/min; Y depth of cut (radial) was 0.125 mm; Z depth of cut (axial) was 0.2 mm. Data was acquired at 50 KHz/channel.
+
+Dataset Files
+Files have not been uploaded for this dataset
+Advertisement
+
+
+
 
 \subsection{Datasets and generalization protocol}
 The study uses two sensor schemas: (i) SIT (production-oriented schema with eight sensor channels), and (ii) IEEE (benchmark schema with force, vibration, and acoustic emission channels). Generalization is evaluated via a one-vs-all protocol: agents are trained on training file(s) within a schema and evaluated on remaining unseen files within the same schema.
 
-\subsection{Evaluation metrics}
-\label{sec:metrics}
+\subsection{Evaluation metrics} \label{sec:metrics}
 We report three metrics used by the AutoRL evaluation: (i) evaluation score, (ii) tool usage (\%), and (iii) a $\lambda$ timing metric.
 
 \subsubsection{Exact evaluation score definition (as implemented)}
