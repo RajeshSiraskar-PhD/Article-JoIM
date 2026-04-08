@@ -1,6 +1,6 @@
 % ------------------------------------------------------------------------------------------------
 % Journal of Intelligent Manufacturing
-% Ver. 0.8 - Machine set-up section
+% Ver. 1.0 - Prism review
 % ------------------------------------------------------------------------------------------------
 \PassOptionsToPackage{hypertexnames=false}{hyperref}
 \documentclass[sn-basic]{sn-jnl} % Basic Springer Nature Reference Style
@@ -9,7 +9,8 @@
 \usepackage{caption}
 \usepackage{subcaption}
 \usepackage{graphicx}%
-\usepackage{pgfplots} % \pgfplotsset{compat=1.18}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
 \usepackage{multirow}%
 \usepackage{amsmath,amssymb,amsfonts}%
 \usepackage{amsthm}%
@@ -27,8 +28,9 @@
 \usepackage{xcolor}
 \graphicspath{{figures/}}
 
-\pagecolor[rgb]{0.08,0.08,0.10}
-\color[rgb]{0.90,0.90,0.90}
+% NOTE: Draft-only dark theme (commented for submission-ready PDF)
+% \pagecolor[rgb]{0.08,0.08,0.10}
+% \color[rgb]{0.90,0.90,0.90}
 \onehalfspacing
 % \lstset{
 %         basicstyle=\ttfamily\footnotesize,
@@ -43,7 +45,7 @@
 
 \begin{document}
 
-\title[Lightweight RL for Edge PdM]{V0.6-Lightweight Reinforcement Learning for Edge Predictive Maintenance: An Empirical Study of REINFORCE with Attention Mechanisms for Milling Tool Replacement}
+\title[Lightweight RL for Edge PdM]{Lightweight Reinforcement Learning for Edge Predictive Maintenance: An Empirical Study of REINFORCE with Attention Mechanisms for Milling Tool Replacement}
 
 
 \author[1,4]{\fnm{Rajesh} \sur{Siraskar} \sfx{(\href{https://orcid.org/0000-0003-2341-8787}{ORCID: 0000-0003-2341-8787}})}\email{rajesh.siraskar@gmail.com}
@@ -58,35 +60,38 @@
 \affil[3]{Swinburne University of Technology, Hawthorn VIC 3122, Australia}
 \affil[4]{\orgdiv{CTO Office}, \orgname{Birlasoft Ltd.}, \orgaddress{\city{Pune}, \postcode{411057}, \state{Maharashtra}, \country{India}}}
 
-\abstract{\textcolor{red}{v.0.7} Industry 4.0 maintenance systems increasingly rely on edge-computing deployments where stringent limits on memory, latency, and energy consumption favor computationally light learning methods. This paper evaluates whether the na\"{i}ve Monte-Carlo policy-gradient algorithm \textsc{REINFORCE} can serve as a \emph{lightweight} yet competitive reinforcement learning (RL) approach for edge-deployable predictive maintenance (PdM), particularly when combined with attention-based feature extraction.
+\abstract{Edge-oriented predictive maintenance (PdM) in Industry~4.0 settings requires decision models that operate under constraints on memory, latency, and energy. This paper examines whether the Monte-Carlo policy-gradient algorithm \textsc{REINFORCE} can provide a competitive lightweight reinforcement-learning (RL) approach for milling-tool replacement when combined with attention-based feature extraction.
 
-Time replacement of a milling-machine tool is the subject of our study. We compare four RL algorithms (\textsc{A2C}, \textsc{DQN}, \textsc{PPO}, \textsc{REINFORCE}) and four attention mechanisms (Nadaraya--Watson, temporal, multi-head, self-attention) as feature enrichers. A simple 'AutoRL' pipeline is used to run standardized sweeps and multi-round evaluations developed as a convinience mechanism for industrial practioners.
+The study considers the decision of when to replace a milling cutter under asymmetric costs: replacing too late risks quality loss or failure, whereas replacing too early wastes remaining tool life. We compare four RL algorithms (\textsc{A2C}, \textsc{DQN}, \textsc{PPO}, and \textsc{REINFORCE}) and four attention mechanisms (Nadaraya--Watson, temporal, multi-head, and self-attention) within an AutoRL workflow for standardized training, repeated evaluation, and consolidated reporting.
 
-We develop a custom PdM environment that is adaptable to different milling machine types and settings. We used IEEE public dataset and data collected at the University to demonstrate adaptabilty of our design. Evaluating \textcolor{red}{48} trained agents showing that REINFORCE is statistically superior to A2C and DQN baselines, and competitive against PPO. The results support \textsc{REINFORCE} as a lightweight, competitive alternative when combined with attention-based mechanisms.}
+A Gymnasium-compatible PdM environment is developed with schema-adaptive sensor observations and partial observability, with tool wear hidden from the agent. Experiments on two milling datasets with different sensing modalities---the public IEEE PHM~2010 benchmark and an in-house university dataset---show that \textsc{REINFORCE} outperforms \textsc{A2C} and \textsc{DQN} under the adopted evaluation protocol and remains competitive with \textsc{PPO}. Attention mechanisms further improve performance, although the strongest attention variant depends on the dataset. Overall, the results identify \textsc{REINFORCE} as a lightweight baseline for edge-oriented PdM.}
 
 \keywords{Predictive maintenance, Industry 4.0, Edge computing, Reinforcement Learning, REINFORCE, Attention mechanisms, Sustainable AI, AutoRL}
 
 \maketitle
 
 \section{Introduction}
-Predictive maintenance (PdM) aims to intervene \emph{before} functional failure while maximizing asset utilization and protecting product quality. In Industry~4.0 deployments, manufacturing equipment with sensors, generate rich telemetry streams that enable condition-aware decision support and prescriptive control \cite{Zonta2020, Compare2020}. In practical deployments, PdM must increasingly operate at the \emph{edge} with the maintenance controllers in close proximity of the machines. This allows reduced latency and bandwidth requirement and increased reliability thereby reducing operational risk associated with centralized compute.
+\subsection{Background}
+Predictive maintenance (PdM) aims to intervene \emph{before} functional failure while maximizing asset utilization and protecting product quality. In Industry~4.0 deployments, sensorized manufacturing equipment generates rich telemetry streams that enable condition-aware decision support and prescriptive control \cite{Zonta2020, Compare2020}. In practical settings, however, PdM decision support increasingly needs to operate at the \emph{edge} (close to machines) to reduce latency and bandwidth requirements and to improve reliability in the presence of connectivity or cloud-service disruptions.
 
-Edge deployment imposes hard resource limits (compute cycles, memory footprint, and energy), motivating \emph{lightweight} ML/RL models and training procedures. These constraints directly offer sustainability benefits: lower compute and shorter training runs reduce electricity consumption and associated carbon emissions, which is increasingly relevant in corporate carbon accounting and Industry~5.0 initiatives. Recent work in ``Green AI'' emphasizes reporting and minimizing computational cost as a first-class metric alongside accuracy \cite{Schwartz2020, Strubell2019}.\\
+Edge deployment introduces hard constraints on compute cycles, memory footprint, and energy consumption. These constraints motivate \emph{lightweight} learning methods and also connect to ``Green AI'' arguments: when many candidate agents are trained during sweep-based experimentation, the incremental cost per training run becomes operationally and environmentally relevant \cite{Schwartz2020, Strubell2019}.
 
-With this, we attempt to explore the key research question: Can simple, computationally light RL algorithms such as \textsc{REINFORCE} be competitive with more advanced policy-optimization methods (e.g., \textsc{PPO}) for PdM decision-making, especially when augmented with attention-based feature extraction?
+\subsection{Problem statement}
+This paper studies a prescriptive PdM decision for milling: \emph{when should a cutting tool be replaced?} The decision is cost-asymmetric: late replacement risks defective parts or failure, while early replacement discards remaining tool life. Reinforcement learning is a natural fit because the agent must trade off utilization against risk over time; in realistic deployments, the agent must do so under partial observability (tool wear is not directly observable) and under edge-oriented resource limits.
 
-This study builds on prior findings that na\"{i}ve \textsc{REINFORCE} can perform strongly for PdM in untuned regimes \cite{Siraskar2025}. It also leverages prior work applying a Nadaraya--Watson estimator as a lightweight attention mechanism for PdM, motivated by edge constraints \cite{Siraskar2024}.
+The core research question is: \emph{Can a computationally light policy-gradient algorithm such as \textsc{REINFORCE} remain competitive with more advanced deep RL methods (e.g., \textsc{PPO}) for milling PdM when paired with attention-based feature extraction?}
 
-AutoRL is positioned here as a practitioner-oriented \emph{implementation mechanism}: it standardizes training and evaluation across a grid of algorithmic choices and hyperparameters, producing comparable artefacts (dashboards, heatmaps, and hypothesis-test summaries) for model selection when exhaustive manual tuning is not feasible due to limited compute budgets and limited RL expertise \cite{Schwartz2020, Strubell2019, Faust2019, Mussi2022}.
+\subsection{Contributions}
+This study builds on evidence that na\"{i}ve \textsc{REINFORCE} can perform strongly for PdM in untuned regimes \cite{Siraskar2025} and on prior PdM work using a Nadaraya--Watson estimator as a lightweight attention mechanism under edge constraints \cite{Siraskar2024}. AutoRL is used here as an implementation framework that standardizes training and evaluation across a grid of algorithmic and hyperparameter choices, producing comparable artefacts (dashboards, heatmaps, and hypothesis-test summaries) for model selection when exhaustive manual tuning is impractical \cite{Schwartz2020, Strubell2019, Faust2019, Mussi2022}.
 
 \textbf{Research objectives and hypotheses.}
-The study addresses the following research objectives (RO): (RO1) compare RL algorithms suitable for edge-oriented PdM, (RO2) evaluate whether \textsc{REINFORCE} is a competitive lightweight baseline (and when it is not), (RO3) assess attention mechanisms as inductive biases that can improve lightweight RL under partial observability, (RO4--RO5) design a Gymnasium-compatible RL environment that generalizes across sensor schemas, and (RO6) provide an AutoRL-style sweep and reporting pipeline as a practitioner convenience for standardized experimentation when manual tuning is impractical.
+The study addresses the following research objectives (RO): (RO1) compare RL algorithms suitable for edge-oriented PdM, (RO2) evaluate whether \textsc{REINFORCE} is a competitive lightweight baseline (and when it is not), (RO3) assess attention mechanisms as inductive biases that can improve lightweight RL under partial observability, (RO4--RO5) design a Gymnasium-compatible RL environment that operates across differing sensor schemas, and (RO6) provide an AutoRL-style sweep and reporting pipeline for standardized experimentation.
 
 We test three hypotheses:
 \begin{itemize}
-        \item \textbf{H1 (primary):} A computationally light REINFORCE agent outperforms A2C, DQN, and PPO on the studied PdM task.
-        \item \textbf{H2:} The same environment and reward design generalize across two different milling-machine schemas (SIT and IEEE).
-        \item \textbf{H3:} Attention mechanisms improve REINFORCE sufficiently to match or exceed PPO, with multi-head attention providing the most robust gains.
+        \item \textbf{H1 (primary):} A computationally light \textsc{REINFORCE} agent outperforms \textsc{A2C} and \textsc{DQN}, while remaining competitive with \textsc{PPO}, on the studied PdM task.
+        \item \textbf{H2:} The same environment design and reward logic can be applied effectively across two different milling-machine schemas (SIT and IEEE).
+        \item \textbf{H3:} Attention mechanisms improve \textsc{REINFORCE} performance, with the strongest attention choice depending on schema; multi-head attention is strongest on SIT, while IEEE performance is shared across multi-head, self-attention, and temporal attention.
 \end{itemize}
 
 \textbf{Contributions.}
@@ -98,14 +103,8 @@ This paper contributes:
         \item \textbf{Practitioner convenience mechanism (AutoRL):} batch training and multi-round evaluation with checkpointed recovery and standardized reporting to reduce the burden of manual tuning and ad-hoc experimentation.
 \end{itemize}
 
-\section{Training strategy}
-\huge\textcolor{red}{move later}
-\normalsize
- - One - evaluate on rest\\
- - Single dataset - often combined of multiple experiments - but industrial practioners so did not combine.\\
 
-
-\section{Background and related work}
+\section{Related Work}
 \subsection{PdM, Industry~4.0, and edge constraints}
 PdM is commonly positioned as an Industry~4.0 centerpiece because it links sensing, connectivity, analytics, and operational decision-making in cyber-physical production systems \cite{Compare2020, Zonta2020}. Prescriptive maintenance architectures further motivate this role by embedding decision-making (when to defer vs intervene) into cyber-physical workflows \cite{Ansari2019}. Edge deployment strengthens the PdM case by enabling low-latency, resilient operation near equipment, but it also introduces feasibility constraints: memory, compute, latency, and system-integration overhead can limit the practical adoption of complex ML/RL pipelines \cite{Njor2024, Pandey2023}. These constraints connect to sustainability and ``Green AI'' concerns: when many candidate agents are trained during AutoRL exploration, the incremental cost per training run becomes operationally and environmentally relevant \cite{Schwartz2020, Strubell2019}.
 
@@ -114,10 +113,10 @@ RL has been surveyed extensively in PdM, with evidence that a wide range of form
 
 The literature also suggests a useful two-stream picture. Many PdM and condition-based maintenance studies learn effective policies using non-deep or otherwise lightweight RL, especially when state representations are structured and action spaces are modest \cite{Adsule2020, Yousefi2020, Rasay2024, Dadash2024}. Deep RL (e.g., DQN/PPO-style methods) becomes more prominent as environments become richer and harder: higher-dimensional sensing, long-horizon tradeoffs, multi-component scheduling, or coupled resource constraints \cite{Liu2020, Chen2023, Lee2022, Ong2022-02}.
 
-\subsection{Positioning lightweight RL for edge PdM (qualified defense)}
-The strongest literature-backed position is a \emph{qualified defense} of lightweight RL for edge PdM: the literature does not establish that REINFORCE is universally better than advanced deep RL, but it does support the claim that lightweight methods are often the more credible engineering choice when the PdM task is structured and edge constraints are first-order requirements \cite{Compare2020, Njor2024, Pandey2023}. In embedded RL more broadly, deep RL frequently requires additional machinery---transfer learning, pruning, compression, or distillation---to fit acutely constrained devices \cite{Jang2020, Szydlo2022, Xu2022}.
+\subsection{Positioning lightweight RL for edge PdM}
+The literature does not establish that REINFORCE is universally better than advanced deep RL, but it does indicate that lightweight methods are often a sound engineering choice when the PdM task is structured and edge constraints are first-order requirements \cite{Compare2020, Njor2024, Pandey2023}. In embedded RL more broadly, deep RL frequently requires additional machinery---transfer learning, pruning, compression, or distillation---to fit acutely constrained devices \cite{Jang2020, Szydlo2022, Xu2022}.
 
-Sustainability motivations should also be framed carefully. Maintenance optimization can contribute to energy and emissions objectives in industrial systems, but the PdM literature rarely reports algorithm-level energy draw or carbon footprints for competing RL methods. Accordingly, ``Green AI'' claims in this paper are positioned as downstream implications of reduced computational demand and edge-feasible deployment, not as directly measured environmental outcomes \cite{Banyai2021, Banyai2022, JasiulewiczKaczmarek2024}.
+Sustainability motivations also require careful framing. Maintenance optimization can contribute to energy and emissions objectives in industrial systems, but the PdM literature rarely reports algorithm-level energy draw or carbon footprints for competing RL methods. Accordingly, ``Green AI'' claims in this paper are positioned as downstream implications of reduced computational demand and edge-feasible deployment, not as directly measured environmental outcomes \cite{Banyai2021, Banyai2022, JasiulewiczKaczmarek2024}.
 
 The most direct quantitative anchor for this positioning is the recent empirical PdM study by Siraskar et al.~\cite{Siraskar2025}. Across 15 environment variants and 10 rounds of training and testing, REINFORCE achieved the highest reported tool-replacement precision at 0.687, exceeding the next-best method by 0.215 in absolute terms; the same study reports that REINFORCE also led the other algorithms on recall, F1, and $F_{\beta=0.5}$. The reported model sizes were small: 56.4~KB for DQN, 89.8~KB for A2C, 121.5~KB for REINFORCE, and 135.5~KB for PPO \cite{Siraskar2025}.
 
@@ -142,6 +141,12 @@ A third quantitative anchor comes from edge deployment studies that make the mem
         \caption{Quantitative anchors supporting a reviewer-safe positioning of lightweight RL for edge-aware PdM.}
         \label{tab:quantitative_anchors_lightweight_edge}
 \end{table}
+\section{Background / Preliminary Knowledge}
+\subsection{MDP notation and partial observability}
+We model milling PdM as a sequential decision problem. An episodic Markov Decision Process (MDP) is defined by $(\mathcal{S},\mathcal{A},P,R,\gamma)$, where $\mathcal{S}$ is the state space, $\mathcal{A}$ is the action space, $P(s'\mid s,a)$ is the transition kernel, $R(s,a)$ is the reward function, and $\gamma\in(0,1]$ is the discount factor.
+
+In the studied PdM setting, the agent does not observe tool wear directly; it instead receives a sensor vector $\mathbf{x}_t\in\mathbb{R}^d$ derived from multiple channels. This corresponds to partial observability and can be viewed as a POMDP where the observation $o_t$ is a function of the latent wear-related state. We therefore treat representation learning from sensor-only observations as a first-order factor in policy performance.
+\label{sec:pomdp}
 \subsection{RL algorithms compared}
 \label{sec:algos}
 We compare four algorithms: DQN (value-based), A2C (actor--critic), PPO (policy optimization), and REINFORCE (Monte-Carlo policy gradient).
@@ -186,7 +191,9 @@ Experience replay and target-network updates stabilize learning, but partial obs
 \subsubsection{Why REINFORCE can be edge-suited}
 When deployment constraints are first-order requirements, algorithmic simplicity can translate to smaller policies and lower training/inference overhead. In sweep-based experimentation (including AutoRL-style grids), simpler learners can also reduce total compute when many configurations must be compared. This does not guarantee superior reward, but it shifts the burden of proof: if a lightweight method is statistically competitive on PdM metrics, it may be preferable for edge-first deployments \cite{Schwartz2020, Njor2024}.
 
-\section{Problem formulation: asymmetric costs and decision rationale}
+\section{Methodology and Experimental Setup}
+\label{sec:method}
+\subsection{Problem formulation: asymmetric costs and decision rationale}
 \label{sec:problem}
 PdM decisions are inherently asymmetric. A late replacement can cause defective parts, scrap, or catastrophic failure, while an early replacement wastes remaining tool life.
 
@@ -206,7 +213,9 @@ PdM decisions are inherently asymmetric. A late replacement can cause defective 
         \end{tabular}
 \end{table}
 
-\section{AutoRL as a practitioner convenience: standardized sweeps and reporting}
+\subsection{Algorithm description}
+\label{sec:algo_desc}
+\subsubsection{AutoRL as a practitioner convenience: standardized sweeps and reporting}
 \label{sec:autorl}
 The AutoRL pipeline is implemented as a CLI batch runner (\texttt{code/batch\_train.py}) that supports training, evaluation, and reporting across a grid of algorithms, hyperparameters, and attention mechanisms. The pipeline is designed to be practitioner-friendly in two ways:
 \begin{itemize}
@@ -215,33 +224,12 @@ The AutoRL pipeline is implemented as a CLI batch runner (\texttt{code/batch\_tr
 \end{itemize}
 For this study, multi-round evaluation uses 20 rounds (\texttt{EVAL\_ROUNDS=20}) to support confidence intervals and statistical tests.
 
-\section{Environment design: a Gymnasium-compatible milling PdM POMDP}
-\label{sec:env}
-\subsection{Design goals and schema abstraction}
-The environment class \texttt{MT\_Env} (\texttt{code/rl\_pdm.py}) implements the Gymnasium interface \cite{Foundation2023}. A central design goal is schema generality: the same environment logic (episode structure, actions, and reward shaping) should work across different milling-machine sensor schemas.
+\subsubsection{Training procedure and policy architecture}
+All agents are trained using Stable-Baselines3 with an \texttt{MlpPolicy} and a Gymnasium-compatible environment wrapper. Each training run uses a fixed number of episodes (\texttt{EPISODES=100}) with early stopping triggered by an episode-count callback, and learning rate $\eta$ and discount factor $\gamma$ are swept as part of the AutoRL grid.
 
-In the implementation, schema abstraction is achieved by keeping the MDP ``skeleton'' fixed while allowing the observation \emph{feature set} to vary:
-\begin{itemize}
-        \item \textbf{Fixed across schemas:} the observation is a flat real-valued sensor vector $\mathbf{x}_t\in\mathbb{R}^d$, the action space is binary (replace vs. continue), and the reward/termination logic is driven by an internal wear threshold.
-        \item \textbf{Schema-dependent:} the specific sensor columns used to form $\mathbf{x}_t$ (and therefore $d$) are selected based on column names.
-\end{itemize}
+Attention mechanisms are implemented as custom feature extractors $\phi(\mathbf{x}_t)$ that map the raw sensor observation $\mathbf{x}_t$ into a 64-dimensional embedding (\texttt{features\_dim=64}). The resulting embedding is then consumed by the default multilayer-perceptron policy/value networks provided by Stable-Baselines3.
 
-\textbf{Schema detection.}
-The environment detects the schema using available sensor columns (e.g., force and acoustic emission channels for IEEE; vibration, sound, and load-cell channels for SIT). If no known schema signature is found, the implementation falls back to using \emph{all} non-excluded columns as sensor features (excluding \texttt{Time}/\texttt{time}, \texttt{tool\_wear}, and \texttt{ACTION\_CODE}).
-
-\textbf{Practical requirement for new datasets.}
-To reuse \texttt{MT\_Env} on a new milling-machine dataset without code changes, the CSV must include a \texttt{tool\_wear} column (used internally for termination and reward) plus one or more numeric sensor columns (used as observations).
-
-\subsection{Observation and action spaces}
-Only sensor readings are included in the observation vector; \emph{tool wear} is excluded but retained internally for reward and termination. The action space is discrete with two actions: $a=0$ means \emph{replace} (terminates the episode) and $a=1$ means \emph{continue}.
-
-\subsection{Reward shaping for asymmetric PdM risk}
-\label{sec:reward}
-The reward function encourages long tool use without threshold violation, while rewarding timely replacement close to the wear threshold. In the implementation, continuing yields a small positive survival reward $R_1$, violating the wear threshold yields a catastrophic penalty $R_2$, replacement has a small cost $R_3$, and replacement near the threshold earns a strong bonus $R_4$ (with stepped bonuses above 70\%, 80\%, and 90\% wear ratio).
-
-This design reflects a practical PdM asymmetry: a late replacement causing quality loss or failure is substantially worse than an early replacement.
-
-\section{Attention mechanisms as lightweight feature extractors}
+\subsubsection{Attention mechanisms as lightweight feature extractors}
 \label{sec:attention}
 Because wear is hidden from observation (Section~\ref{sec:pomdp}), the core challenge is representation learning from sensor vectors. We implement attention mechanisms as feature extractors $\phi_\theta(\mathbf{x}_t)$ that map a raw sensor vector into a compact embedding used by the RL policy.
 
@@ -256,8 +244,9 @@ with weights computed by a softmax over a compatibility score $s(\mathbf{q},\mat
 \end{equation}
 
 \textbf{Note on terminology.}
-We use ``attention'' as a unifying design label for feature extractors that implement (i) learned reweighting/gating and (ii) structured fusion of sensor features and (optionally) time context.
-\subsection{Nadaraya--Watson attention (NW)}
+We use ``attention'' as a unifying label for feature extractors that implement (i) learned reweighting/gating and (ii) structured fusion of sensor features and (optionally) time context.
+
+\paragraph{Nadaraya--Watson attention (NW)}
 NW attention can be interpreted as kernel-regression-based soft retrieval from learnable prototypes. This mechanism is computationally light and aligns with prior PdM attention work motivated by edge constraints \cite{Siraskar2024}.
 
 A standard Gaussian-kernel form is
@@ -283,7 +272,7 @@ A standard Gaussian-kernel form is
 \end{algorithmic}
 \end{algorithm}
 
-\subsection{Temporal attention (TP)}
+\paragraph{Temporal attention (TP)}
 Temporal attention injects an explicit stage-of-life signal using sinusoidal positional encodings and a learnable temporal embedding \cite{Vaswani2017}.
 
 \begin{algorithm}[t]
@@ -301,7 +290,7 @@ Temporal attention injects an explicit stage-of-life signal using sinusoidal pos
 \end{algorithmic}
 \end{algorithm}
 
-\subsection{Multi-head attention (MH)}
+\paragraph{Multi-head attention (MH)}
 Multi-head attention uses multiple attention heads to represent different subspaces of sensor relationships \cite{Vaswani2017}.
 
 In standard form,
@@ -331,7 +320,7 @@ In standard form,
 \end{algorithmic}
 \end{algorithm}
 
-\subsection{Self-attention (SA)}
+\paragraph{Self-attention (SA)}
 Self-attention projects the observation into a feature space and uses a compact Transformer-style block with residual connections and layer normalization.
 
 In standard token-wise form,
@@ -362,20 +351,34 @@ In this codebase, the softmax normalization is across the \emph{batch} dimension
 \end{algorithmic}
 \end{algorithm}
 
+\subsection{Simulation environment: a Gymnasium-compatible milling PdM POMDP}
+\label{sec:env}
+\subsubsection{Design goals and schema abstraction}
+The environment class \texttt{MT\_Env} (\texttt{code/rl\_pdm.py}) implements the Gymnasium interface \cite{Foundation2023}. A central design goal is schema generality: the same environment logic (episode structure, actions, and reward shaping) should work across different milling-machine sensor schemas.
 
-%% $$$ MISPLACED
-\textcolor{red}{MIS PLACED -- figure}
-\begin{figure}[t]
-        \centering
-        \includegraphics[width=0.48\textwidth]{PPO_MH_SIT_8_10.png}\hfill
-        \includegraphics[width=0.48\textwidth]{PPO_NW_SIT_8_10.png}
-        \caption{PPO trained PdM agents - evaluated on unseen data. \textbf{(a)} PPO with Multi-Head attention. \textbf{(b)} PPO with Nadaraya--Watson attention.}
-        \label{fig:ppo_unseen_mh_nw}
-\end{figure}
+In the implementation, schema abstraction is achieved by keeping the MDP ``skeleton'' fixed while allowing the observation \emph{feature set} to vary:
+\begin{itemize}
+        \item \textbf{Fixed across schemas:} the observation is a flat real-valued sensor vector $\mathbf{x}_t\in\mathbb{R}^d$, the action space is binary (replace vs. continue), and the reward/termination logic is driven by an internal wear threshold.
+        \item \textbf{Schema-dependent:} the specific sensor columns used to form $\mathbf{x}_t$ (and therefore $d$) are selected based on column names.
+\end{itemize}
 
+\textbf{Schema detection.}
+The environment detects the schema using available sensor columns (e.g., force and acoustic emission channels for IEEE; vibration, sound, and load-cell channels for SIT). If no known schema signature is found, the implementation falls back to using \emph{all} non-excluded columns as sensor features (excluding \texttt{Time}/\texttt{time}, \texttt{tool\_wear}, and \texttt{ACTION\_CODE}).
+
+\textbf{Practical requirement for new datasets.}
+To reuse \texttt{MT\_Env} on a new milling-machine dataset without code changes, the CSV must include a \texttt{tool\_wear} column (used internally for termination and reward) plus one or more numeric sensor columns (used as observations).
+
+\subsubsection{Observation and action spaces}
+Only sensor readings are included in the observation vector; \emph{tool wear} is excluded but retained internally for reward and termination. The action space is discrete with two actions: $a=0$ means \emph{replace} (terminates the episode) and $a=1$ means \emph{continue}.
+
+\subsubsection{Reward shaping for asymmetric PdM risk}
+\label{sec:reward}
+The reward function encourages long tool use without threshold violation, while rewarding timely replacement close to the wear threshold. In the implementation, continuing yields a small positive survival reward $R_1$, violating the wear threshold yields a catastrophic penalty $R_2$, replacement has a small cost $R_3$, and replacement near the threshold earns a strong bonus $R_4$ (with stepped bonuses above 70\%, 80\%, and 90\% wear ratio).
+
+This design reflects a practical PdM asymmetry: a late replacement causing quality loss or failure is substantially worse than an early replacement.
 
 %% $$$ 
-\section{Experimental design} \label{sec:experiment} 
+\subsection{Experimental design} \label{sec:experiment} 
 
 We evaluate AutoRL under two datasets with deliberately different sensing modalities: (i) an IEEE benchmark dataset (public PHM 2010 data challenge), and (ii) an in-house SIT dataset collected on a university milling testbed. To align the learning problem with real deployment constraints, the environment observation in \texttt{MT\_Env} contains \emph{only} sensor channels (excluding \texttt{Time}, \texttt{tool\_wear}, and \texttt{ACTION\_CODE}). Sensor units are: force in N, vibration in $g$, AE-RMS (\texttt{acoustic\_emission\_rms}) in V, current in A, sound in V, and load-cell signals in kN (or V after conditioning).
 
@@ -466,10 +469,14 @@ The SIT observation schema includes eight channels aligned with \texttt{MT\_Env}
 \textbf{Schema heterogeneity and environment robustness.}
 The two schemas differ in both dimensionality (7 vs. 8 channels) and sensing modality (force/vibration/AE vs. vibration/sound/load/current), which produces distinct value ranges and temporal variability patterns (Fig.~\ref{fig:schema_feature_plots_ieee_sit}). This heterogeneity is intentional: \texttt{MT\_Env} selects schema-specific sensor feature sets while keeping the action semantics (replace vs. continue) and wear-threshold termination logic fixed, thereby stress-testing sensor-only policies across materially different instrumentation and supporting robustness and generalizability claims.
 
-\subsection{Datasets and generalization protocol}
+\subsubsection{Datasets and generalization protocol}
 The study uses two sensor schemas: (i) SIT (production-oriented schema with eight sensor channels), and (ii) IEEE (benchmark schema with force, vibration, and acoustic emission channels). Generalization is evaluated via a one-vs-all protocol: agents are trained on training file(s) within a schema and evaluated on remaining unseen files within the same schema.
 
-\subsection{Evaluation metrics} \label{sec:metrics}
+\subsection{Baselines and metrics}
+\label{sec:metrics}
+The primary comparison in this paper is among RL agents that consume raw sensor observations directly. We do not include conventional supervised-ML baselines in this version because such pipelines typically require additional target construction, forecasting design choices, or task-specific feature engineering that vary substantially across schemas and practitioner settings. This omission should be treated as a scope choice rather than a claim that conventional ML is unsuitable; adding strong non-RL baselines remains an important extension for future work.
+
+\subsubsection{Evaluation metrics}
 We report three metrics used by the AutoRL evaluation: (i) evaluation score, (ii) tool usage (\%), and (iii) a $\lambda$ timing metric.
 
 \subsubsection{Exact evaluation score definition (as implemented)}
@@ -502,7 +509,7 @@ We implement a timing metric inspired by offline prognostic evaluation concepts 
         \lambda = t_{\lambda} - t_{\mathrm{FR}}.
 \end{equation}
 
-\subsection{Multi-round evaluation, confidence intervals, and hypothesis tests}
+\subsubsection{Multi-round evaluation, confidence intervals, and hypothesis tests}
 For SIT, each trained model is evaluated for 20 rounds on unseen data to quantify variance from stochastic action sampling. Hypothesis testing uses one-tailed Welch $t$-tests (provided as CSV artefacts) at $\alpha=0.05$.
 
 \textbf{Aggregation and 95\% confidence intervals.}
@@ -514,11 +521,11 @@ Let $S_1,\ldots,S_n$ denote the evaluation scores obtained across rounds and tes
 and the standard error of the mean $\mathrm{SEM}=\sigma/\sqrt{n}$. A normal-approximation 95\% CI is then $[\mu-1.96\,\mathrm{SEM},\;\mu+1.96\,\mathrm{SEM}]$.
 
 \textbf{Statistical caveats.}
-The $t$-tests are used as a practical, automated comparison tool for the AutoRL grid and should be interpreted with standard cautions: (i) multiple comparisons are performed across algorithms/attention panels and no correction is applied, and (ii) repeated evaluation rounds on the same test file can introduce dependence (pseudoreplication). Accordingly, the statistical panels are best treated as evidence of consistent trends rather than as definitive confirmatory inference.
+The $t$-tests are used here to compare and rank configurations in the AutoRL grid, not as stand-alone confirmatory evidence. Standard cautions apply: (i) multiple comparisons are performed across algorithms and attention panels without formal correction, and (ii) repeated evaluation rounds on the same test file can introduce dependence (pseudoreplication). Accordingly, the statistical panels should be read together with the mean scores, confidence intervals, and cross-schema consistency.
 
-\section{Results}
+\section{Results and Discussion}
 \label{sec:results}
-This section reports consolidated evidence from the SIT and IEEE experiments using AutoRL dashboards, generalization heatmaps, and hypothesis-test artefacts.
+This section reports consolidated evidence from the SIT and IEEE experiments using AutoRL dashboards, generalization heatmaps, and hypothesis-test artefacts, with emphasis on effect patterns, ranking stability, and cross-schema consistency.
 
 \textbf{Experimental design for robustness.}
 For SIT, we evaluate a consolidated set of results using 14 trained models and 14 evaluation files, with 20 stochastic evaluation rounds per model--file pair. For IEEE, we report results over 5 trained models and 5 evaluation files.
@@ -554,68 +561,78 @@ Figure~\ref{fig:analysis_sit} and Figure~\ref{fig:analysis_ieee} provide consoli
         \label{fig:heatmap_ieee}
 \end{figure}
 
-%% IEEE REINFORCE + Attention
-\begin{figure}[H]
-  \centering
-  \begin{subfigure}[t]{\textwidth}
-    \centering
-    \includegraphics[width=0.8\linewidth]{REINFORCE_NW_IEEE_04_06.png}
-    \caption{REINFORCE with Nadaraya--Watson attention}
-    \label{fig:IEEE_RF_NW}
-  \end{subfigure}
-  \begin{subfigure}[t]{\textwidth}
-    \centering
-    \includegraphics[width=0.8\linewidth]{REINFORCE_TP_IEEE_06_01.png}
-    \caption{REINFORCE with Temporal attention}
-    \label{fig:IEEE_RF_TP}
-  \end{subfigure}\hfill
-  \begin{subfigure}[t]{\textwidth}
-    \centering
-    \includegraphics[width=0.8\linewidth]{REINFORCE_SA_IEEE_01_04.png}
-    \caption{REINFORCE with Self-Attention}
-    \label{fig:IEEE_RF_SA}
-  \end{subfigure}\hfill
-  \begin{subfigure}[t]{\textwidth}
-    \centering
-    \includegraphics[width=0.8\linewidth]{REINFORCE_MH_IEEE_04_01.png}
-    \caption{REINFORCE with Multi-Head attention}
-    \label{fig:IEEE_RF_MH}
-  \end{subfigure}
+\begin{figure}[t]
+        \centering
+        \includegraphics[width=0.48\textwidth]{PPO_MH_SIT_8_10.png}\hfill
+        \includegraphics[width=0.48\textwidth]{PPO_NW_SIT_8_10.png}
+        \caption{Example unseen-only evaluation traces for PPO on the SIT schema. \textbf{(a)} PPO with Multi-Head attention. \textbf{(b)} PPO with Nadaraya--Watson attention.}
+        \label{fig:ppo_unseen_mh_nw}
+\end{figure}
 
-  \caption{Sample evaluation plots showing REINFORCE with different attention mechanisms, on the IEEE dataset.}
-  \label{fig:IEEE_RF_with_Attention}
+%% IEEE REINFORCE + Attention
+\begin{figure}[t]
+        \centering
+        \begin{subfigure}[t]{0.48\textwidth}
+                \centering
+                \includegraphics[width=\linewidth]{REINFORCE_NW_IEEE_04_06.png}
+                \caption{NW attention}
+                \label{fig:IEEE_RF_NW}
+        \end{subfigure}\hfill
+        \begin{subfigure}[t]{0.48\textwidth}
+                \centering
+                \includegraphics[width=\linewidth]{REINFORCE_TP_IEEE_06_01.png}
+                \caption{Temporal attention}
+                \label{fig:IEEE_RF_TP}
+        \end{subfigure}
+
+        \begin{subfigure}[t]{0.48\textwidth}
+                \centering
+                \includegraphics[width=\linewidth]{REINFORCE_SA_IEEE_01_04.png}
+                \caption{Self-attention}
+                \label{fig:IEEE_RF_SA}
+        \end{subfigure}\hfill
+        \begin{subfigure}[t]{0.48\textwidth}
+                \centering
+                \includegraphics[width=\linewidth]{REINFORCE_MH_IEEE_04_01.png}
+                \caption{Multi-head attention}
+                \label{fig:IEEE_RF_MH}
+        \end{subfigure}
+
+        \caption{Sample evaluation plots showing \textsc{REINFORCE} with different attention mechanisms on the IEEE dataset.}
+        \label{fig:IEEE_RF_with_Attention}
 \end{figure}
 
  %% SIT REINFORCE + Attention
-\begin{figure}[H]
-  \centering
-  \begin{subfigure}[t]{\textwidth}
-    \centering
-    \includegraphics[width=0.8\linewidth]{REINFORCE_NW_SIT_12_10.png}
-    \caption{REINFORCE with Nadaraya--Watson attention}
-    \label{fig:SIT_RF_NW}
-  \end{subfigure}
-  \begin{subfigure}[t]{\textwidth}
-    \centering
-    \includegraphics[width=0.8\linewidth]{REINFORCE_TP_SIT_12_10.png}
-    \caption{REINFORCE with Temporal attention}
-    \label{fig:SIT_RF_TP}
-  \end{subfigure}\hfill
-  \begin{subfigure}[t]{\textwidth}
-    \centering
-    \includegraphics[width=0.8\linewidth]{REINFORCE_SA_SIT_12_10.png}
-    \caption{REINFORCE with Self-Attention}
-    \label{fig:SIT_RF_SA}
-  \end{subfigure}
-  \begin{subfigure}[t]{\textwidth}
-    \centering
-    \includegraphics[width=0.8\linewidth]{REINFORCE_MH_SIT_12_10.png}
-    \caption{REINFORCE with Multi-Head attention}
-    \label{fig:SIT_RF_MH}
-  \end{subfigure}
+\begin{figure}[t]
+        \centering
+        \begin{subfigure}[t]{0.48\textwidth}
+                \centering
+                \includegraphics[width=\linewidth]{REINFORCE_NW_SIT_12_10.png}
+                \caption{NW attention}
+                \label{fig:SIT_RF_NW}
+        \end{subfigure}\hfill
+        \begin{subfigure}[t]{0.48\textwidth}
+                \centering
+                \includegraphics[width=\linewidth]{REINFORCE_TP_SIT_12_10.png}
+                \caption{Temporal attention}
+                \label{fig:SIT_RF_TP}
+        \end{subfigure}
 
-  \caption{Sample evaluation plots showing REINFORCE with different attention mechanisms, on the SIT dataset.}
-  \label{fig:SIT_RF_with_Attention}
+        \begin{subfigure}[t]{0.48\textwidth}
+                \centering
+                \includegraphics[width=\linewidth]{REINFORCE_SA_SIT_12_10.png}
+                \caption{Self-attention}
+                \label{fig:SIT_RF_SA}
+        \end{subfigure}\hfill
+        \begin{subfigure}[t]{0.48\textwidth}
+                \centering
+                \includegraphics[width=\linewidth]{REINFORCE_MH_SIT_12_10.png}
+                \caption{Multi-head attention}
+                \label{fig:SIT_RF_MH}
+        \end{subfigure}
+
+        \caption{Sample evaluation plots showing \textsc{REINFORCE} with different attention mechanisms on the SIT dataset.}
+        \label{fig:SIT_RF_with_Attention}
 \end{figure}
 
 \subsection{Hypothesis tests (H1): REINFORCE vs A2C/DQN/PPO}
@@ -691,20 +708,20 @@ Table~\ref{tab:ieee_top10} lists the top IEEE configurations by mean evaluation 
         \end{tabular}
 \end{table}
 
-\subsection{Statistical heatmaps: p-values and t-statistics}
+\subsection{Ablation study / sensitivity analysis (H3): attention mechanisms}
 \textbf{Dataset-level interpretation.}
 \textbf{SIT (consolidated).} The SIT dashboard (Figure~\ref{fig:analysis_sit}) indicates a clear separation between the two lightweight baselines (A2C/DQN) and the two top performers (PPO/\textsc{REINFORCE}) across attention mechanisms.
 
-\textbf{IEEE.} IEEE results show a tighter competition between PPO and \textsc{REINFORCE}, with the best-attention panel identifying self-attention as a strong \textsc{REINFORCE} configuration (Tables~\ref{tab:ieee_top10}--\ref{tab:ieee_best_attn}).
+\textbf{IEEE.} IEEE results show a tighter competition between PPO and \textsc{REINFORCE}. The best configurations are effectively tied at the reported precision: PPO with temporal attention and \textsc{REINFORCE} with multi-head or self-attention all achieve mean evaluation scores of about 0.886 (Tables~\ref{tab:ieee_top10}--\ref{tab:ieee_best_attn}).
 
 \textbf{Attention improves REINFORCE (H3).}
-Across schemas, multi-head attention emerges as the best or most consistent attention mechanism in the statistical panels and the consolidated analysis reports.
+Attention improves \textsc{REINFORCE}, but no single mechanism dominates across both schemas. On SIT, multi-head attention is the clearest winner and yields the strongest overall \textsc{REINFORCE} configuration. On IEEE, multi-head, self-attention, and temporal attention are all strong, with only marginal differences at the reported precision.
 
 \textbf{Practical recommendation.}
-For edge-first deployments where training and inference budgets are constrained, the evidence supports a simple default: \emph{REINFORCE + Multi-Head attention}. When a practitioner has bandwidth to benchmark alternatives, PPO with temporal attention is a strong secondary candidate.
+For edge-first deployments with constrained training and inference budgets, \emph{REINFORCE + Multi-Head attention} is a reasonable default for SIT-like settings. For IEEE-like settings, \textsc{REINFORCE}+multi-head, \textsc{REINFORCE}+self-attention, \textsc{REINFORCE}+temporal attention, and PPO+temporal attention appear closely matched.
 
-\subsection{H2: cross-schema generality (SIT vs IEEE)}
-H2 is supported structurally by the environment design (Section~\ref{sec:env}) and empirically by results on both schemas (Figures~\ref{fig:analysis_sit}--\ref{fig:heatmap_ieee}). The same environment class (with schema detection and feature selection) and the same reward shaping (Section~\ref{sec:reward}) produce strong-performing agents in both SIT and IEEE settings.
+\subsection{H2: schema portability (SIT vs IEEE)}
+H2 is supported structurally by the environment design (Section~\ref{sec:env}) and empirically by results on both schemas (Figures~\ref{fig:analysis_sit}--\ref{fig:heatmap_ieee}). More precisely, the same environment class (with schema detection and feature selection) and the same reward logic (Section~\ref{sec:reward}) can be reused across SIT and IEEE settings while still producing strong sensor-only policies. This is best described as \emph{schema portability} of the environment formulation, not direct train-on-one-schema, test-on-another-schema transfer.
 \begin{figure}[t]
         \centering
         \includegraphics[width=0.95\textwidth]{_Statistical_p-value_SIT.png}
@@ -733,30 +750,33 @@ H2 is supported structurally by the environment design (Section~\ref{sec:env}) a
         \label{fig:tstats_ieee}
 \end{figure}
 
-\section{Discussion}
+\subsection{Discussion}
 \label{sec:discussion}
-\subsection{Why lightweight REINFORCE can win in this PdM setup}
-The PdM task studied here has a small action space and terminates on replacement; accordingly, the control problem can resemble learning a decision boundary over sensor-derived features. When partial observability dominates the difficulty (Section~\ref{sec:pomdp}), representation quality can matter more than optimizer sophistication.
+\subsubsection{Why lightweight REINFORCE can win in this PdM setup}
+The PdM task studied here has a small action space and terminates on replacement, but the decision is still sequential and partially observable because the agent never observes tool wear directly. Instead, it must infer replacement timing from multivariate sensor trajectories alone. In such settings, representation quality can matter at least as much as optimizer sophistication; this helps explain why a lightweight policy-gradient method paired with suitable feature extraction can compete with heavier baselines.
 
-\subsection{Implications for industrial practitioners}
-The primary practical implication is that a lightweight policy-gradient learner (\textsc{REINFORCE}), when paired with appropriate attention-based feature extraction, can be a credible choice for edge-first PdM deployments where model footprint and operational simplicity matter. AutoRL is therefore framed as a \emph{convenience layer}: it reduces reliance on RL expertise by automating algorithm/attention sweeps and exposing standardized result artefacts (dashboards, heatmaps, and hypothesis-test summaries) for selection and auditing.
+\subsubsection{Implications for industrial practitioners}
+The primary practical implication is that a lightweight policy-gradient learner (\textsc{REINFORCE}), when paired with appropriate attention-based feature extraction, is a viable option for edge-first PdM deployments where model footprint and operational simplicity matter. AutoRL serves as a standardized workflow that automates algorithm and attention sweeps and exposes comparable result artefacts (dashboards, heatmaps, and hypothesis-test summaries) for selection and auditing. A further practical advantage is that the RL agents in this study operate directly on raw sensor observations; by contrast, conventional ML alternatives often require additional feature engineering, target-construction choices, or domain-specific prognostics pipelines.
 
-\subsection{Edge compute and sustainability framing}
-This paper does not directly measure energy consumption. However, the combination of AutoRL-style sweeps and edge deployment makes compute-efficiency a meaningful engineering constraint. In this context, if REINFORCE achieves equal or better PdM outcomes than heavier baselines, it supports a defensible ``Green AI'' argument: prefer the simplest method that meets the operational objective \cite{Schwartz2020, Strubell2019}.
+\subsubsection{Edge compute and sustainability framing}
+This paper does not directly measure energy consumption, latency, or deployment memory on target edge hardware. Compute-efficiency is therefore treated here as an engineering motivation, not as a directly validated empirical result. If \textsc{REINFORCE} achieves comparable PdM outcomes to heavier baselines, a simple design principle follows: prefer the least complex method that meets the operational objective \cite{Schwartz2020, Strubell2019}. A subsequent revision will also report direct model-footprint comparisons for the trained policies (e.g., serialized model sizes for PPO versus \textsc{REINFORCE}) to complement the performance analysis.
 
-\section{Limitations and threats to validity}
-\label{sec:limits}
+\section{Conclusion and Future Work}
+\label{sec:conclusion}
+\subsection{Summary of key findings}
+This paper presented an empirical study of \textsc{REINFORCE} with attention mechanisms for milling-machine tool-replacement PdM under edge-oriented constraints. Using a schema-adaptive Gymnasium environment and multi-round evaluation on unseen data, the results show a consistent pattern across SIT and IEEE schemas: \textsc{REINFORCE} outperforms \textsc{A2C} and \textsc{DQN} under the adopted evaluation protocol, and remains competitive with \textsc{PPO}. The study also shows that the same environment formulation and reward logic can be reused effectively across two materially different sensor schemas. Finally, attention improves \textsc{REINFORCE}, although the strongest attention choice is schema-dependent, with multi-head attention dominating on SIT and several attention variants performing similarly on IEEE.
+
+\subsection{Limitations and threats to validity}
 \begin{itemize}
-        \item \textbf{Dataset-driven environment:} the environment replays logged runs-to-threshold and does not model intervention dynamics beyond termination; future work can extend to maintenance logistics and downtime costs.
+        \item \textbf{Dataset-backed sequential environment:} the environment is sequential and partially observable, but it is still constructed from logged machining trajectories and models intervention through reward and episode termination rather than through downstream physical process changes; richer closed-loop maintenance dynamics remain for future work.
+        \item \textbf{Evaluation dependence:} repeated stochastic evaluation rounds on the same held-out files improve stability estimates but can introduce dependence, so the statistical results should be interpreted alongside the reported mean trends and confidence intervals.
         \item \textbf{Temporal extractor state:} temporal attention maintains an internal timestep counter; production use should ensure the counter resets consistently with episode resets.
-        \item \textbf{Compute and carbon measurement:} energy/carbon implications are argued from algorithmic complexity and deployment constraints rather than measured on edge hardware.
+        \item \textbf{Missing non-RL baselines:} this study focuses on RL policies that act directly on raw sensor observations. Conventional-ML and prognostics baselines should be included in future comparative studies.
+        \item \textbf{Compute and carbon measurement:} energy, latency, memory footprint, and carbon implications are motivated by deployment constraints rather than directly measured on representative edge hardware.
 \end{itemize}
 
-\section{Conclusions and future work}
-\label{sec:conclusion}
-This paper presented an empirical study of \textsc{REINFORCE} with attention mechanisms for milling-machine tool-replacement PdM under edge-oriented constraints, using a schema-adaptive Gymnasium environment and multi-round evaluation on unseen data. Results across SIT and IEEE schemas, supported by hypothesis tests at $\alpha=0.05$, show that \textsc{REINFORCE} is a strong candidate for edge-first PdM, and that attention mechanisms---especially multi-head attention---can further improve performance and robustness. AutoRL is used as an implementation mechanism to standardize sweeps and reporting rather than as the core research contribution.
-
-Future work should (i) measure inference latency and energy on representative edge devices, (ii) incorporate richer maintenance costs and partial observability models, and (iii) evaluate robustness under sensor drift and cross-machine domain shift.
+\subsection{Future work}
+Future work should (i) measure inference latency, serialized model size, and energy on representative edge devices, (ii) incorporate richer maintenance costs and partial observability models, (iii) add non-RL baselines that operate on the same raw or minimally processed sensor streams, and (iv) evaluate robustness under sensor drift and cross-machine domain shift.
 
 
 
@@ -769,6 +789,7 @@ Please refer to Journal-level guidance for any specific requirements.
 \section*{Declarations}
 
 \subsection*{Funding}
+The authors received no specific funding for this work.
 
 \subsection*{Conflict of interest/Competing interests}
 Not applicable
@@ -777,15 +798,16 @@ Not applicable
 Not applicable
 
 \subsection*{Consent for publication}
-xxxx
+Not applicable
 
 \subsection*{Data availability}
-xxxx
+The IEEE PHM~2010 milling dataset is publicly available \cite{PHMdata2010}. The SIT dataset used in this study contains in-house experimental measurements and is available from the corresponding author upon reasonable request.
 
 \subsection*{Materials availability}
 Not applicable
 
 \subsection*{Code availability}
+The code used to train and evaluate the agents (AutoRL pipeline and the Gymnasium environment) is available from the authors upon reasonable request.
 
 \subsection*{Author contribution}
 \begin{itemize}

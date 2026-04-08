@@ -8,6 +8,7 @@ tex_storage/
 .vscode/
 slr/
 
+temp*
 *.pdf
 
 ## LaTeX build/auxiliary files
