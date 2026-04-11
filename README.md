@@ -1,5 +1,24 @@
 # Article-JoIM
 Springer Journal article format
+===========================================================================================
+
+#### Attention mechanism
+
+**
+Attention mechanism is a representation-learning prior that biases the policy toward informative sensor patterns. This is particularly relevant in the present PdM setting, where tool wear is latent and decisions must be made from indirect sensor evidence
+**
+ Attention provides a structured way to weight informative features and feature interactions, which can improve learning in this partially observable setting
+**
+
+
+
+Because tool wear is hidden from the agent, the policy must infer latent condition from sensor observations alone. Attention helps structure this inference process by allowing the model to emphasize more informative sensor channels, interactions, or temporal cues
+
+“In our case, attention gives the RL agent a way to focus on the most informative sensor signals instead of treating all inputs equally.”
+“That matters because tool wear is hidden from the agent, so the model has to infer condition indirectly from noisy multichannel sensor data.”
+“So the role of attention here is to guide representation learning under partial observability.”
+“That is why we describe attention mechanisms as inductive biases for lightweight RL.”
+
 
 
 ### UNDERMIND
@@ -28,3 +47,4 @@ Output expected:
 
 
 For now lets us ignore 'AutoRL'
+

@@ -85,7 +85,7 @@ The core research question is: \emph{Can a computationally light policy-gradient
 This study builds on evidence that na\"{i}ve \textsc{REINFORCE} can perform strongly for PdM in untuned regimes \cite{Siraskar2025} and on prior PdM work using a Nadaraya--Watson estimator as a lightweight attention mechanism under edge constraints \cite{Siraskar2024}. AutoRL is used here as an implementation framework that standardizes training and evaluation across a grid of algorithmic and hyperparameter choices, producing comparable artefacts (dashboards, heatmaps, and hypothesis-test summaries) for model selection when exhaustive manual tuning is impractical \cite{Schwartz2020, Strubell2019, Faust2019, Mussi2022}.
 
 \textbf{Research objectives and hypotheses.}
-The study addresses the following research objectives (RO): (RO1) compare RL algorithms suitable for edge-oriented PdM, (RO2) evaluate whether \textsc{REINFORCE} is a competitive lightweight baseline (and when it is not), (RO3) assess attention mechanisms as inductive biases that can improve lightweight RL under partial observability, (RO4--RO5) design a Gymnasium-compatible RL environment that operates across differing sensor schemas, and (RO6) provide an AutoRL-style sweep and reporting pipeline for standardized experimentation.
+The study addresses the following research objectives (RO): (RO1) compare RL algorithms suitable for edge-oriented PdM, (RO2) evaluate whether \textsc{REINFORCE} is a competitive lightweight baseline (and when it is not), (RO3) assess attention mechanisms as a form of inductive bias that can improve lightweight RL under partial observability, (RO4--RO5) design a Gymnasium-compatible RL environment that operates across differing sensor schemas, and (RO6) provide an AutoRL-style sweep and reporting pipeline for standardized experimentation.
 
 We test three hypotheses:
 \begin{itemize}
@@ -227,11 +227,11 @@ For this study, multi-round evaluation uses 20 rounds (\texttt{EVAL\_ROUNDS=20})
 \subsubsection{Training procedure and policy architecture}
 All agents are trained using Stable-Baselines3 with an \texttt{MlpPolicy} and a Gymnasium-compatible environment wrapper. Each training run uses a fixed number of episodes (\texttt{EPISODES=100}) with early stopping triggered by an episode-count callback, and learning rate $\eta$ and discount factor $\gamma$ are swept as part of the AutoRL grid.
 
-Attention mechanisms are implemented as custom feature extractors $\phi(\mathbf{x}_t)$ that map the raw sensor observation $\mathbf{x}_t$ into a 64-dimensional embedding (\texttt{features\_dim=64}). The resulting embedding is then consumed by the default multilayer-perceptron policy/value networks provided by Stable-Baselines3.
+The principal architectural contribution of this study is the use of attention-based custom feature extractors $\phi(\mathbf{x}_t)$ that transform the raw sensor observation $\mathbf{x}_t$ into a 64-dimensional embedding (\texttt{features\_dim=64}) before it is passed to the otherwise standard multilayer-perceptron policy/value networks provided by Stable-Baselines3 (Appendix~\ref{app:attn_core_impl}).
 
 \subsubsection{Attention mechanisms as lightweight feature extractors}
 \label{sec:attention}
-Because wear is hidden from observation (Section~\ref{sec:pomdp}), the core challenge is representation learning from sensor vectors. We implement attention mechanisms as feature extractors $\phi_\theta(\mathbf{x}_t)$ that map a raw sensor vector into a compact embedding used by the RL policy.
+Because tool wear is not directly observed at decision time (Section~\ref{sec:pomdp}), the setting is partially observable in the standard RL sense and the core challenge becomes representation learning from sensor vectors. Attention is a representation-learning prior that biases the policy toward informative sensor patterns. This is particularly relevant in the present PdM setting, where tool wear is latent and decisions must be made from indirect sensor evidence. We implement attention mechanisms as feature extractors $\phi_\theta(\mathbf{x}_t)$ that map a raw sensor vector into a compact embedding used by the RL policy.
 
 \textbf{General attention concept.}
 Given values $V=\{\mathbf{v}_1,\ldots,\mathbf{v}_n\}$ and a query $\mathbf{q}$, attention forms a convex combination
@@ -244,7 +244,7 @@ with weights computed by a softmax over a compatibility score $s(\mathbf{q},\mat
 \end{equation}
 
 \textbf{Note on terminology.}
-We use ``attention'' as a unifying label for feature extractors that implement (i) learned reweighting/gating and (ii) structured fusion of sensor features and (optionally) time context.
+We use ``attention'' as a unifying label for feature extractors that implement (i) learned reweighting/gating and (ii) structured fusion of sensor features and (optionally) time context. In this sense, attention provides a structured way to weight informative features and feature interactions, which can improve learning in this partially observable setting.
 
 \paragraph{Nadaraya--Watson attention (NW)}
 NW attention can be interpreted as kernel-regression-based soft retrieval from learnable prototypes. This mechanism is computationally light and aligns with prior PdM attention work motivated by edge constraints \cite{Siraskar2024}.
@@ -764,7 +764,7 @@ This paper does not directly measure energy consumption, latency, or deployment 
 \section{Conclusion and Future Work}
 \label{sec:conclusion}
 \subsection{Summary of key findings}
-This paper presented an empirical study of \textsc{REINFORCE} with attention mechanisms for milling-machine tool-replacement PdM under edge-oriented constraints. Using a schema-adaptive Gymnasium environment and multi-round evaluation on unseen data, the results show a consistent pattern across SIT and IEEE schemas: \textsc{REINFORCE} outperforms \textsc{A2C} and \textsc{DQN} under the adopted evaluation protocol, and remains competitive with \textsc{PPO}. The study also shows that the same environment formulation and reward logic can be reused effectively across two materially different sensor schemas. Finally, attention improves \textsc{REINFORCE}, although the strongest attention choice is schema-dependent, with multi-head attention dominating on SIT and several attention variants performing similarly on IEEE.
+This paper presented an empirical study of \textsc{REINFORCE} with attention mechanisms for milling-machine tool-replacement PdM under edge-oriented constraints. Using a schema-adaptive Gymnasium environment and multi-round evaluation on unseen data, the results show a consistent pattern across SIT and IEEE schemas: \textsc{REINFORCE} outperforms \textsc{A2C} and \textsc{DQN} under the adopted evaluation protocol, and remains competitive with \textsc{PPO}. The study also shows that the same environment formulation and reward logic can be reused effectively across two materially different sensor schemas. Finally, attention improves \textsc{REINFORCE}, although the strongest attention choice is schema-dependent, with multi-head attention dominating on SIT and several attention variants performing similarly on IEEE. Interpreted as representation-learning priors, the attention mechanisms bias the policy toward informative sensor patterns when tool wear must be inferred from indirect sensor evidence.
 
 \subsection{Limitations and threats to validity}
 \begin{itemize}
@@ -886,6 +886,22 @@ IEEE & \texttt{force\_x}, \texttt{force\_y}, \texttt{force\_z}, \texttt{vibratio
 \bottomrule
 \end{tabular}
 \end{table}
+
+\section{Attention mechanisms core implementation detail}
+\label{app:attn_core_impl}
+This appendix makes explicit why attention is treated as the principal architectural contribution of the study rather than as an auxiliary add-on. In the implementation, attention is placed at the observation-encoding stage of the policy. The processing path is
+\begin{equation}
+\mathbf{x}_t \xrightarrow{\phi_\theta} \mathbf{z}_t \in \mathbb{R}^{64} \xrightarrow{\text{SB3 MLP policy/value heads}} \left(\pi(a_t\mid \mathbf{z}_t), V(\mathbf{z}_t)\right).
+\end{equation}
+Thus, the architectural novelty lies in how raw sensor vectors are transformed before reaching otherwise standard policy and value networks.
+
+The evidence in the code is direct. First, the environment \texttt{MT\_Env} defines the observation space using only schema-specific sensor channels, while excluding \texttt{tool\_wear}, \texttt{Time}, and \texttt{ACTION\_CODE}. Consequently, the agent must infer replacement timing from indirect sensor evidence rather than from direct wear observations. This makes representation learning a first-order component of performance, not a secondary implementation choice.
+
+Second, the attention modules are implemented as policy feature extractors rather than as external preprocessing blocks. In \texttt{rl\_pdm.py}, the study mechanisms \texttt{NadarayaWatsonExtractor}, \texttt{TemporalAttentionExtractor}, \texttt{MultiHeadAttentionExtractor}, and \texttt{SelfAttentionExtractor} all inherit from \texttt{BaseFeaturesExtractor}. In Stable-Baselines3 terms, this means that they replace the default observation encoder used by the policy (Refer to https://stable-baselines3.readthedocs.io/en/master/guide/custom_policy.html#custom-feature-extractor). Their role is therefore architectural: they determine what latent representation of the sensor vector is made available to the downstream actor and critic.
+
+Third, the linkage from code to model architecture is explicit in the training setup. The \texttt{policy\_kwargs} dictionary selects the attention class through \texttt{features\_extractor\_class} and sets \texttt{features\_extractor\_kwargs=dict(features\_dim=64)}. The model is then instantiated as \texttt{AlgoClass("MlpPolicy", env, ... , policy\_kwargs=policy\_kwargs)}. Therefore, the downstream policy/value heads remain the standard Stable-Baselines3 multilayer perceptrons, while the attention-based encoder is the component that changes across configurations.
+
+This separation is exactly why attention is described in the main text as the core implementation idea. The comparison isolates the effect of the learned encoder $\phi_\theta(\mathbf{x}_t)$ while keeping the policy/value heads standard. Listings~\ref{lst:nw_forward}--\ref{lst:sa_forward} further support this interpretation: each forward pass returns a learned context vector or projected latent feature representation, not an action. Actions are produced only after that representation is consumed by the standard policy network. Accordingly, attention functions here as the main inductive bias for extracting decision-relevant structure from partially observed sensor signals.
 
 \section{Core code implementation snippets}
 \label{app:code_snippets}
