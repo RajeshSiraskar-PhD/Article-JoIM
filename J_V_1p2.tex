@@ -122,14 +122,41 @@ The literature also suggests a useful two-stream picture. Many PdM and condition
 \subsection{Lightweight RL for edge PdM}
 The literature does not establish that REINFORCE is universally better than advanced deep RL, but it does indicate that lightweight methods are often a sound engineering choice when the PdM task is structured and edge constraints are first-order requirements \cite{Compare2020, Njor2024, Pandey2023}. In embedded RL more broadly, deep RL frequently requires additional techniques such as transfer learning, pruning, compression, or distillation, to fit constrained edge devices \cite{Jang2020, Szydlo2022, Xu2022}.
 
-%% $$$ REFINE
-Sustainability motivation: While maintenance optimization contributes to energy and emissions objectives in industrial systems, the PdM literature rarely reports \emph{algorithm-level} energy drawn or carbon footprints for employing RL methods, \cite{Banyai2021, Banyai2022, JasiulewiczKaczmarek2024}. In the empirical study \cite{Siraskar2025}, conducted across 15 environment variants and 10 rounds of training and testing, REINFORCE achieved the highest reported tool-replacement precision at 0.687, exceeding the next-best method by 0.215 in absolute terms; the same study reports that REINFORCE also led the other algorithms on recall, F1, and $F_{\beta=0.5}$. The reported model sizes were small: 56.4~KB for DQN, 89.8~KB for A2C, 121.5~KB for REINFORCE, and 135.5~KB for PPO \cite{Siraskar2025}.
+Sustainability motivation: While maintenance optimization contributes to energy and emissions objectives in industrial systems, the PdM literature rarely reports \emph{algorithm-level} energy drawn or carbon footprints for employing RL methods, \cite{Banyai2021, Banyai2022, JasiulewiczKaczmarek2024}. In the empirical study \cite{Siraskar2025}, conducted across 15 environment variants that covered real milling dataset \cite{PHMdata2010}, REINFORCE achieved the highest reported tool-replacement precision at 0.687, exceeding the next-best method, PPO, by 0.215 in absolute terms; the same study reports that REINFORCE also led the other algorithms on recall, F1, and $F_{\beta=0.5}$. The reported model sizes were 121.5~KB for REINFORCE, and 135.5~KB for PPO \cite{Siraskar2025}.
 
-``Green AI'' claims in this paper is provided as \emph{downstream} implications of reduced computational demand and not as scientifically measured environmental outcomes. 
+%% Detailed paper not available
+% A second quantitative anchor comes from richer IIoT maintenance decision problems where heavier DRL can earn its place. Ong et al.~report that a PPO--LSTM based PdM framework outperformed comparable DRL methods by 53\% and human participants by 65\% in a maintenance resource-management simulator \cite{Ong2022-01}. In a follow-on study, the same line of work introduced transfer learning with demonstrations to reduce DRL training wall time by 58\% \cite{Ong2022-02}.
 
-A second quantitative anchor comes from richer IIoT maintenance decision problems where heavier DRL can earn its place. Ong et al.~report that a PPO--LSTM based PdM framework outperformed comparable DRL methods by 53\% and human participants by 65\% in a maintenance resource-management simulator \cite{Ong2022-01}. In a follow-on study, the same line of work introduced transfer learning with demonstrations to reduce DRL training wall time by 58\% \cite{Ong2022-02}.
+A significant quantitative study by Pandey et al. \cite{Pandey2023}, around edge deployment studies the memory bottleneck. They show that in a PdM edge-deployment study, pruning could reduce model sizes dramatically while keeping the average accuracy drop within about 3\%. For example, with Short-Time Fourier Transform (STFT) features, AlexNet was reduced from 28,534,479 to 75,627 parameters, resulting in an accuracy drop from 98.37\% to 97.65\%, while LeNet fell from 76,695 to 1,967 parameters--accuracy drop from 98.07\% to 97.13\%. With Continuous Wavelet Transform (CWT) features, AlexNet reduced parameters from 28,534,479 to 656,620. The model sizes for STFT and CWT, using AlexNet were both 28.18 MB, \cite{Pandey2023}. The implication is not that deep models are unusable, but that their deployment often depends on pruning, quantization, distillation, or related compression steps before edge feasibility can be discussed \cite{Pandey2023, Jang2020, Xu2022}.
+\\
+\\
+\textcolor{red}{TinyRL: Towards Reinforcement Learning on Tiny EmbeddedDevices}\\
 
-A third quantitative anchor comes from edge deployment studies that make the memory bottleneck concrete. Pandey et al.~show that in a PdM edge-deployment study, pruning could reduce model sizes dramatically while keeping the average accuracy drop within about 3 percentage points \cite{Pandey2023}. For example, with STFT features, AlexNet was reduced from 28,534,479 to 75,627 parameters (accuracy 98.37\% to 97.65\%), while LeNet fell from 76,695 to 1,967 parameters (accuracy 98.07\% to 97.13\%) \cite{Pandey2023}. With CWT features, AlexNet fell from 28,534,479 to 656,620 parameters \cite{Pandey2023}. The implication is not that deep models are unusable, but that their deployment often depends on pruning, quantization, distillation, or related compression steps before edge feasibility can be discussed \cite{Pandey2023, Jang2020, Xu2022}.
+\begin{table}[htbp]
+    \centering
+    \caption{Deep Edge Microcontrollers for Predictive Maintenance (256 KB to 2 MB SRAM)}
+    \label{tab:deep_edge_mcus}
+    \renewcommand{\arraystretch}{1.3} % Adds slight vertical padding to rows for readability
+    \begin{tabular}{@{} l l l l p{5.5cm} @{}}
+        \toprule
+        \textbf{MCU Name} & \textbf{Architecture} & \textbf{Processor} & \textbf{Memory} & \textbf{Notes} \\
+        \midrule
+        STM32H7 Series & ARM & Dual-core Cortex-M7 + M4 & Up to 2 MB & Industrial powerhouse; M7 handles heavy ML math while M4 handles real-time sensor control. \\
+        
+        NXP i.MX RT Series & ARM & Cortex-M7 (up to 1 GHz) & 1 MB -- 2 MB & "Crossover" MCU; ultra-fast clock speeds for processing complex local anomaly detection. \\
+        
+        Espressif ESP32-S3 & Xtensa & Dual-core LX7 & 512 KB & Includes built-in Wi-Fi/BLE and CPU vector instructions to accelerate neural networks. \\
+        
+        Nordic nRF5340 & ARM & Dual-core Cortex-M33 & 512 KB & Ultra-low-power BLE gold standard; dedicated separate cores for application and wireless stack. \\
+        
+        Renesas RA6M5 & ARM & Cortex-M33 & 512 KB & Ideal for industrial motor control; features robust security, Ethernet, and CAN bus controllers. \\
+        
+        Raspberry Pi RP2040 & ARM & Dual-core Cortex-M0+ & 264 KB & Highly cost-effective; features unique Programmable I/O (PIO) blocks for custom sensor interfacing. \\
+        
+        Nordic nRF52840 & ARM & Cortex-M4F & 256 KB & Includes an FPU for crucial vibration math; widely used in battery-operated nodes. \\
+        \bottomrule
+    \end{tabular}
+\end{table}
 
 \begin{table}[t]
         \centering
@@ -137,7 +164,7 @@ A third quantitative anchor comes from edge deployment studies that make the mem
         \setlength{\tabcolsep}{4pt}
         \begin{tabular}{p{0.24\textwidth} p{0.42\textwidth} p{0.30\textwidth}}
                 \toprule
-                Evidence strand & Quantitative anchor & Reviewer-safe reading \\
+                Evidence strand & Quantitative anchor & xxxxxx \\
                 \midrule
                 Direct REINFORCE evidence in PdM & REINFORCE leads tool-replacement precision at 0.687 across 15 variants, and reported model sizes remain small (56.4~KB DQN, 89.8~KB A2C, 121.5~KB REINFORCE, 135.5~KB PPO) \cite{Siraskar2025} & A simple policy-gradient baseline can be competitive in PdM and is not disqualified on footprint grounds \\
                 Richer IIoT maintenance decision problems & PPO--LSTM outperforms comparable DRL methods by 53\% and human participants by 65\% in a maintenance resource-management simulator \cite{Ong2022-01} & As the decision problem becomes richer and more coupled, heavier DRL can earn its place \\
@@ -148,6 +175,8 @@ A third quantitative anchor comes from edge deployment studies that make the mem
         \caption{Quantitative anchors supporting a reviewer-safe positioning of lightweight RL for edge-aware PdM.}
         \label{tab:quantitative_anchors_lightweight_edge}
 \end{table}
+
+%% $$$ REFINE
 \section{Background / Preliminary Knowledge}
 \subsection{MDP notation and observation model}
 We model milling PdM as a sequential decision problem. An episodic Markov Decision Process (MDP) is defined by $(\mathcal{S},\mathcal{A},P,R,\gamma)$, where $\mathcal{S}$ is the state space, $\mathcal{A}$ is the action space, $P(s'\mid s,a)$ is the transition kernel, $R(s,a)$ is the reward function, and $\gamma\in(0,1]$ is the discount factor.
