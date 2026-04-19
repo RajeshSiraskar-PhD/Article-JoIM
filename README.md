@@ -61,3 +61,24 @@ What I finally want is this: Just a small para - at most 4 lines that makes the 
 
 
 Ref.-1: https://link.springer.com/article/10.1007/s42452-025-06613-1
+
+This is a journal article for a scientific journal. I think its messed up. The sections can be much cleaner. Broadly - we need only the following high level sections:
+
+1. Introduction
+2. Literature Review and Technical Background
+3. Materials and Methods
+4. Results
+5. Discussion
+6. Conclusion
+
+Please help me re-arrange this entirely. Feel free to move non-essentials to Appendices. Only a max of three sub sections are allowed by the journal.
+
+## Important: My writing style:
+The 'Introduction' 
+
+
+
+Nadaraya--Watson attention (NW)
+Temporal attention (TP)
+Self-attention (SA)
+Multi-head attention (MH)

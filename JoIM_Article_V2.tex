@@ -1,11 +1,9 @@
 % ------------------------------------------------------------------------------------------------
 % Journal of Intelligent Manufacturing
-% Ver. 1.1 - Reduce repeated wear-state emphasis
-% Ver. 1.4 - 16-Apr: LINE 347 
+% Ver. 2.1 -- Revised Hypothesis section
 % ------------------------------------------------------------------------------------------------
-% REVISION NOTES
-% - Green duplication in Intro and Related work? Make Intro. shorter and without citations?
-% - Remove unecssary 'labels'
+% REVIEW NOTES
+% Results section
 % ------------------------------------------------------------------------------------------------
 
 \PassOptionsToPackage{hypertexnames=false}{hyperref}
@@ -51,6 +49,13 @@
 
 \graphicspath{{figures/}}
 
+% Avoid large bookmark-level jumps when using \paragraph headings.
+% (hyperref warns when jumping from \subsection directly to \paragraph.)
+\makeatletter
+\def\toclevel@paragraph{3}
+\def\toclevel@subparagraph{4}
+\makeatother
+
 \onehalfspacing
 % \lstset{
 %         basicstyle=\ttfamily\footnotesize,
@@ -65,7 +70,7 @@
 
 \begin{document}
 
-\title[Lightweight RL for Edge PdM]{Lightweight Reinforcement Learning for Edge Predictive Maintenance: An Empirical Study of REINFORCE with Attention Mechanisms for Milling Tool Replacement (V.1.4)}
+\title[Lightweight RL for Edge PdM]{Lightweight Reinforcement Learning for Edge Predictive Maintenance: An Empirical Study of REINFORCE with Attention Mechanisms for Milling Tool Replacement (V.2.1)}
 
 
 \author[1,4]{\fnm{Rajesh} \sur{Siraskar} \sfx{(\href{https://orcid.org/0000-0003-2341-8787}{ORCID: 0000-0003-2341-8787}})}\email{rajesh.siraskar@gmail.com}
@@ -124,16 +129,17 @@ This paper contributes:
 		\item \textbf{Practitioner convenience mechanism (AutoRL):} batch training and multi-round evaluation with checkpointed recovery and standardized reporting to reduce the burden of manual tuning and ad-hoc experimentation.
 \end{itemize}
 
-\section{Related Work}
-\subsection{PdM, Industry~4.0, and edge constraints}
+\section{Literature Review and Technical Background}
+\label{sec:lit_tech}
+\subsection{Edge-oriented PdM and deployment constraints}
 PdM is commonly positioned as an Industry~4.0 centerpiece because it links sensing, connectivity, analytics, and operational decision-making in cyber-physical production systems \cite{Compare2020, Zonta2020}. Prescriptive maintenance architectures further enhance this role by embedding \emph{prescriptive} decision-making, such as suggesting the \emph{action} to take directly into cyber-physical workflows \cite{Ansari2019}. Edge deployment strengthens the PdM case by enabling low-latency, resilient operation near equipment, but it also introduces feasibility constraints: memory, compute, latency, and system-integration overhead can limit the practical adoption of complex ML/RL pipelines \cite{Njor2024, Pandey2023}. These constraints relate to sustainability and ``Green AI'' concerns: when many candidate agents are trained during AutoRL exploration, the incremental cost per training run becomes operationally and environmentally relevant \cite{Schwartz2020, Strubell2019}.
 
-\subsection{RL for predictive maintenance}
+\subsection{RL for predictive maintenance and lightweight baselines}
 RL has been surveyed extensively in PdM, with evidence that a wide range of formulations have been explored across maintenance scheduling, inspection, and resource-constrained decision problems \cite{Siraskar2023, Ogunfowora2023, Zhang2024}. A consistent theme across these surveys is that the ``right'' RL complexity level depends on (i) the structure of the decision problem (action-space size, time horizon and the rewards occurence frequency within that) and (ii) deployment requirements (compute, memory, latency).
 
 The literature also suggests a useful two-stream picture. Many PdM and condition-based maintenance studies learn effective policies using non-deep or otherwise lightweight RL, especially when state representations are structured and action spaces are modest \cite{Adsule2020, Yousefi2020, Rasay2024, Dadash2024}. Deep RL (e.g., DQN/PPO-style methods) becomes more prominent as environments become richer and harder: higher-dimensional sensing, long-horizon tradeoffs, multi-component scheduling, or coupled resource constraints \cite{Liu2020, Chen2023, Lee2022, Ong2022-02}.
 
-\subsection{Lightweight RL for edge PdM}
+\paragraph{Lightweight RL for edge PdM.}
 The literature does not establish that REINFORCE is universally better than advanced deep RL, but it does indicate that lightweight methods are often a sound engineering choice when the PdM task is structured and edge constraints are first-order requirements \cite{Compare2020, Njor2024, Pandey2023}. In embedded RL more broadly, deep RL frequently requires additional techniques such as transfer learning, pruning, compression, or distillation, to fit constrained edge devices \cite{Jang2020, Szydlo2022, Xu2022}.
 
 Sustainability motivation: While maintenance optimization contributes to energy and emissions objectives in industrial systems, the PdM literature rarely reports \emph{algorithm-level} energy drawn or carbon footprints for employing RL methods, \cite{Banyai2021, Banyai2022, JasiulewiczKaczmarek2024}. In the empirical study \cite{Siraskar2025}, conducted across 15 environment variants that covered real milling dataset \cite{PHMdata2010}, REINFORCE achieved the highest reported tool-replacement precision at 0.687, exceeding the next-best method, PPO, by 0.215 in absolute terms; the same study reports that REINFORCE also led the other algorithms on recall, F1, and $F_{\beta=0.5}$. The reported model sizes were 121.5~KB for REINFORCE, and 135.5~KB for PPO \cite{Siraskar2025}.
@@ -141,141 +147,25 @@ Sustainability motivation: While maintenance optimization contributes to energy 
 %% DRL better - Commented as detailed paper not available
 % A second quantitative anchor comes from richer IIoT maintenance decision problems where heavier DRL can earn its place. Ong et al.~report that a PPO--LSTM based PdM framework outperformed comparable DRL methods by 53\% and human participants by 65\% in a maintenance resource-management simulator \cite{Ong2022-01}. In a follow-on study, the same line of work introduced transfer learning with demonstrations to reduce DRL training wall time by 58\% \cite{Ong2022-02}.
 
-A significant quantitative study by Pandey et al. \cite{Pandey2023}, around edge deployment studies the memory bottleneck. They show that in a PdM edge-deployment study, pruning could reduce model sizes dramatically while keeping the average accuracy drop within about 3\%. For example, with Short-Time Fourier Transform (STFT) features, AlexNet was reduced from 28,534,479 to 75,627 parameters, resulting in an accuracy drop from 98.37\% to 97.65\%, while LeNet fell from 76,695 to 1,967 parameters--accuracy drop from 98.07\% to 97.13\%. With Continuous Wavelet Transform (CWT) features, AlexNet reduced parameters from 28,534,479 to 656,620. The model sizes for STFT and CWT, using AlexNet were both 28.18 MB, \cite{Pandey2023}. The implication of this research indicates that for DRL to be suitable for edge deployment, their deployment often depends on pruning, quantization, distillation, or related compression steps before edge feasibility can be discussed \cite{Pandey2023, Jang2020, Xu2022}.
-\\
-\\
-\textcolor{red}{TinyRL: Towards Reinforcement Learning on Tiny EmbeddedDevices \cite{Szydlo2022}}\\
+A significant quantitative study by Pandey et al. \cite{Pandey2023} studies the memory bottleneck in edge deployment. They show that pruning could reduce model sizes dramatically while keeping the average accuracy drop within about 3\%. The implication is that for heavier deep models to be suitable for edge deployment, their deployment often depends on pruning, quantization, distillation, or related compression steps before edge feasibility can be discussed \cite{Pandey2023, Jang2020, Xu2022}. Related work on TinyRL also explores reinforcement learning on tiny embedded devices \cite{Szydlo2022}.
 
 Although RL is often motivated through generic benchmark environments, the evidence most useful for predictive maintenance comes from studies built on maintenance-specific data, assets, and decision constraints rather than abstract control tasks \cite{Andrade2021Aircraft,Dangut2022RareFailure,Zhao2024,Siraskar2025}. Public PdM benchmarks have helped move the field forward, but they still leave a gap to deployment because they cannot fully capture plant-specific degradation, sensing, and maintenance logic. By contrast, studies grounded in operational aircraft logs, fleet maintenance records, or physical manufacturing systems provide a stronger evidence tier for industrial relevance \cite{Andrade2021Aircraft,Dangut2022RareFailure,Chen2024DigitalTwin}. The case is stronger still for RL with attention, since attention mechanisms are only valuable insofar as they exploit domain-specific temporal and cross-sensor structure, which must be learned and tested in PdM-specific settings \cite{Zhao2024}. In that sense, newly collected real machine data is not just an implementation detail, but a substantive contribution to PdM RL research.
 
 In the screened core set used here, 2 papers are domain-agnostic, 6 are PdM-specific studies built on public maintenance datasets, and only 2 are PdM-specific studies grounded in domain-specific operational or physical-system data; among these groups, direct RL with attention appears in 0, 1, and 0 papers, respectively \cite{DulacArnold2021,GarauLuis2021,Zhao2024,Aglogallos2026,Siraskar2025,Andrade2021Aircraft,Dangut2022RareFailure,Chen2024DigitalTwin}.
 
+To keep the main narrative focused, compact edge-device context is provided in Appendix~\ref{app:edge_context}, and model-size summaries are reported with the empirical results (Section~\ref{sec:results}).
 
-\begin{table}[htbp]
-	\centering
-	\caption{Deep Edge Microcontrollers for Predictive Maintenance (256 KB to 2 MB SRAM)}
-	\label{tab:deep_edge_mcus}
-	\renewcommand{\arraystretch}{1.3}
-	\begin{tabular}{@{} l l l l p{5.5cm} @{}}
-		\toprule
-		\textbf{MCU Name} & \textbf{Architecture} & \textbf{Processor} & \textbf{Memory} & \textbf{Notes} \\
-		\midrule
-		STM32H7 Series & ARM & Dual-core Cortex-M7 + M4 & Up to 2 MB & Industrial powerhouse; M7 handles heavy ML math while M4 handles real-time sensor control. \\
-		
-		NXP i.MX RT Series & ARM & Cortex-M7 (up to 1 GHz) & 1 MB -- 2 MB & "Crossover" MCU; ultra-fast clock speeds for processing complex local anomaly detection. \\
-		
-		Espressif ESP32-S3 & Xtensa & Dual-core LX7 & 512 KB & Includes built-in Wi-Fi/BLE and CPU vector instructions to accelerate neural networks. \\
-		
-		Nordic nRF5340 & ARM & Dual-core Cortex-M33 & 512 KB & Ultra-low-power BLE gold standard; dedicated separate cores for application and wireless stack. \\
-		
-		Renesas RA6M5 & ARM & Cortex-M33 & 512 KB & Ideal for industrial motor control; features robust security, Ethernet, and CAN bus controllers. \\
-		
-		Raspberry Pi RP2040 & ARM & Dual-core Cortex-M0+ & 264 KB & Highly cost-effective; features unique Programmable I/O (PIO) blocks for custom sensor interfacing. \\
-		
-		Nordic nRF52840 & ARM & Cortex-M4F & 256 KB & Includes an FPU for crucial vibration math; widely used in battery-operated nodes. \\
-		\bottomrule
-	\end{tabular}
-\end{table}
-
-
-\begin{table}[t]
-	\centering
-	\caption{IEEE schema (averaged over 80 models)}
-	\label{tab:model_size_ieee}
-	\begin{tabular}{l l r r}
-		\toprule
-		\textbf{Algorithm} & \textbf{Attention} & \textbf{Avg. size (KB)} & \textbf{$\log_{10}(\text{size(KB)})$} \\
-		\midrule
-		\multirow{5}{*}{A2C}     
-			& Multi-Head       & 212.79 & 2.328 \\
-			& Nadaraya-Watson  & 182.30 & 2.261 \\
-			& Self-Attention   & 414.77 & 2.618 \\
-			& Temporal         & 360.31 & 2.557 \\
-			\faintcmidrule{2-4}
-			& A2C Average      & 292.54 & 2.441 \\
-		\midrule
-		\multirow{5}{*}{DQN}
-			
-			& Multi-Head       & 259.84 & 2.415 \\
-			& Nadaraya-Watson  & 201.53 & 2.304 \\
-			& Self-Attention   & 657.75 & 2.818 \\
-			& Temporal         & 551.74 & 2.742 \\ 
-			\faintcmidrule{2-4}
-			& DQN Average      & 417.72 & 2.570 \\
-		\midrule
-		\multirow{5}{*}{PPO}
-			& Multi-Head       & 113.23 & 2.054 \\
-			& Nadaraya-Watson  & 97.64  & 1.990 \\
-			& Self-Attention   & 214.53 & 2.331 \\
-			& Temporal         & 252.12 & 2.402 \\ 
-			\faintcmidrule{2-4}
-			& PPO Average      & 169.38 & 2.194 \\
-		\midrule
-		\multirow{5}{*}{REINFORCE}
-			& Multi-Head       & 112.81 & 2.052 \\
-			& Nadaraya-Watson  & 97.21  & 1.988 \\
-			& Self-Attention   & 214.10 & 2.331 \\
-			& Temporal         & 251.69 & 2.401 \\ 
-			\faintcmidrule{2-4}
-			& REINFORCE Average& 168.95 & 2.193 \\
-		\bottomrule
-	\end{tabular}
-\end{table}
-
-\begin{table}[t]
-	\centering
-	\caption{SIT schema (averaged over 128 models)}
-	\label{tab:model_size_sit}
-	\begin{tabular}{l l r r}
-		\toprule
-		\textbf{Algorithm} & \textbf{Attention} & \textbf{Avg. size (KB)} & \textbf{$\log_{10}(\text{size(KB)})$} \\
-		\midrule
-		\multirow{5}{*}{A2C}
-			& Multi-Head       & 214.37 & 2.331 \\
-			& Nadaraya-Watson  & 182.59 & 2.261 \\
-			& Self-Attention   & 415.33 & 2.618 \\
-			& Temporal         & 361.89 & 2.559 \\ 
-			\faintcmidrule{2-4}
-			& A2C Average      & 293.55 & 2.442 \\
-		\midrule
-		\multirow{5}{*}{DQN}
-			& Multi-Head       & 262.96 & 2.420 \\
-			& Nadaraya-Watson  & 202.28 & 2.306 \\
-			& Self-Attention   & 658.82 & 2.819 \\
-			& Temporal         & 554.85 & 2.744 \\ 
-			\faintcmidrule{2-4}
-			& DQN Average      & 419.73 & 2.572 \\
-		\midrule
-		\multirow{5}{*}{PPO}
-			& Multi-Head       & 114.04 & 2.057 \\
-			& Nadaraya-Watson  & 97.80  & 1.990 \\
-			& Self-Attention   & 214.83 & 2.332 \\
-			& Temporal         & 252.93 & 2.403 \\ 
-			\faintcmidrule{2-4}
-			& PPO Average      & 169.90 & 2.196 \\
-		\midrule
-		\multirow{5}{*}{REINFORCE}
-			& Multi-Head       & 113.62 & 2.055 \\
-			& Nadaraya-Watson  & 97.38  & 1.988 \\
-			& Self-Attention   & 214.40 & 2.331 \\
-			& Temporal         & 252.50 & 2.402 \\ 
-			\faintcmidrule{2-4}
-			& REINFORCE Average& 169.47 & 2.194 \\
-		\bottomrule
-	\end{tabular}
-\end{table}
-
-\section{Technical Background}
-\subsection{MDP notation and observation model}
+\subsection{Technical background: MDP setting and RL algorithms}
+\label{sec:tech_background}
+\paragraph{MDP notation and observation model.}
 We model milling PdM as a sequential decision problem. An episodic Markov Decision Process (MDP) is defined by $(\mathcal{S},\mathcal{A},P,R,\gamma)$, where $\mathcal{S}$ is the state space, $\mathcal{A}$ is the action space, $P(s'\mid s,a)$ is the transition kernel, $R(s,a)$ is the reward function, and $\gamma\in(0,1]$ is the discount factor.
 
 In the studied PdM setting, the policy receives a sensor vector $\mathbf{x}_t\in\mathbb{R}^d$ derived from multiple channels rather than a fully instrumented machine-condition state. As is obvious, tool wear is not available as its measurement requires interrupting the operation and removing the tool. We therefore formulate the agent information space around the information available during cutting and treat representation learning from these process measurements as a first-order factor in policy performance.
-\label{sec:obs_model}
-\subsection{RL algorithms compared}
-\label{sec:algos}
+
+\paragraph{RL algorithms compared.}
 We compare four algorithms: DQN (value-based), A2C (actor--critic), PPO (policy optimization), and REINFORCE (Monte-Carlo policy gradient).
 
-\subsubsection{A2C (advantage actor--critic)}
+\paragraph{A2C (advantage actor--critic).}
 Actor--critic methods use a learned value baseline $V_\phi(s_t)$ to reduce variance. With advantage estimate $\hat{A}_t=G_t-V_\phi(s_t)$, the policy gradient takes the form
 \begin{equation}
 \nabla_\theta J(\theta) \approx \mathbb{E}\big[\nabla_\theta\log\pi_\theta(a_t\mid s_t)\,\hat{A}_t\big].
@@ -285,14 +175,14 @@ The critic is trained by minimizing a regression loss such as
 \mathcal{L}_V(\phi)=\mathbb{E}\big[(G_t - V_\phi(s_t))^2\big].
 \end{equation}
 
-\subsubsection{DQN (deep Q-learning)}
+\paragraph{DQN (deep Q-learning).}
 DQN learns an action-value function $Q_\theta(s,a)$ and minimizes a temporal-difference error with a target network \cite{Mnih2015}:
 \begin{equation}
 \mathcal{L}(\theta)=\mathbb{E}\left[\left(r_t + \gamma\max_{a'}Q_{\bar\theta}(s_{t+1},a') - Q_\theta(s_t,a_t)\right)^2\right].
 \end{equation}
 Experience replay and target-network updates stabilize learning, but performance can still degrade when the observed sensor vector does not fully summarize the underlying degradation state without explicit memory.
 
-\subsubsection{PPO (clipped policy optimization)}
+\paragraph{PPO (clipped policy optimization).}
 PPO constrains policy updates using a clipped surrogate objective \cite{Schulman2017}. Define the probability ratio
 \begin{equation}
  r_t(\theta)=\frac{\pi_\theta(a_t\mid s_t)}{\pi_{\theta_{\mathrm{old}}}(a_t\mid s_t)}.
@@ -306,7 +196,7 @@ In typical implementations, the optimized objective also includes a value-functi
 \mathcal{J}(\theta,\phi)=\mathcal{L}^{\mathrm{CLIP}}(\theta) - c_1\,\mathcal{L}_V(\phi) + c_2\,H(\pi_\theta).
 \end{equation}
 
-\subsubsection{REINFORCE (Monte-Carlo policy gradient)}
+\paragraph{REINFORCE (Monte-Carlo policy gradient).}
 REINFORCE directly estimates the policy gradient using Monte-Carlo returns \cite{Williams1992}:
 \begin{equation}
 \nabla_\theta J(\theta) = \mathbb{E}\left[\sum_{t=0}^{T} \nabla_\theta \log \pi_\theta(a_t\mid s_t)\,\big(G_t-b(s_t)\big)\right].
@@ -314,10 +204,12 @@ REINFORCE directly estimates the policy gradient using Monte-Carlo returns \cite
 
 \textbf{Why REINFORCE can be edge-suited}: When deployment constraints are first-order requirements, algorithmic simplicity can translate to smaller policies and lower training/inference overhead. In sweep-based experimentation (including AutoRL-style grids), simpler learners can also reduce total compute when many configurations must be compared. 
 
-\section{Methodology and Experimental Setup}
+\section{Materials and Methods}
 \label{sec:method}
-\subsection{Problem formulation: asymmetric costs and decision rationale}
+\subsection{Problem formulation and environment}
 \label{sec:problem}
+\label{sec:env}
+\label{sec:reward}
 PdM decisions are inherently asymmetric. A late replacement can cause defective parts, scrap, or catastrophic failure, while an early replacement wastes remaining tool life.
 
 \begin{table}[t]
@@ -336,23 +228,23 @@ PdM decisions are inherently asymmetric. A late replacement can cause defective 
 	\end{tabular}
 \end{table}
 
-\subsection{Algorithm description}\label{sec:algo_desc}
-\subsubsection{AutoRL as a practitioner convenience: standardized sweeps and reporting}\label{sec:autorl}
+\subsection{Learning pipeline and attention mechanisms}\label{sec:algo_desc}
+\paragraph{AutoRL as a practitioner convenience: standardized sweeps and reporting.}\label{sec:autorl}
 The AutoRL pipeline is implemented as both a web-application and CLI batch runner that supports training, evaluation, and reporting across a grid of algorithms, hyperparameters, and attention mechanisms. The pipeline automates by enumerating the multiple hyperparameter and attention mechanism choices made for experimentation, into a queue. Since the pipeline can run for hours, we built reliability against training failure using intermitently saved checkpoints.
 
-\subsubsection{Training procedure and policy architecture}
+\paragraph{Training procedure and policy architecture.}
 All agents are trained using Stable-Baselines3 and a Gymnasium-compatible environment wrapper. Each training run uses a fixed number of episodes with early stopping triggered by an episode-count callback, and learning rate $\eta$ and discount factor $\gamma$ are swept as part of the AutoRL grid.
 
 Tuning RL algorithms has been acknowledged to be difficult due to their extreme sensitivity to hyperparameter settings, \cite{Henderson2019}. Learning rate $\alpha$ and the discount factor $\gamma$ are two core hyperparameters, common across RL algorithms, and we chose these for grid search training. Both these hyperparameters are suggested by \cite{Shala2022AutoRL, Eimer2023, Francois2016} and as used by \cite{Shala2022AutoRL} for their "AutoRL-Bench".
 
 %% $$$
 
-\subsubsection{Attention mechanisms as lightweight feature extractors}
+\paragraph{Attention mechanisms as lightweight feature extractors.}
 \label{sec:attention}
 
 Attention mechanisms are implemented as custom feature extractors $\phi(\mathbf{x}_t)$ that map the raw sensor observation $\mathbf{x}_t$ into a 64-dimensional embedding (\texttt{features\_dim=64}). The resulting embedding is then consumed by the default multilayer-perceptron policy/value networks provided by Stable-Baselines3.
 
-Because the policy acts on sensor vectors rather than on a fully instrumented machine state (Section~\ref{sec:obs_model}), the core challenge becomes representation learning from multivariate observations. Attention is a representation-learning prior that biases the policy toward informative sensor patterns and feature interactions. We implement attention mechanisms as feature extractors $\phi_\theta(\mathbf{x}_t)$ that map a raw sensor vector into a compact embedding used by the RL policy.
+Because the policy acts on sensor vectors rather than on a fully instrumented machine state (Section~\ref{sec:tech_background}), the core challenge becomes representation learning from multivariate observations. Attention is a representation-learning prior that biases the policy toward informative sensor patterns and feature interactions. We implement attention mechanisms as feature extractors $\phi_\theta(\mathbf{x}_t)$ that map a raw sensor vector into a compact embedding used by the RL policy.
 
 \textbf{General attention concept.}
 Given values $V=\{\mathbf{v}_1,\ldots,\mathbf{v}_n\}$ and a query $\mathbf{q}$, attention forms a convex combination
@@ -472,9 +364,7 @@ In this codebase, the softmax normalization is across the \emph{batch} dimension
 \end{algorithmic}
 \end{algorithm}
 
-\subsection{Simulation environment: a Gymnasium-compatible milling PdM environment}
-\label{sec:env}
-\subsubsection{Design goals and schema abstraction}
+\paragraph{Simulation environment (Gymnasium-compatible milling PdM).}
 The environment class \texttt{MT\_Env} (\texttt{code/rl\_pdm.py}) implements the Gymnasium interface \cite{Foundation2023}. A central design goal is schema generality: the same environment logic (episode structure, actions, and reward shaping) should work across different milling-machine sensor schemas.
 
 In the implementation, schema abstraction is achieved by keeping the MDP ``skeleton'' fixed while allowing the observation \emph{feature set} to vary:
@@ -489,28 +379,27 @@ The environment detects the schema using available sensor columns (e.g., force a
 \textbf{Practical requirement for new datasets.}
 To reuse \texttt{MT\_Env} on a new milling-machine dataset without code changes, the CSV must include a \texttt{tool\_wear} column (used internally for termination and reward) plus one or more numeric sensor columns (used as observations).
 
-\subsubsection{Observation and action spaces}
+\paragraph{Observation and action spaces.}
 Only sensor readings available during cutting are included in the observation vector; inspection-based wear values are retained internally for reward and termination. The action space is discrete with two actions: $a=0$ means \emph{replace} (terminates the episode) and $a=1$ means \emph{continue}.
 
-\subsubsection{Reward shaping for asymmetric PdM risk}
-\label{sec:reward}
+\paragraph{Reward shaping for asymmetric PdM risk.}
 The reward function encourages long tool use without threshold violation, while rewarding timely replacement close to the wear threshold. In the implementation, continuing yields a small positive survival reward $R_1$, violating the wear threshold yields a catastrophic penalty $R_2$, replacement has a small cost $R_3$, and replacement near the threshold earns a strong bonus $R_4$ (with stepped bonuses above 70\%, 80\%, and 90\% wear ratio).
 
 This design reflects a practical PdM asymmetry: a late replacement causing quality loss or failure is substantially worse than an early replacement.
 
-\subsection{Experimental design} \label{sec:experiment} 
+\subsection{Datasets and evaluation protocol} \label{sec:experiment} 
 
 We evaluate AutoRL under two datasets with deliberately different sensing modalities: (i) an IEEE benchmark dataset (public PHM 2010 data challenge), and (ii) an in-house SIT dataset collected on a university milling testbed. To align the learning problem with real deployment constraints, the environment observation in \texttt{MT\_Env} contains \emph{only} sensor channels (excluding \texttt{Time}, \texttt{tool\_wear}, and \texttt{ACTION\_CODE}). Sensor units are: force in N, vibration in $g$, AE-RMS (\texttt{acoustic\_emission\_rms}) in V, current in A, sound in V, and load-cell signals in kN (or V after conditioning).
 
-\subsubsection{IEEE benchmark dataset (public PHM 2010)}
+\paragraph{IEEE benchmark dataset (public PHM 2010).}
 The IEEE dataset \cite{PHMdata2010} is from the PHM Society 2010 Data Challenge and targets tool-condition monitoring and remaining useful life estimation for a high-speed CNC milling process. The dataset documentation reports a high-speed CNC platform instrumented with a dynamometer (cutting forces), accelerometers (vibrations), and an acoustic-emission sensor, with signals acquired at 50~kHz per channel. The published cutting conditions include a spindle speed of 10{,}400~rpm, feed rate of 1{,}555~mm/min, radial depth of cut 0.125~mm, and axial depth of cut 0.2~mm.
 
 Following the competition release format, we use the seven sensor columns corresponding to \{\texttt{force\_x}, \texttt{force\_y}, \texttt{force\_z}, \texttt{vibration\_x}, \texttt{vibration\_y}, \texttt{vibration\_z}, \texttt{acoustic\_emission\_rms}\}. In typical descriptions of the apparatus, these channels correspond to cutting-force measurement via a dynamometer, vibration measurement via accelerometers, and acoustic emission summarized as an RMS feature. Five cutter records are used in our experiments (three for training and two for evaluation), matching the standard train/test partitioning.
 
-\subsubsection{SIT in-house dataset (university milling testbed)}
-The SIT dataset is collected on a Vertical Milling Centre (VMC) (Jyoti NVU PX10) using an NI data acquisition system and a production-oriented sensor suite. The machine-and-sensor layout (Fig.~\ref{fig:expt-setup-1}) and measurement instruments (DAQ and tool-makers microscope; Fig.~\ref{fig:expt-setup-2}) summarize the in-house setup.
+\paragraph{SIT in-house dataset (university milling testbed).}
+The SIT dataset is collected on a Vertical Milling Centre (VMC) (Jyoti NVU PX10) using an NI data acquisition system. The machine-and-sensor layout (Fig.~\ref{fig:expt-setup-1}) and measurement instruments (DAQ and tool-makers microscope; Fig.~\ref{fig:expt-setup-2}) summarize the in-house setup.
 
-Tool wear is quantified via a tool-makers microscope, with the flank-wear definition illustrated using digital images of a new and a worn insert (Fig.~\ref{fig:tool_images}). Progressive wear snapshots used for annotation/validation are shown in Table~\ref{tab:wearimages}. The experiments span spindle speeds of 800--1{,}200~rpm and feed rates of 20--40~mm/min, with a maximum allowable flank wear of 0.32~mm.
+Tool wear is quantified via a tool-makers microscope, with the flank-wear definition illustrated using digital images of a new and a worn insert (Fig.~\ref{fig:tool_images}). The experiments span spindle speeds of 800--1{,}200~rpm and feed rates of 20--40~mm/min, with a maximum allowable flank wear of 0.32~mm.
 
 The SIT observation schema includes eight channels aligned with \texttt{MT\_Env}: \{\texttt{Vib\_Spindle}, \texttt{Vib\_Table}, \texttt{Sound\_Spindle}, \texttt{Sound\_table}, \texttt{X\_Load\_Cell}, \texttt{Y\_Load\_Cell}, \texttt{Z\_Load\_Cell}, \texttt{Current}\}, covering vibration, sound, three-axis load, and spindle current signals.
 
@@ -530,24 +419,24 @@ The SIT observation schema includes eight channels aligned with \texttt{MT\_Env}
 	\label{fig:expt-setup-2}
 \end{figure}
 
-\begin{table}[h!]
-	\centering
-	\caption{Progressive tool wear. Images taken using tool-makers microscope}
-	\label{tab:wearimages}
-	\begin{tabular}{|r|r|c|}
-	\hline
-	Runs & Wear $VB_{max}\mu$m & Tool condition\\
-	\hline
-	 0 &   0.00 & \includegraphics[width=0.3\linewidth]{tw-1.jpg} \\ \hline
-	 5 & 119.71 & \includegraphics[width=0.3\linewidth]{tw-2.jpg} \\ \hline
-	10 & 170.07 & \includegraphics[width=0.3\linewidth]{tw-3.jpg} \\ \hline
-	15 & 212.21 & \includegraphics[width=0.3\linewidth]{tw-4.jpg} \\ \hline
-	20 & 236.50 & \includegraphics[width=0.3\linewidth]{tw-5.jpg} \\ \hline
-	25 & 254.74 & \includegraphics[width=0.3\linewidth]{tw-6.jpg} \\ \hline
-	30 & 280.29 & \includegraphics[width=0.3\linewidth]{tw-7.jpg} \\ \hline
-	35 & 303.65 & \includegraphics[width=0.3\linewidth]{tw-8.jpg} \\ \hline
-	\end{tabular}
-\end{table}
+% \begin{table}[h!]
+% 	\centering
+% 	\caption{Progressive tool wear. Images taken using tool-makers microscope}
+% 	\label{tab:wearimages}
+% 	\begin{tabular}{|r|r|c|}
+% 	\hline
+% 	Runs & Wear $VB_{max}\mu$m & Tool condition\\
+% 	\hline
+% 	 0 &   0.00 & \includegraphics[width=0.3\linewidth]{tw-1.jpg} \\ \hline
+% 	 5 & 119.71 & \includegraphics[width=0.3\linewidth]{tw-2.jpg} \\ \hline
+% 	10 & 170.07 & \includegraphics[width=0.3\linewidth]{tw-3.jpg} \\ \hline
+% 	15 & 212.21 & \includegraphics[width=0.3\linewidth]{tw-4.jpg} \\ \hline
+% 	20 & 236.50 & \includegraphics[width=0.3\linewidth]{tw-5.jpg} \\ \hline
+% 	25 & 254.74 & \includegraphics[width=0.3\linewidth]{tw-6.jpg} \\ \hline
+% 	30 & 280.29 & \includegraphics[width=0.3\linewidth]{tw-7.jpg} \\ \hline
+% 	35 & 303.65 & \includegraphics[width=0.3\linewidth]{tw-8.jpg} \\ \hline
+% 	\end{tabular}
+% \end{table}
 
 \begin{figure}[t]
 	\centering
@@ -589,17 +478,17 @@ The SIT observation schema includes eight channels aligned with \texttt{MT\_Env}
 \textbf{Schema heterogeneity and environment robustness.}
 The two schemas differ in both dimensionality (7 vs. 8 channels) and sensing modality (force/vibration/AE vs. vibration/sound/load/current), which produces distinct value ranges and temporal variability patterns (Fig.~\ref{fig:schema_feature_plots_ieee_sit}). This heterogeneity is intentional: \texttt{MT\_Env} selects schema-specific sensor feature sets while keeping the action semantics (replace vs. continue) and wear-threshold termination logic fixed, thereby stress-testing policies built from available machine signals across materially different instrumentation and supporting robustness and generalizability claims.
 
-\subsubsection{Datasets and generalization protocol}
-The study uses two sensor schemas: (i) SIT (production-oriented schema with eight sensor channels), and (ii) IEEE (benchmark schema with force, vibration, and acoustic emission channels). Generalization is evaluated via a one-vs-all protocol: agents are trained on training file(s) within a schema and evaluated on remaining unseen files within the same schema.
+\paragraph{Datasets and generalization protocol.}
+The study uses two sensor schemas: (i) SIT (production-oriented schema with eight sensor channels), and (ii) IEEE (benchmark schema with force, vibration, and acoustic emission channels). Generalization is evaluated via a one-vs-all protocol: agents are trained on training file(s) within a schema and evaluated on remaining unseen datasets within the same schema.
 
-\subsection{Baselines and metrics}
+\paragraph{Baselines and metrics.}
 \label{sec:metrics}
 The primary comparison in this paper is among RL agents that consume raw sensor observations directly. We do not include conventional supervised-ML baselines in this version because such pipelines typically require additional target construction, forecasting design choices, or task-specific feature engineering that vary substantially across schemas and practitioner settings. This omission should be treated as a scope choice rather than a claim that conventional ML is unsuitable; adding strong non-RL baselines remains an important extension for future work.
 
-\subsubsection{Evaluation metrics}
+\paragraph{Evaluation metrics.}
 We report three metrics used by the AutoRL evaluation: (i) evaluation score, (ii) tool usage (\%), and (iii) a $\lambda$ timing metric. We used 40 rounds of evaluation.
 
-\subsubsection{Exact evaluation score definition (as implemented)}
+\paragraph{Exact evaluation score definition (as implemented).}
 The paper-level ``evaluation score'' corresponds to \texttt{calculate\_eval\_score()} in \texttt{code/batch\_train.py}. Let $u\in[0,1]$ be tool usage fraction at first replacement, $v\in\mathbb{N}_0$ be the number of post-threshold timesteps without replacement (threshold violations), and $\lambda=t_{\lambda}-t_{\mathrm{FR}}$ be the signed timing error. The implemented score is
 \begin{align}
 S_{\text{tool}} &= \mathrm{clip}(u,0,1),\\
@@ -624,17 +513,17 @@ Here $c_{\lambda}$ is the normalization constant used by \texttt{calculate\_eval
 \end{algorithm}
 
 %% Lambda
-\subsubsection{Lambda metric and offline prognostic evaluation}
+\paragraph{Lambda metric and offline prognostic evaluation.}
 We implement a timing metric inspired by offline prognostic evaluation concepts \cite{Saxena2010Metrics}. Define $t_{\lambda}$ as the first timestep where wear exceeds an ``in-advance replacement'' (IAR) lower bound. Let $t_{\mathrm{FR}}$ be the first replacement timestep. Then
 \begin{equation}
 		\lambda = t_{\lambda} - t_{\mathrm{FR}}.
 \end{equation}
 
-\subsubsection{Multi-round evaluation, confidence intervals, and hypothesis tests}
+\paragraph{Multi-round evaluation, confidence intervals, and hypothesis tests.}
 For SIT, each trained model is evaluated for 20 rounds on unseen data to quantify variance from stochastic action sampling. Hypothesis testing uses one-tailed Welch $t$-tests (provided as CSV artefacts) at $\alpha=0.05$.
 
 \textbf{Aggregation and 95\% confidence intervals.}
-Let $S_1,\ldots,S_n$ denote the evaluation scores obtained across rounds and test files in a given panel. We report the sample mean and standard deviation
+Let $S_1,\ldots,S_n$ denote the evaluation scores obtained across rounds and test files. We report the sample mean and standard deviation
 \begin{align}
 \mu &= \frac{1}{n}\sum_{i=1}^{n} S_i,\\
 \sigma &= \sqrt{\frac{1}{n-1}\sum_{i=1}^{n}(S_i-\mu)^2},
@@ -644,27 +533,43 @@ and the standard error of the mean $\mathrm{SEM}=\sigma/\sqrt{n}$. A normal-appr
 \textbf{Statistical caveats.}
 The $t$-tests are used here to compare and rank configurations in the AutoRL grid, not as stand-alone confirmatory evidence. Standard cautions apply: (i) multiple comparisons are performed across algorithms and attention panels without formal correction, and (ii) repeated evaluation rounds on the same test file can introduce dependence (pseudoreplication). Accordingly, the statistical panels should be read together with the mean scores, confidence intervals, and cross-schema consistency.
 
-\section{Results and Discussion}
-\label{sec:results}
-This section reports consolidated evidence from the SIT and IEEE experiments using AutoRL dashboards, generalization heatmaps, and hypothesis-test artefacts, with emphasis on effect patterns, ranking stability, and cross-schema consistency.
+\section{Results} \label{sec:results}
+This section reports consolidated evidence from the SIT and IEEE experiments.
 
-\textbf{Experimental design for robustness.}
-For SIT, we evaluate a consolidated set of results using 14 trained models and 14 evaluation files, with 20 stochastic evaluation rounds per model--file pair. For IEEE, we report results over 5 trained models and 5 evaluation files.
+\textbf{Experimental design for robustness}
+For each schema (SIT and IEEE), we trained models using four RL algorithms (A2C, DQN, PPO and REINFORCE) and four attention mechanisms (Nadaraya--Watson attention (NW), Temporal attention (TP), Self-attention (SA) and Multi-head attention (MH)).
 
-\subsection{Visual summaries: analysis dashboards and generalization heatmaps}
+For statistical robustness we performed 20 stochastic rounds per evaluation dataset.
+
+\paragraph{SIT Schema}
+\begin{itemize}
+	\item Training datasets: 7 (Identifiers: SIT-07, -08, -09, -15, -17, -19, and -20)
+	\item Evaluation datasets: 14 (Identifiers: SIT-07, -08, -09, -10, -11, -12, -13, -14, -15, -16, -17, -18, -19, and -20)
+	\item Trained models: 4 $\times$ 4 $\times$ 7 $\times$ = 112
+	\item Evaluations: 112 $\times$ 14 = 1568
+\end{itemize}
+\paragraph{IEEE Schema}
+\begin{itemize}
+	\item Training datasets: 5 (Identifiers: IEEE-01, -03, -04, -06, and -08)
+	\item Evaluation datasets: 5 (Identifiers: IEEE-01, -03, -04, -06, and -08)
+	\item Trained models: 4 $\times$ 4 $\times$ 5 $\times$ = 80
+	\item Evaluations: 80 $\times$ 5 = 400
+\end{itemize}
+
+\subsection{Analysis dashboards and generalization heatmaps}
 Figure~\ref{fig:analysis_sit} and Figure~\ref{fig:analysis_ieee} provide consolidated dashboards for each schema. Figure~\ref{fig:heatmap_sit} and Figure~\ref{fig:heatmap_ieee} complement these dashboards with one-vs-all generalization heatmaps.
 
 \begin{figure}[t]
 	\centering
 	\includegraphics[width=0.95\textwidth]{_Analysis_Report_SIT.png}
-	\caption{Consolidated evaluation dashboard for SIT (mean and uncertainty/error bars) used as primary visual evidence for performance patterns across algorithms and attention mechanisms.}
+	\caption{Consolidated evaluation dashboard for SIT -- Performance across algorithms and attention mechanisms.}
 	\label{fig:analysis_sit}
 \end{figure}
 
 \begin{figure}[t]
 	\centering
 	\includegraphics[width=0.95\textwidth]{_Analysis_Report_IEEE.jpg}
-	\caption{Consolidated evaluation dashboard for IEEE (mean and uncertainty/error bars) used as primary visual evidence for performance patterns across algorithms and attention mechanisms.}
+	\caption{Consolidated evaluation dashboard for IEEE -- Performance across algorithms and attention mechanisms.}
 	\label{fig:analysis_ieee}
 \end{figure}
 
@@ -682,13 +587,13 @@ Figure~\ref{fig:analysis_sit} and Figure~\ref{fig:analysis_ieee} provide consoli
 	\label{fig:heatmap_ieee}
 \end{figure}
 
-\begin{figure}[t]
-	\centering
-	\includegraphics[width=0.48\textwidth]{PPO_MH_SIT_8_10.png}\hfill
-	\includegraphics[width=0.48\textwidth]{PPO_NW_SIT_8_10.png}
-	\caption{Example unseen-only evaluation traces for PPO on the SIT schema. \textbf{(a)} PPO with Multi-Head attention. \textbf{(b)} PPO with Nadaraya--Watson attention.}
-	\label{fig:ppo_unseen_mh_nw}
-\end{figure}
+% \begin{figure}[t]
+% 	\centering
+% 	\includegraphics[width=0.48\textwidth]{PPO_MH_SIT_8_10.png}\hfill
+% 	\includegraphics[width=0.48\textwidth]{PPO_NW_SIT_8_10.png}
+% 	\caption{Sample evaluation traces for PPO on the SIT schema. \textbf{(a)} PPO with Multi-Head attention. \textbf{(b)} PPO with Nadaraya--Watson attention.}
+% 	\label{fig:ppo_unseen_mh_nw}
+% \end{figure}
 
 %% IEEE REINFORCE + Attention
 \begin{figure}[t]
@@ -756,80 +661,232 @@ Figure~\ref{fig:analysis_sit} and Figure~\ref{fig:analysis_ieee} provide consoli
 	\label{fig:SIT_RF_with_Attention}
 \end{figure}
 
-\subsection{Pairwise comparison tests: REINFORCE vs A2C/DQN/PPO}
+\subsection{Quantitative comparisons and statistical evidence}
 \label{sec:hypothesis_tests}
-The hypothesis-test artefacts provide one-tailed Welch $t$-tests at $\alpha=0.05$ for each schema. Table~\ref{tab:hyp_tests} summarizes the unseen-only evaluation-score tests for two reporting panels: \emph{All Attn} and \emph{Best Attn}.
+Hypothesis test performed with one-tailed Welch $t$-tests at $\alpha=0.05$ for each schema. Table~\ref{tab:hyp_tests} summarizes the results under two categories - overall and using the best performing attention mechanism.
 
 \begin{table}[t]
 	\centering
-	\caption{Pairwise comparison tests (unseen-only evaluation score): one-tailed Welch $t$-tests comparing REINFORCE to each competitor at $\alpha=0.05$.}
+	\caption{Pairwise comparison tests: one-tailed Welch $t$-tests comparing REINFORCE to each competitor at $\alpha=0.05$.}
 	\label{tab:hyp_tests}
-	% (Inlined from figures/hypothesis_tests_summary.tex)
-	\begin{tabular}{l l l r r l}
+	\begin{tabular}{l l r r l}
 	\toprule
-	\textbf{Dataset} & \textbf{Panel} & \textbf{Competitor} & \textbf{t} & \textbf{p (1-tail)} & \textbf{Sig.}\\
+	\textbf{Dataset} & \textbf{Competitor} & \textbf{t} & \textbf{p (1-tail)} & \textbf{Significance}\\
 	\midrule
-	SIT & All Attn & A2C & 198.007 & 0.000 & YES\\
-	SIT & Best Attn & A2C & 512.423 & 0.000 & YES\\
-	SIT & All Attn & DQN & 202.449 & 0.000 & YES\\
-	SIT & Best Attn & DQN & 562.313 & 0.000 & YES\\
-	SIT & All Attn & PPO & 20.686 & 0.000 & YES\\
-	SIT & Best Attn & PPO & 49.902 & 0.000 & YES\\
-	IEEE & All Attn & A2C & 10.726 & 0.000 & YES\\
-	IEEE & Best Attn & A2C & 10.434 & 0.000 & YES\\
-	IEEE & All Attn & DQN & 15.977 & 0.000 & YES\\
-	IEEE & Best Attn & DQN & 15.235 & 0.000 & YES\\
-	IEEE & All Attn & PPO & 1.957 & 0.026 & YES\\
-	IEEE & Best Attn & PPO & 2.096 & 0.020 & YES\\
+	\multicolumn{5}{l}{\textbf{Overall}}\\
+	\faintcmidrule{1-5}
+	\multirow{3}{*}{SIT}
+		& A2C & 198.007 & 0.000 & Yes\\
+		& DQN & 202.449 & 0.000 & Yes\\
+		& PPO & 20.686 & 0.000 & Yes\\
+	\faintcmidrule{1-5}
+	\multirow{3}{*}{IEEE}
+		& A2C & 10.726 & 0.000 & Yes\\
+		& DQN & 15.977 & 0.000 & Yes\\
+		& PPO & 1.957 & 0.026 & Yes\\
+	\midrule
+	\multicolumn{5}{l}{\textbf{Best attention mechanism}}\\
+	\faintcmidrule{1-5}
+	\multirow{3}{*}{SIT}
+		& A2C & 512.423 & 0.000 & Yes\\
+		& DQN & 562.313 & 0.000 & Yes\\
+		& PPO & 49.902 & 0.000 & Yes\\
+	\faintcmidrule{1-5}
+	\multirow{3}{*}{IEEE}
+		& A2C & 10.434 & 0.000 & Yes\\
+		& DQN & 15.235 & 0.000 & Yes\\
+		& PPO & 2.096 & 0.020 & Yes\\
 	\bottomrule
 	\end{tabular}
 \end{table}
 
-\subsection{Quantitative IEEE summary (means and 95\% CI)}
-\label{sec:ieee_summary}
+\paragraph{Hypothesis-driven interpretation (H1--H3).}
+Let $S$ denote the  evaluation score (Section~\ref{sec:metrics}). For each schema and competitor $c\in\{\textsc{A2C},\textsc{DQN},\textsc{PPO}\}$, Table~\ref{tab:hyp_tests} reports a one-tailed Welch $t$-test of whether \textsc{REINFORCE} achieves a higher mean score than $c$ under repeated stochastic evaluation. Formally, for each pairwise comparison we test
+\begin{equation}
+H_0: \mu_{\mathrm{RF}} \le \mu_c
+\qquad\text{vs.}\qquad
+H_1: \mu_{\mathrm{RF}} > \mu_c,
+\end{equation}
+at significance level $\alpha=0.05$, where $\mu_{\mathrm{RF}}$ and $\mu_c$ denote the mean  evaluation scores aggregated over evaluation rounds and held-out files within the corresponding schema/panel. The table is structured into two panels: \textbf{Overall} (aggregating across attention mechanisms in the evaluation set) and \textbf{Best attention mechanism} (restricting to the best-performing attention configuration per algorithm within the grid).
+
+\textbf{H1 (primary): \textsc{REINFORCE} is competitive with A2C/DQN/PPO.}
+Under the $H_1$ formulation above, all reported comparisons satisfy $p<0.05$ for both SIT and IEEE in both panels (Table~\ref{tab:hyp_tests}), so $H_0$ is rejected throughout at $\alpha=0.05$. This provides statistical evidence---under the adopted evaluation protocol---that \textsc{REINFORCE} achieves higher mean  scores than \textsc{A2C} and \textsc{DQN} on both schemas, and also exceeds \textsc{PPO} on both schemas. Notably, the IEEE \textsc{PPO} comparison shows the smallest margin (overall: $t=1.957$, $p=0.026$), indicating that on IEEE the top methods are closer, consistent with the near-ties observed in the mean-score tables.
+
+\textbf{H2: schema portability of environment and reward logic.}
+H2 is supported by the cross-schema consistency of the hypothesis-test outcomes: the same environment design and reward shaping yield a stable ranking signal in both SIT and IEEE, with \textsc{REINFORCE} significantly outperforming \textsc{A2C} and \textsc{DQN} and remaining close to (but still statistically above) \textsc{PPO}. This should be interpreted as \emph{schema portability} of the experimental pipeline and MDP formulation---i.e., the same formulation produces meaningful learning and evaluation behaviour across heterogeneous sensor schemas---not as direct transfer of a trained policy from one schema to the other.
+
+\textbf{H3: attention mechanisms improve \textsc{REINFORCE} performance.}
+While Table~\ref{tab:hyp_tests} is not a within-algorithm ablation test of ``with-attention'' versus ``without-attention'', it provides supporting evidence that attention selection materially affects outcomes: when comparisons are restricted to the \emph{best attention mechanism} panel, the $t$-statistics generally increase relative to the overall panel (e.g., SIT vs \textsc{PPO}: $t$ rises from 20.686 to 49.902; SIT vs \textsc{A2C}: 198.007 to 512.423), indicating that attention can amplify performance separation in favour of \textsc{REINFORCE} under tuned feature extraction. Taken together with the mean-performance summaries, this pattern is consistent with H3: attention mechanisms act as a useful inductive bias for representation learning from observation-only sensor vectors in this PdM setting.
+
+\paragraph{Quantitative IEEE summary (means and 95\% CI).}
 Table~\ref{tab:ieee_top10} lists the top IEEE configurations by mean evaluation score, and Table~\ref{tab:ieee_best_attn} summarizes the best attention mechanism per algorithm.
 
+\begin{table}
+\caption{Top 10 SIT models sorted by mean eval-scores, aggregated across all trained models and test files}
+\label{tab:sit_top10}
+\begin{tabular}{ll r r r r}
+\toprule
+\textbf{Algorithm} & \textbf{Attention} & \textbf{Eval. Score} & \textbf{95\% CI} & \textbf{Tool use (\%)} & \textbf{$\lambda$}\\
+\midrule
+    \textbf{REINFORCE} & \textbf{Multi-Head} & \textbf{0.930} & \textbf{0.002} & \textbf{96.637} & \textbf{-45.020} \\
+    REINFORCE & Self-Attention & 0.846 & 0.010 & 90.733 & 20.041 \\
+    PPO & Temporal & 0.841 & 0.010 & 90.288 & 24.878 \\
+    REINFORCE & Nadaraya-Watson & 0.833 & 0.011 & 89.768 & 28.571 \\
+    PPO & Nadaraya-Watson & 0.831 & 0.011 & 89.862 & 27.520 \\
+    REINFORCE & Temporal & 0.746 & 0.013 & 83.938 & 93.684 \\
+    PPO & Self-Attention & 0.713 & 0.014 & 82.141 & 109.276 \\
+    PPO & Multi-Head & 0.606 & 0.015 & 74.896 & 188.755 \\
+    A2C & Nadaraya-Watson & 0.283 & 0.004 & 53.148 & 427.786 \\
+    A2C & Multi-Head & 0.271 & 0.002 & 52.193 & 437.571 \\
+    \bottomrule
+\end{tabular}
+\end{table}
+
+
 \begin{table}[t]
 	\centering
-	\caption{Top IEEE configurations on unseen-only evaluations (mean and 95\% CI, aggregated across trained models and test files). Numbers are rounded to three decimals.}
+	\caption{Top 10 IEEE models sorted by mean eval-scores, aggregated across all trained models and test files)}
 	\label{tab:ieee_top10}
-	% (Inlined from figures/ieee_unseen_summary.tex)
 	\begin{tabular}{ll r r r r}
 	\toprule
-	\textbf{Algorithm} & \textbf{Attention} & \textbf{Eval. Score} & \textbf{CI} & \textbf{Tool use (\%)} & \textbf{$\lambda$}\\
+	\textbf{Algorithm} & \textbf{Attention} & \textbf{Eval. Score} & \textbf{95\% CI} & \textbf{Tool use (\%)} & \textbf{$\lambda$}\\
 	\midrule
-	PPO & Temporal & 0.886 & 0.031 & 95.199 & -85.050\\
-	REINFORCE & Multi-Head & 0.886 & 0.031 & 95.215 & -85.700\\
-	REINFORCE & Self-Attention & 0.886 & 0.031 & 95.261 & -86.100\\
-	REINFORCE & Temporal & 0.885 & 0.031 & 95.341 & -86.750\\
-	PPO & Nadaraya-Watson & 0.857 & 0.070 & 93.651 & -31.900\\
-	REINFORCE & Nadaraya-Watson & 0.850 & 0.068 & 93.079 & -40.950\\
-	PPO & Multi-Head & 0.843 & 0.070 & 93.170 & -50.300\\
-	PPO & Self-Attention & 0.740 & 0.114 & 87.271 & 109.150\\
-	A2C & Multi-Head & 0.684 & 0.130 & 82.617 & 208.600\\
-	A2C & Nadaraya-Watson & 0.669 & 0.129 & 83.096 & 212.750\\
+	\textbf{REINFORCE} & \textbf{Multi-Head} & \textbf{0.886} & \textbf{0.031} & \textbf{95.215} & \textbf{-85.700}\\
+	REINFORCE & Self-Attention 	& 0.886 & 0.031 & 95.261 & -86.100\\
+	PPO & Temporal 				& 0.886 & 0.031 & 95.199 & -85.050\\
+	REINFORCE & Temporal 		& 0.885 & 0.031 & 95.341 & -86.750\\
+	PPO & Nadaraya-Watson 		& 0.857 & 0.070 & 93.651 & -31.900\\
+	REINFORCE & Nadaraya-Watson	& 0.850 & 0.068 & 93.079 & -40.950\\
+	PPO & Multi-Head 			& 0.843 & 0.070 & 93.170 & -50.300\\
+	PPO & Self-Attention 		& 0.740 & 0.114 & 87.271 & 109.150\\
+	A2C & Multi-Head 			& 0.684 & 0.130 & 82.617 & 208.600\\
+	A2C & Nadaraya-Watson 		& 0.669 & 0.129 & 83.096 & 212.750\\
 	\bottomrule
 	\end{tabular}
 \end{table}
 
-\begin{table}[t]
-	\centering
-	\caption{IEEE unseen-only: best attention mechanism per algorithm (mean evaluation score and 95\% CI).}
-	\label{tab:ieee_best_attn}
-	% (Inlined from figures/ieee_best_attention_per_algo.tex)
+
+\begin{table}
+	\caption{SIT: Algorithms with best performing attention mechanism.}
+	\label{tab:sit_best_attn}
 	\begin{tabular}{l l r r r}
 	\toprule
 	\textbf{Algorithm} & \textbf{Best attention} & \textbf{Eval. Score} & \textbf{CI} & \textbf{n}\\
 	\midrule
-	A2C & Multi-Head & 0.684 & 0.130 & 20\\
-	DQN & Multi-Head & 0.509 & 0.139 & 20\\
-	PPO & Temporal & 0.886 & 0.031 & 20\\
-	REINFORCE & Multi-Head & 0.886 & 0.031 & 20\\
+		A2C & Nadaraya-Watson & 0.283 & 0.004 & 1568 \\
+		DQN & Multi-Head & 0.271 & 0.002 & 1568 \\
+		PPO & Temporal & 0.841 & 0.010 & 1568 \\
+		\textbf{REINFORCE} & \textbf{Multi-Head} & \textbf{0.930} & \textbf{0.002} & 1568 \\
 	\bottomrule
 	\end{tabular}
 \end{table}
 
-\subsection{Ablation study / sensitivity analysis: attention mechanisms}
+\begin{table}[t]
+	\centering
+	\caption{IEEE: Algorithms with best performing attention mechanism.}
+	\label{tab:ieee_best_attn}
+	\begin{tabular}{l l r r r}
+	\toprule
+	\textbf{Algorithm} & \textbf{Best attention} & \textbf{Eval. Score} & \textbf{CI} & \textbf{n}\\
+	\midrule
+		A2C & Multi-Head & 0.696 & 0.113 & 400 \\
+		DQN & Multi-Head & 0.509 & 0.124 & 400 \\
+		PPO & Temporal & 0.886 & 0.028 & 400 \\
+		\textbf{REINFORCE} & \textbf{Self-Attention} & \textbf{0.886} & \textbf{0.021} & 400 \\
+	\bottomrule
+	\end{tabular}
+\end{table}
+
+\paragraph{Model footprint (serialized sizes).}
+To complement the performance comparisons, we also report the serialized policy sizes produced by the training pipeline, averaged across models within each schema.
+
+\begin{table}[t]
+	\centering
+	\caption{IEEE schema (averaged over 80 models)}
+	\label{tab:model_size_ieee}
+	\begin{tabular}{l l r r}
+		\toprule
+		\textbf{Algorithm} & \textbf{Attention} & \textbf{Avg. size (KB)} & \textbf{$\log_{10}(\text{size(KB)})$} \\
+		\midrule
+		\multirow{5}{*}{A2C}     
+			& Multi-Head       & 212.79 & 2.328 \\
+			& Nadaraya-Watson  & 182.30 & 2.261 \\
+			& Self-Attention   & 414.77 & 2.618 \\
+			& Temporal         & 360.31 & 2.557 \\
+			\faintcmidrule{2-4}
+			& A2C Average      & 292.54 & 2.441 \\
+		\midrule
+		\multirow{5}{*}{DQN}			
+			& Multi-Head       & 259.84 & 2.415 \\
+			& Nadaraya-Watson  & 201.53 & 2.304 \\
+			& Self-Attention   & 657.75 & 2.818 \\
+			& Temporal         & 551.74 & 2.742 \\ 
+			\faintcmidrule{2-4}
+			& DQN Average      & 417.72 & 2.570 \\
+		\midrule
+		\multirow{5}{*}{PPO}
+			& Multi-Head       & 113.23 & 2.054 \\
+			& Nadaraya-Watson  & 97.64  & 1.990 \\
+			& Self-Attention   & 214.53 & 2.331 \\
+			& Temporal         & 252.12 & 2.402 \\ 
+			\faintcmidrule{2-4}
+			& PPO Average      & 169.38 & 2.194 \\
+		\midrule
+		\multirow{5}{*}{REINFORCE}
+			& Multi-Head       & 112.81 & 2.052 \\
+			& Nadaraya-Watson  & 97.21  & 1.988 \\
+			& Self-Attention   & 214.10 & 2.331 \\
+			& Temporal         & 251.69 & 2.401 \\ 
+			\faintcmidrule{2-4}
+			& REINFORCE Average& 168.95 & 2.193 \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\begin{table}[t]
+	\centering
+	\caption{SIT schema (averaged over 112 models)}
+	\label{tab:model_size_sit}
+	\begin{tabular}{l l r r}
+		\toprule
+		\textbf{Algorithm} & \textbf{Attention} & \textbf{Avg. size (KB)} & \textbf{$\log_{10}(\text{size(KB)})$} \\
+		\midrule
+		\multirow{5}{*}{A2C}
+			& Multi-Head       & 214.37 & 2.331 \\
+			& Nadaraya-Watson  & 182.59 & 2.261 \\
+			& Self-Attention   & 415.33 & 2.618 \\
+			& Temporal         & 361.89 & 2.559 \\ 
+			\faintcmidrule{2-4}
+			& A2C Average      & 293.55 & 2.442 \\
+		\midrule
+		\multirow{5}{*}{DQN}
+			& Multi-Head       & 262.96 & 2.420 \\
+			& Nadaraya-Watson  & 202.28 & 2.306 \\
+			& Self-Attention   & 658.82 & 2.819 \\
+			& Temporal         & 554.85 & 2.744 \\ 
+			\faintcmidrule{2-4}
+			& DQN Average      & 419.73 & 2.572 \\
+		\midrule
+		\multirow{5}{*}{PPO}
+			& Multi-Head       & 114.04 & 2.057 \\
+			& Nadaraya-Watson  & 97.80  & 1.990 \\
+			& Self-Attention   & 214.83 & 2.332 \\
+			& Temporal         & 252.93 & 2.403 \\ 
+			\faintcmidrule{2-4}
+			& PPO Average      & 169.90 & 2.196 \\
+		\midrule
+		\multirow{5}{*}{REINFORCE}
+			& Multi-Head       & 113.62 & 2.055 \\
+			& Nadaraya-Watson  & 97.38  & 1.988 \\
+			& Self-Attention   & 214.40 & 2.331 \\
+			& Temporal         & 252.50 & 2.402 \\ 
+			\faintcmidrule{2-4}
+			& REINFORCE Average& 169.47 & 2.194 \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\subsection{Schema portability and attention sensitivity}
 \textbf{Dataset-level interpretation.}
 \textbf{SIT (consolidated).} The SIT dashboard (Figure~\ref{fig:analysis_sit}) indicates a clear separation between the two lightweight baselines (A2C/DQN) and the two top performers (PPO/\textsc{REINFORCE}) across attention mechanisms.
 
@@ -841,7 +898,7 @@ Attention improves \textsc{REINFORCE}, but no single mechanism dominates across 
 \textbf{Practical recommendation.}
 For edge-first deployments with constrained training and inference budgets, \emph{REINFORCE + Multi-Head attention} is a reasonable default for SIT-like settings. For IEEE-like settings, \textsc{REINFORCE}+multi-head, \textsc{REINFORCE}+self-attention, \textsc{REINFORCE}+temporal attention, and PPO+temporal attention appear closely matched.
 
-\subsection{H2: schema portability (SIT vs IEEE)}
+\paragraph{H2: schema portability (SIT vs IEEE).}
 H2 is supported structurally by the environment design (Section~\ref{sec:env}) and empirically by results on both schemas (Figures~\ref{fig:analysis_sit}--\ref{fig:heatmap_ieee}). More precisely, the same environment class (with schema detection and feature selection) and the same reward logic (Section~\ref{sec:reward}) can be reused across SIT and IEEE settings while still producing strong policies from online measurements. This is best described as \emph{schema portability} of the environment formulation, not direct train-on-one-schema, test-on-another-schema transfer.
 \begin{figure}[t]
 	\centering
@@ -871,21 +928,16 @@ H2 is supported structurally by the environment design (Section~\ref{sec:env}) a
 	\label{fig:tstats_ieee}
 \end{figure}
 
-\subsection{Discussion}
+\section{Discussion}
 \label{sec:discussion}
-\subsubsection{Why lightweight REINFORCE can win in this PdM setup}
+\subsection{Why lightweight REINFORCE can be competitive in this PdM setup}
 The PdM task studied here has a small action space and terminates on replacement, but the policy still has to infer replacement timing from multivariate sensor trajectories rather than from direct inspection measurements. In such settings, representation quality can matter at least as much as optimizer sophistication; this helps explain why a lightweight policy-gradient method paired with suitable feature extraction can compete with heavier baselines.
 
-\subsubsection{Implications for industrial practitioners}
+\subsection{Implications for industrial practitioners and edge deployment}
 The primary practical implication is that a lightweight policy-gradient learner (\textsc{REINFORCE}), when paired with appropriate attention-based feature extraction, is a viable option for edge-first PdM deployments where model footprint and operational simplicity matter. AutoRL serves as a standardized workflow that automates algorithm and attention sweeps and exposes comparable result artefacts (dashboards, heatmaps, and hypothesis-test summaries) for selection and auditing. A further practical advantage is that the RL agents in this study operate directly on raw sensor observations; by contrast, conventional ML alternatives often require additional feature engineering, target-construction choices, or domain-specific prognostics pipelines.
 
-\subsubsection{Edge compute and sustainability framing}
+\paragraph{Edge compute and sustainability framing.}
 This paper does not directly measure energy consumption, latency, or deployment memory on target edge hardware. Compute-efficiency is therefore treated here as an engineering motivation, not as a directly validated empirical result. If \textsc{REINFORCE} achieves comparable PdM outcomes to heavier baselines, a simple design principle follows: prefer the least complex method that meets the operational objective \cite{Schwartz2020, Strubell2019}. A subsequent revision will also report direct model-footprint comparisons for the trained policies (e.g., serialized model sizes for PPO versus \textsc{REINFORCE}) to complement the performance analysis.
-
-\section{Conclusion and Future Work}
-\label{sec:conclusion}
-\subsection{Summary of key findings}
-This paper presented an empirical study of \textsc{REINFORCE} with attention mechanisms for milling-machine tool-replacement PdM under edge-oriented constraints. Using a schema-adaptive Gymnasium environment and multi-round evaluation on unseen data, the results indicate a consistent pattern across SIT and IEEE schemas: under the adopted evaluation protocol, \textsc{REINFORCE} emerges as a strong lightweight baseline, performing more strongly than \textsc{A2C} and \textsc{DQN} while remaining comparable to \textsc{PPO}. The study also shows that the same environment formulation and reward logic can be reused effectively across two materially different sensor schemas. Finally, attention is beneficial for \textsc{REINFORCE}, although the most effective choice is schema-dependent: multi-head attention is strongest on SIT, whereas several attention variants perform similarly on IEEE. Interpreted as representation-learning priors, the attention mechanisms bias the policy toward informative sensor patterns in an online monitoring setting.
 
 \subsection{Limitations and threats to validity}
 \begin{itemize}
@@ -895,6 +947,11 @@ This paper presented an empirical study of \textsc{REINFORCE} with attention mec
 	\item \textbf{Missing non-RL baselines:} this study focuses on RL policies that act directly on raw sensor observations. Conventional-ML and prognostics baselines should be included in future comparative studies.
 	\item \textbf{Compute and carbon measurement:} energy, latency, memory footprint, and carbon implications are motivated by deployment constraints rather than directly measured on representative edge hardware.
 \end{itemize}
+
+\section{Conclusion}
+\label{sec:conclusion}
+\subsection{Summary of key findings}
+This paper presented an empirical study of \textsc{REINFORCE} with attention mechanisms for milling-machine tool-replacement PdM under edge-oriented constraints. Using a schema-adaptive Gymnasium environment and multi-round evaluation on unseen data, the results indicate a consistent pattern across SIT and IEEE schemas: under the adopted evaluation protocol, \textsc{REINFORCE} emerges as a strong lightweight baseline, performing more strongly than \textsc{A2C} and \textsc{DQN} while remaining comparable to \textsc{PPO}. The study also shows that the same environment formulation and reward logic can be reused effectively across two materially different sensor schemas. Finally, attention is beneficial for \textsc{REINFORCE}, although the most effective choice is schema-dependent: multi-head attention is strongest on SIT, whereas several attention variants perform similarly on IEEE. Interpreted as representation-learning priors, the attention mechanisms bias the policy toward informative sensor patterns in an online monitoring setting.
 
 \subsection{Future work}
 Future work should (i) measure inference latency, serialized model size, and energy on representative edge devices, (ii) incorporate richer maintenance costs and state-estimation models, (iii) add non-RL baselines that operate on the same raw or minimally processed sensor streams, and (iv) evaluate robustness under sensor drift and cross-machine domain shift.
@@ -938,6 +995,29 @@ The code used to train and evaluate the agents (AutoRL pipeline and the Gymnasiu
 
 \begin{appendices}
 
+\section{Edge deployment context}
+\label{app:edge_context}
+
+\begin{table}[htbp]
+	\centering
+	\caption{Deep edge microcontrollers for predictive maintenance (256~KB to 2~MB SRAM)}
+	\label{tab:deep_edge_mcus}
+	\renewcommand{\arraystretch}{1.3}
+	\begin{tabular}{@{} l l l l p{5.5cm} @{}}
+		\toprule
+		\textbf{MCU name} & \textbf{Architecture} & \textbf{Processor} & \textbf{Memory} & \textbf{Notes} \\
+		\midrule
+		STM32H7 series & ARM & Dual-core Cortex-M7 + M4 & Up to 2~MB & Industrial-grade; M7 handles ML math while M4 can handle real-time sensor control. \\
+		NXP i.MX RT series & ARM & Cortex-M7 (up to 1~GHz) & 1~MB--2~MB & ``Crossover'' MCU; high clock speeds for heavier local analytics. \\
+		Espressif ESP32-S3 & Xtensa & Dual-core LX7 & 512~KB & Built-in Wi-Fi/BLE and vector instructions for NN acceleration. \\
+		Nordic nRF5340 & ARM & Dual-core Cortex-M33 & 512~KB & Low-power BLE; separate cores for application and wireless stack. \\
+		Renesas RA6M5 & ARM & Cortex-M33 & 512~KB & Industrial control focus; security and common industrial interfaces. \\
+		Raspberry Pi RP2040 & ARM & Dual-core Cortex-M0+ & 264~KB & Cost-effective; Programmable I/O for custom sensor interfacing. \\
+		Nordic nRF52840 & ARM & Cortex-M4F & 256~KB & Includes FPU; common in battery-operated nodes. \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
 \section{Environment and reward details}
 \label{app:env_reward}
 \subsection{Observation design rationale}
@@ -966,8 +1046,8 @@ The environment returns observation vectors comprised only of channels available
 \subsection{Multi-round evaluation}
 Each agent is evaluated for multiple rounds per test file to reduce variance due to stochastic policies and initialization.
 
-\subsection{Unseen-only emphasis}
-This paper focuses on unseen-only evaluation panels for generalization claims (H2). Panels that include self-evaluation are useful for debugging and sanity checks but can overestimate deployment performance.
+\subsection{ emphasis}
+This paper focuses on  evaluation panels for generalization claims (H2). Panels that include self-evaluation are useful for debugging and sanity checks but can overestimate deployment performance.
 
 \section{Dataset schemas and sensor signals}
 \label{app:schema}
@@ -997,7 +1077,7 @@ IEEE & \texttt{force\_x}, \texttt{force\_y}, \texttt{force\_z}, \texttt{vibratio
 \midrule
 \texttt{WEAR\_THRESHOLD} & 300.000 & Wear threshold used for termination and reporting.\\
 \texttt{TRAINING\_WEAR\_THRESHOLD} & 300.000 & Training threshold (configurable; default equals threshold).\\
-\texttt{EPISODES} & 100 & Training episodes per run (default in RL module).\\
+\texttt{EPISODES} & 1000 & Training episodes per run (default in RL module).\\
 \texttt{LR\_DEFAULT} & 0.001 & Default learning rate (overridden by AutoRL sweep values).\\
 \texttt{GAMMA\_DEFAULT} & 0.990 & Default discount factor (overridden by AutoRL sweep values).\\
 \texttt{EVAL\_ROUNDS} & 20 & Evaluation rounds per model on unseen data.\\
