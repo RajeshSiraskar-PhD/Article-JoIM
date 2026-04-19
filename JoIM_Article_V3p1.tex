@@ -271,7 +271,18 @@ A standard Gaussian-kernel form is
 We use this form as a compact, edge-friendly extractor.
 
 \paragraph{Temporal attention (TP)}
-Temporal attention injects an explicit stage-of-life signal using sinusoidal positional encodings and a learnable temporal embedding \cite{Vaswani2017}.
+Temporal attention injects an explicit stage-of-life signal using sinusoidal positional encodings and a learnable temporal embedding \cite{Vaswani2017, Lim2020TFT}.
+
+In our implementation, temporal attention combines (i) soft feature reweighting over the sensor vector and (ii) a timestep encoding fused via a compact MLP:
+\begin{align}
+\boldsymbol{\alpha}_t &= \mathrm{softmax}\!\left(W_2\tanh\!\left(W_1\mathbf{x}_t\right)\right),
+\qquad \tilde{\mathbf{x}}_t = \mathbf{x}_t\odot\boldsymbol{\alpha}_t,\\
+\mathrm{PE}(t,2i) &= \sin\!\left(\frac{t}{10000^{2i/d_{\mathrm{temp}}}}\right),
+\qquad \mathrm{PE}(t,2i+1)=\cos\!\left(\frac{t}{10000^{2i/d_{\mathrm{temp}}}}\right),\\
+\mathbf{e}_t &= \mathrm{PE}(t) + \mathbf{b},
+\qquad \mathbf{z}_t = f_\theta\!\left([\tilde{\mathbf{x}}_t;\mathbf{e}_t]\right).
+\end{align}
+Here $t$ is the within-episode timestep, $d_{\mathrm{temp}}$ is the temporal-encoding dimension, $\mathbf{b}$ is a learned temporal embedding, and $f_\theta(\cdot)$ is a lightweight fusion network that outputs the feature embedding consumed by the RL policy/value networks.
 
 \paragraph{Multi-head attention (MH)}
 Multi-head attention uses multiple attention heads to represent different subspaces of sensor relationships \cite{Vaswani2017}.
