@@ -82,3 +82,7 @@ Nadaraya--Watson attention (NW)
 Temporal attention (TP)
 Self-attention (SA)
 Multi-head attention (MH)
+
+Here's what we are missing: Support for "H3: attention mechanisms improve REINFORCE performance" -- there is no quantitative support for "a no-attention ablation" 
+
+Help me scan the Evals and Hyothesis .csv files and see if you can write code to support this. So all we need is results of "REINFORCE with and without best attention mechanism" to support our claim. 

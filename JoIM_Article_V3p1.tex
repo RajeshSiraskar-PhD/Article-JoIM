@@ -1,9 +1,6 @@
 % ------------------------------------------------------------------------------------------------
 % Journal of Intelligent Manufacturing
-% Ver. 2.1 -- Revised Hypothesis section
-% ------------------------------------------------------------------------------------------------
-% REVIEW NOTES
-% Results section
+% Ver. 3.1 -- Adding some result figures
 % ------------------------------------------------------------------------------------------------
 
 \PassOptionsToPackage{hypertexnames=false}{hyperref}
@@ -64,7 +61,6 @@
 \begin{document}
 
 \title[Lightweight RL for Edge PdM]{Lightweight Reinforcement Learning for Edge Predictive Maintenance: \textsc{REINFORCE} with Attention for Milling Tool Replacement}
-
 
 \author[1,4]{\fnm{Rajesh} \sur{Siraskar} \sfx{(\href{https://orcid.org/0000-0003-2341-8787}{ORCID: 0000-0003-2341-8787}})}\email{rajesh.siraskar@gmail.com}
 \author*[1,2]{\fnm{Satish} \sur{Kumar}}\email{satish.kumar@sitpune.edu.in}
@@ -159,15 +155,47 @@ We compare DQN (value-based), A2C (actor--critic), PPO (policy optimization), an
 
 \section{Materials and Methods}
 \label{sec:method}
-\subsection{Problem formulation and environment}
-\label{sec:problem}
-\label{sec:env}
-\label{sec:reward}
-PdM decisions are inherently asymmetric. A late replacement can cause defective parts, scrap, or catastrophic failure, while an early replacement wastes remaining tool life.
+
+\subsection{Problem formulation: RL for PdM with attention}
+\label{sec:env} \label{app:env_reward}
+
+We instantiate the MDP setting in Section~\ref{sec:tech_background} for milling-tool predictive maintenance as a sequential replacement decision problem under partial observability. At each decision step $t$, the agent selects an action $a_t\in\{0,1\}$ where $a_t=0$ denotes \emph{replace} and $a_t=1$ denotes \emph{continue}. Replacing a tool ends the current episode and corresponds to a maintenance intervention; continuing keeps the process running and advances the tool toward wear.
+
+The true degradation state (e.g., flank wear) is not available online because it requires interrupting machining and performing inspection. The agent therefore operates on in-process sensing: a multivariate observation vector $\mathbf{x}_t\in\mathbb{R}^d$ derived from sensor channels available during cutting. Inspection-based wear measurements are retained internally by the environment to compute threshold-based safety signals, termination logic, and rewards.
+
+\paragraph{Attention as representation learning for sensor-driven PdM:}
+Because decisions are made from $\mathbf{x}_t$ rather than a fully observed machine-condition state, policy performance depends strongly on extracting informative structure from multivariate sensing. We therefore pair each RL algorithm with lightweight attention mechanisms implemented as feature extractors $\phi_\theta(\mathbf{x}_t)$ that produce a compact embedding for downstream policy/value learning.
+
+\subsection{State space, action space, and reward function}
+\label{sec:mdp_components}
+
+\paragraph{State space (observation model):}
+The agent information state is the sensor observation vector $\mathbf{x}_t$, built from channels available during cutting. We evaluate two observation schemas that deliberately differ in sensing modality and dimensionality (Table~\ref{tab:schema_features}), while keeping the decision semantics fixed.
+
+\paragraph{Dataset schemas and observation channels:}
+\begin{table}[htbp]
+\centering
+\caption{Sensor channels used as observations by the RL environment}
+\label{tab:schema_features}
+	\begin{tabular}{p{0.18\linewidth} p{0.75\linewidth}}
+	\toprule
+	\textbf{Schema} & \textbf{Observation channels}\\
+	\midrule
+	SIT & Spindle vibration, table vibration, spindle sound, table sound, load-cell ($x$/$y$/$z$), spindle current\\
+	IEEE & Cutting force ($x$/$y$/$z$), vibration ($x$/$y$/$z$), acoustic-emission RMS\\
+	\bottomrule
+	\end{tabular}
+\end{table}
+
+\paragraph{Action space:}
+The action space is discrete with two actions: $a_t=0$ means \emph{replace} (maintenance intervention; episode termination) and $a_t=1$ means \emph{continue}.
+
+\paragraph{Reward function and PdM asymmetry:}
+PdM decisions are inherently asymmetric: a late replacement can cause defective parts, scrap, or catastrophic failure, while an early replacement wastes remaining tool life. The reward shaping is designed to reflect this asymmetry by encouraging safe utilization while heavily penalizing threshold violations and still rewarding timely replacement near the wear limit.
 
 \begin{table}[htbp]
 	\centering
-	\caption{Conceptual interpretation of PdM decisions, aligned with the reward shaping in Section~\ref{sec:reward}.}
+	\caption{Conceptual interpretation of PdM decisions}
 	\label{tab:cost_view}
 	\begin{tabular}{p{0.18\linewidth} p{0.32\linewidth} p{0.42\linewidth}}
 		\toprule
@@ -181,25 +209,56 @@ PdM decisions are inherently asymmetric. A late replacement can cause defective 
 	\end{tabular}
 \end{table}
 
-\subsection{Learning pipeline and attention mechanisms}\label{sec:algo_desc}
+\paragraph{Reward shaping components:}
+\begin{table}[htbp]
+	\centering
+	\caption{Reward shaping components in the milling PdM environment (qualitative summary).}
+	\label{tab:reward_components}
+	\begin{tabular}{p{0.20\linewidth} p{0.22\linewidth} p{0.50\linewidth}}
+		\toprule
+		\textbf{Component} & \textbf{Applied when} & \textbf{Effect}\\
+		\midrule
+		$R_1$ survival reward & Continue and safe & Encourages utilization while below threshold.\\
+		$R_2$ violation penalty & Continue and violate & Strongly discourages threshold violation.\\
+		$R_3$ replacement cost & Replace action & Regularizes against replacing too early.\\
+		$R_4$ near-threshold bonus & Replace near $\tau$ & Rewards timely replacement close to threshold.\\
+		Stepwise bonuses & Wear ratio $\,\ge 0.7, 0.8, 0.9$ & Increases incentive as wear approaches threshold.\\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\subsection{Execution implementation: learning pipeline and attention mechanisms}\label{sec:algo_desc}
 \paragraph{AutoRL as a practitioner convenience: standardized sweeps and reporting:}\label{sec:autorl}
 The AutoRL pipeline standardizes training, evaluation, and reporting across a grid of algorithms, hyperparameters, and attention mechanisms. Long runs are made robust via checkpointing and resume support.
+
+\paragraph{Simulation environment (Gymnasium-compatible milling PdM):}
+We define a Gymnasium-compatible environment for milling-tool replacement \cite{Foundation2023}. A central design goal is schema generality: the same episode structure, action semantics, and reward shaping are used across different milling-machine sensor schemas.
+
+Schema abstraction is achieved by keeping the MDP ``skeleton'' fixed while allowing the observation \emph{feature set} to vary:
+\begin{itemize}
+	\item \textbf{Fixed across schemas:} episode structure, binary replace/continue action semantics, and wear-threshold reward/termination logic (Section~\ref{sec:mdp_components}).
+	\item \textbf{Schema-dependent:} the sensor channels used to form $\mathbf{x}_t$ (and therefore $d$) vary with the available instrumentation.
+\end{itemize}
+
+\textbf{Schema detection:}
+The schema is identified from the types of available sensor channels (e.g., force/vibration/acoustic-emission signals vs. vibration/sound/load/current signals). If no known schema signature is found, we fall back to using all available numeric sensor channels.
+
+\textbf{Practical requirement for new datasets:}
+To apply the same environment logic to a new milling dataset, the data must include a tool-wear measurement (used internally for termination and reward) and one or more numeric in-process sensor channels (used as observations). Non-causal identifiers such as a time index or operator labels are excluded from the observation vector.
 
 \paragraph{Training procedure and policy architecture:}
 All agents are trained using Stable-Baselines3 and a Gymnasium-compatible environment wrapper. Each training run uses a fixed number of episodes with early stopping based on the episode budget, and learning rate $\eta$ and discount factor $\gamma$ are swept as part of the AutoRL grid.
 
 We sweep learning rate and discount factor because they are shared across algorithms and strongly affect performance \cite{Henderson2019, Shala2022AutoRL, Eimer2023}.
-
-%% $$$
-
+  
 \paragraph{Attention mechanisms as lightweight feature extractors:}
 \label{sec:attention}
 
 Attention mechanisms are used as feature extractors $\phi(\mathbf{x}_t)$ that map the raw sensor observation $\mathbf{x}_t$ into a 64-dimensional embedding. The resulting embedding is then consumed by multilayer-perceptron policy/value networks.
 
-Because the policy acts on sensor vectors rather than on a fully instrumented machine state (Section~\ref{sec:tech_background}), the core challenge becomes representation learning from multivariate observations. We implement attention-style feature extractors $\phi_\theta(\mathbf{x}_t)$ that bias learning toward informative channels and feature interactions.
+Note that we use ``attention'' as an umbrella term for (i) learned feature reweighting/gating and (ii) structured fusion of sensor features and optional time context.
 
-\textbf{Terminology:} We use ``attention'' as an umbrella term for (i) learned feature reweighting/gating and (ii) structured fusion of sensor features and optional time context.
+Because the policy acts on sensor vectors rather than on a fully instrumented machine state (Section~\ref{sec:tech_background}), the core challenge becomes representation learning from multivariate observations. We implement attention-style feature extractors $\phi_\theta(\mathbf{x}_t)$ that bias learning toward informative channels and feature interactions.
 
 \paragraph{Nadaraya--Watson attention (NW)}
 NW attention can be interpreted as kernel-regression-based soft retrieval from learnable prototypes. This mechanism is computationally light and aligns with prior PdM attention work motivated by edge constraints \cite{Siraskar2024}.
@@ -231,44 +290,42 @@ In standard token-wise form,
 \mathrm{SelfAttn}(X)=\mathrm{softmax}\left(\frac{XW_Q(XW_K)^\top}{\sqrt{d}}\right)XW_V.
 \end{equation}
 
-\paragraph{Simulation environment (Gymnasium-compatible milling PdM):}
-We define a Gymnasium-compatible environment for milling-tool replacement \cite{Foundation2023}. A central design goal is schema generality: the same episode structure, action semantics, and reward shaping are used across different milling-machine sensor schemas.
-
-Schema abstraction is achieved by keeping the MDP ``skeleton'' fixed while allowing the observation \emph{feature set} to vary:
-\begin{itemize}
-	\item \textbf{Fixed across schemas:} the observation is a flat real-valued sensor vector $\mathbf{x}_t\in\mathbb{R}^d$, the action space is binary (replace vs. continue), and the reward/termination logic is driven by an internal wear threshold.
-	\item \textbf{Schema-dependent:} the sensor channels used to form $\mathbf{x}_t$ (and therefore $d$) vary with the available instrumentation.
-\end{itemize}
-
-\textbf{Schema detection:}
-The schema is identified from the types of available sensor channels (e.g., force/vibration/acoustic-emission signals vs. vibration/sound/load/current signals). If no known schema signature is found, we fall back to using all available numeric sensor channels.
-
-\textbf{Practical requirement for new datasets:}
-To apply the same environment logic to a new milling dataset, the data must include a tool-wear measurement (used internally for termination and reward) and one or more numeric in-process sensor channels (used as observations). Non-causal identifiers such as a time index or operator labels are excluded from the observation vector.
-
-\paragraph{Observation and action spaces:}
-Only sensor readings available during cutting are included in the observation vector; inspection-based wear values are retained internally for reward and termination. The action space is discrete with two actions: $a=0$ means \emph{replace} (terminates the episode) and $a=1$ means \emph{continue}.
-
-\paragraph{Reward shaping for asymmetric PdM risk:}
-The reward function encourages long tool use without threshold violation, while rewarding timely replacement close to the wear threshold: continuing safely yields a small positive survival reward $R_1$, threshold violation yields a catastrophic penalty $R_2$, replacement has a small cost $R_3$, and replacement near the threshold earns a strong bonus $R_4$ (with stepped bonuses above 70\%, 80\%, and 90\% wear ratio).
-
-This design reflects a practical PdM asymmetry: a late replacement causing quality loss or failure is substantially worse than an early replacement.
-
 \subsection{Datasets and evaluation protocol} \label{sec:experiment} 
 
-We evaluate AutoRL under two datasets with deliberately different sensing modalities: (i) an IEEE benchmark dataset (public PHM 2010 data challenge), and (ii) an in-house SIT dataset collected on a university milling testbed. To align the learning problem with real deployment constraints, the policy observation contains \emph{only} in-process sensor channels; direct wear measurements and non-causal identifiers (e.g., time indices or operator labels) are excluded from the observation vector. Sensor units are: force in N, vibration in $g$, acoustic-emission RMS in V, current in A, sound in V, and load-cell signals in kN (or V after conditioning).
+We evaluate AutoRL under two datasets with deliberately different sensing modalities: (i) an IEEE benchmark dataset (public PHM 2010 data challenge), and (ii) an in-house SIT dataset collected on a university milling testbed. Both datasets are mapped to the observation interface defined in Section~\ref{sec:mdp_components}. Sensor units are: force in N, vibration in $g$, acoustic-emission RMS in V, current in A, sound in V, and load-cell signals in kN (or V after conditioning).
 
-\paragraph{IEEE benchmark dataset (public PHM 2010):}
+\paragraph{IEEE benchmark dataset:}
 The IEEE dataset \cite{PHMdata2010} is from the PHM Society 2010 Data Challenge and targets tool-condition monitoring and remaining useful life estimation for a high-speed CNC milling process. The dataset documentation reports a high-speed CNC platform instrumented with a dynamometer (cutting forces), accelerometers (vibrations), and an acoustic-emission sensor, with signals acquired at 50~kHz per channel. The published cutting conditions include a spindle speed of 10{,}400~rpm, feed rate of 1{,}555~mm/min, radial depth of cut 0.125~mm, and axial depth of cut 0.2~mm.
 
-Following the competition release format, we use seven sensor channels: three-axis cutting force, three-axis vibration, and an acoustic-emission RMS feature. Five cutter records are used in our experiments (three for training and two for evaluation), matching the standard train/test partitioning.
+Following the competition release format, we use seven sensor channels: three-axis cutting force, three-axis vibration, and an acoustic-emission RMS feature. Five datasets are used in our experiments.
 
 \paragraph{SIT in-house dataset (university milling testbed):}
-The SIT dataset is collected on a Vertical Milling Centre (VMC) (Jyoti NVU PX10) using an NI data acquisition system. The machine-and-sensor layout (Fig.~\ref{fig:expt-setup-1}) and measurement instruments (DAQ and tool-makers microscope; Fig.~\ref{fig:expt-setup-2}) summarize the in-house setup.
+The SIT dataset is collected on a Vertical Milling Centre (VMC) (Jyoti NVU PX10) using an NI data acquisition system. The machine-and-sensor layout (Fig.~\ref{fig:expt-setup-1}) and measurement instruments (DAQ and tool-makers microscope; Fig.~\ref{fig:expt-setup-2}) shows the in-house setup.
 
 Tool wear is quantified via a tool-makers microscope using standard flank-wear (VB) measurement. The experiments span spindle speeds of 800--1{,}200~rpm and feed rates of 20--40~mm/min, with a maximum allowable flank wear of 0.32~mm.
 
 The SIT observation schema includes eight channels covering vibration (spindle and table), sound (spindle and table), three-axis load-cell signals, and spindle current.
+
+We show a random dataset from the SIT and IEEE schemas, in Fig.~\ref{fig:schema_feature_plots_ieee_sit}, to visually represent the differences in sensor features, their magnitude and order of variation.
+
+\begin{figure}[t]
+	\centering
+	\begin{subfigure}[t]{0.48\textwidth}
+		\centering
+		\includegraphics[width=\linewidth]{IEEE_06_SensorPlot.png}
+		\caption{IEEE schema features.}
+		\label{fig:schema_ieee}
+	\end{subfigure}\hfill
+	\begin{subfigure}[t]{0.48\textwidth}
+		\centering
+		\includegraphics[width=\linewidth]{SIT_20_SensorPlot.png}
+		\caption{SIT schema features.}
+		\label{fig:schema_sit}
+	\end{subfigure}
+
+	\caption{IEEE and SIT schema feature plots: Representational plots depicting differences in sensor features, value ranges, and variations.}
+	\label{fig:schema_feature_plots_ieee_sit}
+\end{figure}
 
 \begin{figure}[h]
 	\centering
@@ -285,25 +342,6 @@ The SIT observation schema includes eight channels covering vibration (spindle a
 	\caption{Experimental setups - Measurement instruments}
 	\label{fig:expt-setup-2}
 \end{figure}
-
-% \begin{table}[h!]
-% 	\centering
-% 	\caption{Progressive tool wear. Images taken using tool-makers microscope}
-% 	\label{tab:wearimages}
-% 	\begin{tabular}{|r|r|c|}
-% 	\hline
-% 	Runs & Wear $VB_{max}\mu$m & Tool condition\\
-% 	\hline
-% 	 0 &   0.00 & \includegraphics[width=0.3\linewidth]{tw-1.jpg} \\ \hline
-% 	 5 & 119.71 & \includegraphics[width=0.3\linewidth]{tw-2.jpg} \\ \hline
-% 	10 & 170.07 & \includegraphics[width=0.3\linewidth]{tw-3.jpg} \\ \hline
-% 	15 & 212.21 & \includegraphics[width=0.3\linewidth]{tw-4.jpg} \\ \hline
-% 	20 & 236.50 & \includegraphics[width=0.3\linewidth]{tw-5.jpg} \\ \hline
-% 	25 & 254.74 & \includegraphics[width=0.3\linewidth]{tw-6.jpg} \\ \hline
-% 	30 & 280.29 & \includegraphics[width=0.3\linewidth]{tw-7.jpg} \\ \hline
-% 	35 & 303.65 & \includegraphics[width=0.3\linewidth]{tw-8.jpg} \\ \hline
-% 	\end{tabular}
-% \end{table}
 
 \textbf{Schema heterogeneity and environment robustness:}
 The two schemas differ in both dimensionality (7 vs. 8 channels) and sensing modality (force/vibration/acoustic emission vs. vibration/sound/load/current). This heterogeneity is intentional: the environment uses schema-specific observation feature sets while keeping the action semantics (replace vs. continue) and wear-threshold termination logic fixed.
@@ -351,9 +389,6 @@ Let $S_1,\ldots,S_n$ denote the evaluation scores obtained across rounds and tes
 \end{align}
 and the standard error of the mean $\mathrm{SEM}=\sigma/\sqrt{n}$. A normal-approximation 95\% CI is then $[\mu-1.96\,\mathrm{SEM},\;\mu+1.96\,\mathrm{SEM}]$.
 
-\textbf{Statistical caveats:}
-The $t$-tests are used here to compare and rank configurations in the AutoRL grid, not as stand-alone confirmatory evidence. Standard cautions apply: (i) multiple comparisons are performed across algorithms and attention panels without formal correction, and (ii) repeated evaluation rounds on the same test file can introduce dependence (pseudoreplication). Accordingly, the statistical panels should be read together with the mean scores, confidence intervals, and cross-schema consistency.
-
 \section{Results} \label{sec:results}
 This section reports consolidated evidence from the SIT and IEEE experiments under the same environment and evaluation protocol.
 
@@ -362,11 +397,11 @@ For each schema, we train four RL algorithms (\textsc{A2C}, \textsc{DQN}, \texts
 \paragraph{Datasets:}
 SIT uses 7 training files and 14 evaluation files (112 trained models total). IEEE uses 5 training files and 5 evaluation files (80 trained models total).
 
-\subsection{Compact result summary}
-The core quantitative evidence is reported in Tables~\ref{tab:hyp_tests}--\ref{tab:model_size_summary}.
-
 \subsection{Quantitative comparisons and statistical evidence}
 \label{sec:hypothesis_tests}
+
+The core quantitative evidence is reported in Tables~\ref{tab:hyp_tests}--\ref{tab:model_size_summary}.
+
 Hypothesis test performed with one-tailed Welch $t$-tests at $\alpha=0.05$ for each schema. Table~\ref{tab:hyp_tests} summarizes the results under two categories - overall and using the best performing attention mechanism.
 
 \begin{table}[htbp]
@@ -407,16 +442,34 @@ Hypothesis test performed with one-tailed Welch $t$-tests at $\alpha=0.05$ for e
 \paragraph{Hypothesis-driven interpretation (H1--H3):}
 Let $S$ denote the evaluation score (Section~\ref{sec:metrics}). For each schema and competitor $c\in\{\textsc{A2C},\textsc{DQN},\textsc{PPO}\}$, Table~\ref{tab:hyp_tests} reports one-tailed Welch $t$-tests (at $\alpha=0.05$) for whether \textsc{REINFORCE} achieves a higher mean $S$ than $c$ under repeated stochastic evaluation.
 
-Unless otherwise stated, scores are computed per (model, held-out file) pair by averaging over the 20 stochastic rounds; reported $n$ values count these model--file pairs.
+Evaluations are performed on held out data and evaluation scores are computed per (model, held-out file) pair by averaging over the 20 stochastic rounds; reported $n$ values count these model--test-dataset pairs.
 
 \textbf{H1 (primary): \textsc{REINFORCE} is competitive with A2C/DQN/PPO:}
-All reported comparisons satisfy $p<0.05$ for both SIT and IEEE in both panels (Table~\ref{tab:hyp_tests}), providing evidence---under the adopted protocol---that \textsc{REINFORCE} achieves higher mean scores than \textsc{A2C} and \textsc{DQN} on both schemas and is close to (but statistically above) \textsc{PPO}. The IEEE \textsc{PPO} comparison is the tightest (overall: $t=1.957$, $p=0.026$), consistent with near-ties in mean-score summaries.
+All reported comparisons satisfy $p<0.05$ for both SIT and IEEE (Table~\ref{tab:hyp_tests}), providing evidence---under the adopted protocol---that \textsc{REINFORCE} achieves higher mean scores than \textsc{A2C} and \textsc{DQN} on both schemas and is close to (but statistically above) \textsc{PPO}. The IEEE \textsc{PPO} comparison is the tightest (overall: $t=1.957$, $p=0.026$), consistent with near-ties in mean-score summaries.
 
 \textbf{H2: schema portability of environment and reward logic:}
 H2 is supported by the cross-schema consistency of the hypothesis-test outcomes: the same environment design and reward shaping yield a stable ranking signal in both SIT and IEEE, with \textsc{REINFORCE} significantly outperforming \textsc{A2C} and \textsc{DQN} and remaining close to (but still statistically above) \textsc{PPO}. This should be interpreted as \emph{schema portability} of the experimental pipeline and MDP formulation---i.e., the same formulation produces meaningful learning and evaluation behaviour across heterogeneous sensor schemas---not as direct transfer of a trained policy from one schema to the other.
 
 \textbf{H3: attention mechanisms improve \textsc{REINFORCE} performance:}
 We do not include a no-attention ablation in this grid, so H3 is supported indirectly: (i) \textsc{REINFORCE} performance varies materially across attention extractors, and (ii) the best-performing \textsc{REINFORCE} configurations in both schemas use attention (Tables~\ref{tab:sit_top10} and \ref{tab:ieee_top10}).
+
+
+\paragraph{Visual summaries using analysis dashboards}
+Figure~\ref{fig:analysis_sit} and Figure~\ref{fig:analysis_ieee} provide consolidated dashboards for each schema. Figure~\ref{fig:heatmap_sit} and Figure~\ref{fig:heatmap_ieee} complement these dashboards with one-vs-all generalization heatmaps.
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=0.95\textwidth]{_Analysis_Report_SIT.png}
+	\caption{Consolidated evaluation dashboard for SIT (mean and uncertainty/error bars) used as primary visual evidence for performance patterns across algorithms and attention mechanisms.}
+	\label{fig:analysis_sit}
+\end{figure}
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=0.95\textwidth]{_Analysis_Report_IEEE.jpg}
+	\caption{Consolidated evaluation dashboard for IEEE (mean and uncertainty/error bars) used as primary visual evidence for performance patterns across algorithms and attention mechanisms.}
+	\label{fig:analysis_ieee}
+\end{figure}
 
 \paragraph{Quantitative summaries (means and 95\% CI):}
 Tables~\ref{tab:sit_top10} and \ref{tab:ieee_top10} list the top configurations by mean evaluation score. Tables~\ref{tab:sit_best_attn} and \ref{tab:ieee_best_attn} summarize the best attention mechanism per algorithm.
@@ -532,23 +585,13 @@ The primary practical implication is that a lightweight policy-gradient learner 
 \paragraph{Edge compute and sustainability framing:}
 This paper does not directly measure energy, latency, or memory on target edge hardware, so compute-efficiency is treated as a deployment motivation rather than an empirically validated claim. A practical design principle is to prefer the least complex method that meets the operational objective \cite{Schwartz2020, Strubell2019}.
 
-\subsection{Limitations and threats to validity}
-\begin{itemize}
-	\item \textbf{Dataset-backed sequential environment:} the environment is sequential and observation-limited, but it is still constructed from logged machining trajectories and models intervention through reward and episode termination rather than through downstream physical process changes; richer closed-loop maintenance dynamics remain for future work.
-	\item \textbf{Evaluation dependence:} repeated stochastic evaluation rounds on the same held-out files improve stability estimates but can introduce dependence, so the statistical results should be interpreted alongside the reported mean trends and confidence intervals.
-	\item \textbf{Temporal extractor state:} temporal attention maintains an internal timestep counter; production use should ensure the counter resets consistently with episode resets.
-	\item \textbf{Missing non-RL baselines:} this study focuses on RL policies that act directly on raw sensor observations. Conventional-ML and prognostics baselines should be included in future comparative studies.
-	\item \textbf{Compute and carbon measurement:} energy, latency, memory footprint, and carbon implications are motivated by deployment constraints rather than directly measured on representative edge hardware.
-\end{itemize}
-
 \section{Conclusion}
 \label{sec:conclusion}
 \subsection{Summary of key findings}
 This paper presented an empirical study of \textsc{REINFORCE} with attention mechanisms for milling-machine tool-replacement PdM under edge-oriented constraints. Using a schema-adaptive Gymnasium environment and multi-round evaluation on unseen data, the results indicate a consistent pattern across SIT and IEEE schemas: under the adopted evaluation protocol, \textsc{REINFORCE} emerges as a strong lightweight baseline, performing more strongly than \textsc{A2C} and \textsc{DQN} while remaining comparable to \textsc{PPO}. The study also shows that the same environment formulation and reward logic can be reused effectively across two materially different sensor schemas. Finally, attention is beneficial for \textsc{REINFORCE}, although the most effective choice is schema-dependent: multi-head attention is strongest on SIT, whereas several attention variants perform similarly on IEEE. Interpreted as representation-learning priors, the attention mechanisms bias the policy toward informative sensor patterns in an online monitoring setting.
 
 \subsection{Future work}
-Future work should (i) measure inference latency, serialized model size, and energy on representative edge devices, (ii) incorporate richer maintenance costs and state-estimation models, (iii) add non-RL baselines that operate on the same raw or minimally processed sensor streams, and (iv) evaluate robustness under sensor drift and cross-machine domain shift.
-
+Some limitations of our research could be addressed by future work and should (i) measure inference latency, serialized model size, and energy on representative edge devices, (ii) incorporate richer maintenance costs and state-estimation models, (iii) add non-RL baselines that operate on the same raw or minimally processed sensor streams, and (iv) evaluate robustness under sensor drift and cross-machine domain shift.
 
 
 \section*{Acknowledgements}
@@ -579,14 +622,14 @@ The code used to train and evaluate the agents (AutoRL pipeline and the Gymnasiu
 
 \subsection*{Author contribution}
 \begin{itemize}
-		\item Conceptualization: Rajesh Siraskar, Satish Kumar
-		\item Methodology: Rajesh Siraskar, Satish Kumar, Shruti Patil
+	\item Conceptualization: Rajesh Siraskar, Satish Kumar
+	\item Methodology: Rajesh Siraskar, Satish Kumar, Shruti Patil
+	\item Milling machine set-up and data gathering:  
 \end{itemize}
 
 \begin{appendices}
 
-\section{Edge deployment context}
-\label{app:edge_context}
+\section{Edge deployment context}\label{app:edge_context}
 
 \begin{table}[htbp]
 	\centering
@@ -608,51 +651,24 @@ The code used to train and evaluate the agents (AutoRL pipeline and the Gymnasiu
 	\end{tabular}
 \end{table}
 
-\section{Environment and reward details}
-\label{app:env_reward}
-\subsection{Observation design rationale}
-The environment returns observation vectors comprised only of channels available during cutting. Inspection-based wear measurements are used internally to compute termination and reward.
-
-\subsection{Reward components}
-\begin{table}[htbp]
-		\centering
-		\caption{Reward shaping components in the milling PdM environment (qualitative summary).}
-		\label{tab:reward_components}
-		\begin{tabular}{p{0.20\linewidth} p{0.22\linewidth} p{0.50\linewidth}}
-				\toprule
-				\textbf{Component} & \textbf{Applied when} & \textbf{Effect}\\
-				\midrule
-				$R_1$ survival reward & continue and safe & Encourages utilization while below threshold.\\
-				$R_2$ violation penalty & continue and violate & Strongly discourages threshold violation.\\
-				$R_3$ replacement cost & replace action & Regularizes against replacing too early.\\
-				$R_4$ near-threshold bonus & replace near $\tau$ & Rewards timely replacement close to threshold.\\
-				Stepwise bonuses & wear ratio $\,\ge 0.7, 0.8, 0.9$ & Increases incentive as wear approaches threshold.\\
-				\bottomrule
-		\end{tabular}
-\end{table}
-
-\section{Evaluation protocol details}
-\label{app:eval}
-\subsection{Multi-round evaluation}
-Each agent is evaluated for 20 rounds per test file to reduce variance due to stochastic policies and initialization.
-
-\subsection{Scope note}
-This paper focuses on evaluation panels for generalization claims (H2). Panels that include self-evaluation are useful for debugging and sanity checks but can overestimate deployment performance.
-
-\section{Dataset schemas and sensor signals}
-\label{app:schema}
-\begin{table}[htbp]
-\centering
-\caption{Sensor channels used as observations by schema.}
-\label{tab:schema_features}
-\begin{tabular}{p{0.18\linewidth} p{0.75\linewidth}}
-\toprule
-\textbf{Schema} & \textbf{Observation channels}\\
-\midrule
-SIT & Spindle vibration, table vibration, spindle sound, table sound, load-cell ($x$/$y$/$z$), spindle current\\
-IEEE & Cutting force ($x$/$y$/$z$), vibration ($x$/$y$/$z$), acoustic-emission RMS\\
-\bottomrule
-\end{tabular}
+\section{Progressive tool wear images - Samples}
+\begin{table}[h!]
+	\centering
+	\caption{Progressive tool wear. Images taken using tool-makers microscope}
+	\label{tab:wearimages}
+	\begin{tabular}{|r|r|c|}
+	\hline
+	Runs & Wear $VB_{max}\mu$m & Tool condition\\
+	\hline
+	 0 &   0.00 & \includegraphics[width=0.3\linewidth]{tw-1.jpg} \\ \hline
+	 5 & 119.71 & \includegraphics[width=0.3\linewidth]{tw-2.jpg} \\ \hline
+	10 & 170.07 & \includegraphics[width=0.3\linewidth]{tw-3.jpg} \\ \hline
+	15 & 212.21 & \includegraphics[width=0.3\linewidth]{tw-4.jpg} \\ \hline
+	20 & 236.50 & \includegraphics[width=0.3\linewidth]{tw-5.jpg} \\ \hline
+	25 & 254.74 & \includegraphics[width=0.3\linewidth]{tw-6.jpg} \\ \hline
+	30 & 280.29 & \includegraphics[width=0.3\linewidth]{tw-7.jpg} \\ \hline
+	35 & 303.65 & \includegraphics[width=0.3\linewidth]{tw-8.jpg} \\ \hline
+	\end{tabular}
 \end{table}
 
 \end{appendices}
