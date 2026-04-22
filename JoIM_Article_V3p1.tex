@@ -1,6 +1,6 @@
 % ------------------------------------------------------------------------------------------------
 % Journal of Intelligent Manufacturing
-% Ver. 3.1 -- Adding some result figures
+% Ver. 3.2 -- Review
 % ------------------------------------------------------------------------------------------------
 
 \PassOptionsToPackage{hypertexnames=false}{hyperref}
@@ -22,6 +22,7 @@
 \usepackage{setspace}
 \usepackage[table]{xcolor}
 \usepackage{booktabs}
+\usepackage{array}
 
 % (Removed algorithmic packages; pseudocode moved to Appendix listings.)
 
@@ -31,6 +32,8 @@
 	\cmidrule{#1}%
 	\arrayrulecolor{black}%
 }
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 
 % % % Usage: \faintcmidrule{2-4} % Optional thickness: \faintcmidrule[0.2pt]{2-4}
 % \newcommand{\faintcmidrule}[2][0.25pt]{%
@@ -47,6 +50,7 @@
 \makeatother
 
 \onehalfspacing
+\renewcommand{\arraystretch}{1.2}
 % \lstset{
 %         basicstyle=\ttfamily\footnotesize,
 %         columns=fullflexible,
@@ -60,12 +64,11 @@
 
 \begin{document}
 
-\title[Lightweight RL for Edge PdM]{Lightweight Reinforcement Learning for Edge Predictive Maintenance: \textsc{REINFORCE} with Attention for Milling Tool Replacement}
+\title[Lightweight RL for Edge PdM]{Reinforcement Learning for Edge Predictive Maintenance: \textsc{REINFORCE} with Attention for Milling Tool Replacement}
 
 \author[1,4]{\fnm{Rajesh} \sur{Siraskar} \sfx{(\href{https://orcid.org/0000-0003-2341-8787}{ORCID: 0000-0003-2341-8787}})}\email{rajesh.siraskar@gmail.com}
 \author*[1,2]{\fnm{Satish} \sur{Kumar}}\email{satish.kumar@sitpune.edu.in}
 \author[1,2]{\fnm{Shruti} \sur{Patil}}
-\author[1]{\fnm{Arunkumar} \sur{Bongale}}
 \author[1,2]{\fnm{Ketan} \sur{Kotecha}}
 \author[3]{Ambarish Kulkarni}
 
@@ -74,11 +77,11 @@
 \affil[3]{Swinburne University of Technology, Hawthorn VIC 3122, Australia}
 \affil[4]{\orgdiv{CTO Office}, \orgname{Birlasoft Ltd.}, \orgaddress{\city{Pune}, \postcode{411057}, \state{Maharashtra}, \country{India}}}
 
-\abstract{Edge-oriented predictive maintenance (PdM) requires decision policies that are credible under tight constraints on compute, memory, and operational simplicity. We study milling-tool replacement as an asymmetric-cost decision problem and ask whether a lightweight Monte-Carlo policy-gradient method (\textsc{REINFORCE}) remains competitive with commonly used deep RL baselines.
+\abstract{Edge-oriented predictive maintenance (PdM) requires decision policies that are credible under tight constraints on compute, memory, and operational simplicity. We study milling-tool replacement as an asymmetric-cost decision problem and evaluate if a lightweight Monte-Carlo policy-gradient method (\textsc{REINFORCE}) remains competitive with commonly used deep RL baselines.
 
-We compare four RL algorithms (\textsc{A2C}, \textsc{DQN}, \textsc{PPO}, and \textsc{REINFORCE}) paired with four attention-style feature extractors (Nadaraya--Watson, temporal, multi-head, and self-attention) inside an AutoRL workflow that standardizes training, repeated evaluation, and reporting. A Gymnasium-compatible environment is built around measurements available during cutting and is designed to be schema-adaptive.
+We compare four RL algorithms (\textsc{A2C}, \textsc{DQN}, \textsc{PPO}, and \textsc{REINFORCE}) paired with four attention-style feature extractors (Nadaraya--Watson, temporal, multi-head, and self-attention) inside an industrial \emph{practioner-friendly} AutoRL workflow that standardizes training, repeated evaluation, and reporting. A Gymnasium-compatible environment is built around sensor measurements available during cutting and is designed to be schema-adaptive.
 
-Across two materially different milling datasets (public IEEE PHM~2010 and an in-house SIT testbed), the adopted evaluation protocol shows \textsc{REINFORCE} as a strong lightweight baseline: it consistently outperforms \textsc{A2C} and \textsc{DQN} and remains close to \textsc{PPO}. Attention improves results, but the best mechanism is schema-dependent.}
+Across two different milling datasets (public IEEE PHM~2010 and an in-house SIT testbed), the adopted evaluation protocol shows \textsc{REINFORCE} as a strong lightweight baseline: it consistently outperforms \textsc{A2C} and \textsc{DQN} and remains close to \textsc{PPO}. Attention improves results, but the best attention mechanism is schema-dependent.}
 
 \keywords{Predictive maintenance, Industry 4.0, Edge computing, Reinforcement Learning, REINFORCE, Attention mechanisms, Sustainable AI, AutoRL}
 
@@ -88,7 +91,7 @@ Across two materially different milling datasets (public IEEE PHM~2010 and an in
 \subsection{Background}
 Predictive maintenance (PdM) aims to intervene before functional failure while maximizing asset utilization and protecting product quality. In Industry~4.0 deployments, sensorized manufacturing equipment generates rich telemetry streams that enable condition-aware decision support and prescriptive control \cite{Zonta2020, Compare2020}. In practical settings, however, PdM decision support increasingly needs to operate at the \emph{edge} (close to machines) to reduce latency and bandwidth requirements and to improve reliability in the presence of connectivity or cloud-service disruptions.
 
-Edge deployment constrains compute, memory, and integration overhead. This motivates lightweight learning methods and standardized experimentation workflows that make model selection auditable when exhaustive manual tuning is impractical.
+Edge deployment constrains compute, memory, and integration overhead. This motivates lightweight learning methods and standardized experimentation workflows that make model selection attractive when exhaustive manual tuning is impractical.
 
 \subsection{Problem statement}
 This paper studies a prescriptive PdM decision: what is the optimum time to replace a milling cutting tool? The decision is cost-asymmetric: late replacement risks defective parts or failure, while early replacement disrupts production and reduces usable tool life. In practical milling, direct wear inspection typically requires interrupting machining and removing the tool from the spindle, so online decisions must be made from in-process machine measurements rather than from direct wear measurements. Reinforcement learning is a natural fit because the agent must trade off utilization against risk over time under edge-oriented resource limits.
@@ -97,25 +100,25 @@ The core research question we try to address is: \emph{Can a computationally lig
 
 \subsection{Contributions}
 
-This study builds on evidence that na\"{i}ve \textsc{REINFORCE} can perform strongly for PdM in untuned regimes \cite{Siraskar2025} and on prior PdM work using a Nadaraya--Watson estimator as a lightweight attention mechanism under edge constraints \cite{Siraskar2024}. AutoRL is used here as an experimental framework that standardizes training and evaluation across a grid of algorithmic and hyperparameter choices, producing comparable result summaries for model selection when exhaustive manual tuning is impractical \cite{Schwartz2020, Strubell2019, Faust2019, Mussi2022}.
+This study builds on evidence that na\"{i}ve \textsc{REINFORCE} can perform strongly for PdM in untuned regimes \cite{Siraskar2025} and on prior PdM work using a Nadaraya--Watson estimator as a lightweight attention mechanism under edge constraints \cite{Siraskar2024}. AutoRL is used here as an experimental framework that standardizes training and evaluation across a grid of algorithmic and hyperparameter and attention mechanism choices, producing comparable result summaries for model selection when exhaustive manual tuning is impractical \cite{Schwartz2020, Strubell2019, Faust2019, Mussi2022}.
 
 \textbf{Research objectives and hypotheses:}
-The study addresses the following research objectives: (1) compare RL algorithms suitable for edge-oriented PdM, (2) evaluate whether \textsc{REINFORCE} is a competitive lightweight baseline, (3) assess attention mechanisms as a form of inductive bias that can improve lightweight RL when decisions are made from measurements available during cutting, (4) design a Gymnasium-compatible RL environment that operates across differing sensor schemas, and (5) provide an AutoRL workflow for experimentation and training.
+The study addresses the following research objectives: (1) compare RL algorithms suitable for edge-oriented PdM, (2) evaluate whether \textsc{REINFORCE} is a competitive lightweight baseline, (3) assess attention mechanisms as a form of inductive bias that can improve lightweight RL, (4) design a Gymnasium-compatible RL environment that operates across differing sensor schemas, and (5) provide an AutoRL workflow for experimentation and training.
 
 We test three hypotheses:
 \begin{itemize}
-		\item \textbf{H1 (primary):} A computationally light \textsc{REINFORCE} agent is competitive with \textsc{A2C}, \textsc{DQN}, and \textsc{PPO} on the studied PdM task.
-		\item \textbf{H2:} The same environment design and reward logic can be applied effectively across two different milling-machine schemas (SIT and IEEE).
-		\item \textbf{H3:} Attention mechanisms can improve \textsc{REINFORCE} performance.
+	\item \textbf{H1 (primary):} A computationally light \textsc{REINFORCE} agent is competitive with \textsc{A2C}, \textsc{DQN}, and \textsc{PPO} on the studied PdM task.
+	\item \textbf{H2:} The same environment design and reward logic can be applied effectively across two different milling-machine schemas (SIT and IEEE).
+	\item \textbf{H3:} Attention mechanisms can improve \textsc{REINFORCE} performance.
 \end{itemize}
 
 \textbf{Contributions:}
 This paper contributes:
 \begin{itemize}
-		\item \textbf{Lightweight RL evidence for edge PdM:} an empirical comparison showing when \textsc{REINFORCE} is competitive against \textsc{A2C}, \textsc{DQN}, and \textsc{PPO} on a milling tool-replacement PdM task driven by online machine observations.
-		\item \textbf{Attention mechanisms as inductive bias for lightweight RL:} Nadaraya--Watson, temporal attention, multi-head attention, and self-attention used as feature extractors for RL policies.
-		\item \textbf{A schema-adaptive Gymnasium environment:} a milling-tool PdM environment built around online process measurements across different sensor schemas \cite{Foundation2023}.
-		\item \textbf{Practitioner convenience mechanism (AutoRL):} batch training and multi-round evaluation with checkpointed recovery and standardized reporting to reduce the burden of manual tuning and ad-hoc experimentation.
+	\item \textbf{Lightweight RL evidence for edge PdM:} an empirical comparison showing when \textsc{REINFORCE} is competitive against \textsc{A2C}, \textsc{DQN}, and \textsc{PPO} on a milling tool-replacement PdM task driven by potentially real-time online machine observations.
+	\item \textbf{Attention mechanisms as inductive bias for lightweight RL:} Nadaraya--Watson, temporal attention, multi-head attention, and self-attention used as feature extractors for RL policies.
+	\item \textbf{A schema-adaptive Gymnasium environment:} a milling-tool PdM environment built around online process measurements across different sensor schemas.
+	\item \textbf{Practitioner convenience mechanism (AutoRL):} We build a practioner-friendly system. There is no hyperparameter tuning or feature engineering involved. Raw sensor readings are used. Batch training and multi-round evaluation with checkpointed recovery and standardized reporting to reduce the burden of manual tuning and ad-hoc experimentation.
 \end{itemize}
 
 \section{Literature Review and Technical Background}
@@ -126,11 +129,13 @@ PdM links sensing, analytics, and operational decision-making in cyber-physical 
 \subsection{RL for predictive maintenance and lightweight baselines}
 RL has been surveyed extensively in PdM, with evidence that a wide range of formulations have been explored across maintenance scheduling, inspection, and resource-constrained decision problems \cite{Siraskar2023, Ogunfowora2023, Zhang2024}. A consistent theme across these surveys is that the ``right'' RL complexity level depends on (i) the structure of the decision problem (action-space size, time horizon and the rewards occurence frequency within that) and (ii) deployment requirements (compute, memory, latency).
 
-The literature also suggests a useful two-stream picture. Many PdM and condition-based maintenance studies learn effective policies using non-deep or otherwise lightweight RL, especially when state representations are structured and action spaces are modest \cite{Adsule2020, Yousefi2020, Rasay2024, Dadash2024}. Deep RL (e.g., DQN/PPO-style methods) becomes more prominent as environments become richer and harder: higher-dimensional sensing, long-horizon tradeoffs, multi-component scheduling, or coupled resource constraints \cite{Liu2020, Chen2023, Lee2022, Ong2022-02}.
+The literature suggests a useful two-stream picture. Many PdM and condition-based maintenance studies learn effective policies using non-deep or otherwise lightweight RL, especially when state representations are structured and action spaces are modest \cite{Adsule2020, Yousefi2020, Rasay2024, Dadash2024}. Deep RL (e.g., DQN/PPO-style methods) becomes more prominent as environments become richer and harder: higher-dimensional sensing, long-horizon tradeoffs, multi-component scheduling, or coupled resource constraints \cite{Liu2020, Chen2023, Lee2022, Ong2022-02}. Literature research indicates REINFORCE is an often overlooked algorithm and not studied for the PdM problem, \cite{Siraskar2025}. 
 
 \paragraph{Lightweight RL for edge PdM:}
-The literature does not establish that REINFORCE is universally better than advanced deep RL, but it does indicate that lightweight methods are often a sound engineering choice when the PdM task is structured and edge constraints are first-order requirements \cite{Compare2020, Njor2024, Pandey2023}. In embedded RL more broadly, deep RL frequently requires additional techniques such as transfer learning, pruning, compression, or distillation, to fit constrained edge devices \cite{Jang2020, Szydlo2022, Xu2022}.
+Existing research does indicate that lightweight methods are often a sound engineering choice when the PdM task is structured and edge constraints are first-order requirements \cite{Compare2020, Njor2024, Pandey2023}. In embedded RL more broadly, deep RL frequently requires additional techniques such as transfer learning, pruning, compression, or distillation, to fit constrained edge devices \cite{Jang2020, Szydlo2022, Xu2022}.
 While maintenance optimization contributes to energy and emissions objectives, PdM studies rarely report \emph{algorithm-level} energy or carbon for RL training and deployment \cite{Banyai2021, Banyai2022, JasiulewiczKaczmarek2024}. Prior milling PdM evidence suggests that untuned \textsc{REINFORCE} can be a strong baseline while remaining compact in serialized size \cite{Siraskar2025}.
+
+% \textbf{Why \textsc{REINFORCE} can be edge-suited:} When deployment constraints are first-order requirements, algorithmic simplicity can translate to smaller policies and lower training/inference overhead; it also lowers marginal cost in sweep-based experimentation when many configurations must be compared.
 
 %% DRL better - Commented as detailed paper not available
 % A second quantitative anchor comes from richer IIoT maintenance decision problems where heavier DRL can earn its place. Ong et al.~report that a PPO--LSTM based PdM framework outperformed comparable DRL methods by 53\% and human participants by 65\% in a maintenance resource-management simulator \cite{Ong2022-01}. In a follow-on study, the same line of work introduced transfer learning with demonstrations to reduce DRL training wall time by 58\% \cite{Ong2022-02}.
@@ -144,20 +149,18 @@ Overall, RL-for-PdM evidence is strongest when evaluated on maintenance-specific
 \subsection{Technical background: MDP setting and RL algorithms}
 \label{sec:tech_background}
 \paragraph{MDP notation and observation model:}
-We model milling PdM as a sequential decision problem. An episodic Markov Decision Process (MDP) is defined by $(\mathcal{S},\mathcal{A},P,R,\gamma)$, where $\mathcal{S}$ is the state space, $\mathcal{A}$ is the action space, $P(s'\mid s,a)$ is the transition kernel, $R(s,a)$ is the reward function, and $\gamma\in(0,1]$ is the discount factor.
-
-In the studied PdM setting, the policy receives a sensor vector $\mathbf{x}_t\in\mathbb{R}^d$ derived from multiple channels rather than a fully instrumented machine-condition state. As is obvious, tool wear is not available as its measurement requires interrupting the operation and removing the tool. We therefore formulate the agent information space around the information available during cutting and treat representation learning from these process measurements as a first-order factor in policy performance.
+We model milling PdM as a sequential decision problem. An episodic Markov Decision Process (MDP) is defined by $(\mathcal{S},\mathcal{A},P,R,\gamma)$, where $\mathcal{S}$ is the state space, $\mathcal{A}$ is the action space, $P(s'\mid s,a)$ is the transition kernel, $R(s,a)$ is the reward function, and $\gamma\in(0,1]$ is the discount factor. Next, in Section \ref{sec:env}, we show formulate our maintenance problem, using this model. 
 
 \paragraph{RL algorithms compared:}
 We compare DQN (value-based), A2C (actor--critic), PPO (policy optimization), and \textsc{REINFORCE} (Monte-Carlo policy gradient) \cite{Mnih2015, Schulman2017, Williams1992}. We use consistent reference implementations across algorithms and treat the main differentiator as the policy/value learner paired with a fixed environment and observation interface.
-
-\textbf{Why \textsc{REINFORCE} can be edge-suited:} When deployment constraints are first-order requirements, algorithmic simplicity can translate to smaller policies and lower training/inference overhead; it also lowers marginal cost in sweep-based experimentation when many configurations must be compared.
 
 \section{Materials and Methods}
 \label{sec:method}
 
 \subsection{Problem formulation: RL for PdM with attention}
 \label{sec:env} \label{app:env_reward}
+\paragraph{Milling machines:}
+Milling machines shape the work piece by rotating and driving a metal cutting device into it. The tool therefore experiences abrasive force that causes tool wear. In practice there is usally no tool maintenance procedures, and they are simply replaced on reaching end of useful life. ISO 8688-2:1989 suggests 300 $\mu$m as a standard wear threshold. We define this as $\tau$ and use it as a decision boundry.
 
 We instantiate the MDP setting in Section~\ref{sec:tech_background} for milling-tool predictive maintenance as a sequential replacement decision problem under partial observability. At each decision step $t$, the agent selects an action $a_t\in\{0,1\}$ where $a_t=0$ denotes \emph{replace} and $a_t=1$ denotes \emph{continue}. Replacing a tool ends the current episode and corresponds to a maintenance intervention; continuing keeps the process running and advances the tool toward wear.
 
@@ -170,14 +173,14 @@ Because decisions are made from $\mathbf{x}_t$ rather than a fully observed mach
 \label{sec:mdp_components}
 
 \paragraph{State space (observation model):}
-The agent information state is the sensor observation vector $\mathbf{x}_t$, built from channels available during cutting. We evaluate two observation schemas that deliberately differ in sensing modality and dimensionality (Table~\ref{tab:schema_features}), while keeping the decision semantics fixed.
+The agent information state is the sensor observation vector $\mathbf{x}_t$. We evaluate two observation schemas that deliberately differ in sensing modality and dimensionality (Table~\ref{tab:schema_features}), while keeping the decision semantics fixed.
 
 \paragraph{Dataset schemas and observation channels:}
 \begin{table}[htbp]
 \centering
 \caption{Sensor channels used as observations by the RL environment}
 \label{tab:schema_features}
-	\begin{tabular}{p{0.18\linewidth} p{0.75\linewidth}}
+	\begin{tabular}{L{0.18\linewidth} L{0.75\linewidth}}
 	\toprule
 	\textbf{Schema} & \textbf{Observation channels}\\
 	\midrule
@@ -188,7 +191,7 @@ The agent information state is the sensor observation vector $\mathbf{x}_t$, bui
 \end{table}
 
 \paragraph{Action space:}
-The action space is discrete with two actions: $a_t=0$ means \emph{replace} (maintenance intervention; episode termination) and $a_t=1$ means \emph{continue}.
+The action space is discrete with two actions: $a_t=0$ means \emph{replace} (maintenance intervention; episode termination) and $a_t=1$ means \emph{continue}. 
 
 \paragraph{Reward function and PdM asymmetry:}
 PdM decisions are inherently asymmetric: a late replacement can cause defective parts, scrap, or catastrophic failure, while an early replacement wastes remaining tool life. The reward shaping is designed to reflect this asymmetry by encouraging safe utilization while heavily penalizing threshold violations and still rewarding timely replacement near the wear limit.
@@ -197,7 +200,7 @@ PdM decisions are inherently asymmetric: a late replacement can cause defective 
 	\centering
 	\caption{Conceptual interpretation of PdM decisions}
 	\label{tab:cost_view}
-	\begin{tabular}{p{0.18\linewidth} p{0.32\linewidth} p{0.42\linewidth}}
+	\begin{tabular}{L{0.18\linewidth} L{0.32\linewidth} L{0.42\linewidth}}
 		\toprule
 		\textbf{Case} & \textbf{Condition} & \textbf{PdM interpretation}\\
 		\midrule
@@ -214,12 +217,12 @@ PdM decisions are inherently asymmetric: a late replacement can cause defective 
 	\centering
 	\caption{Reward shaping components in the milling PdM environment (qualitative summary).}
 	\label{tab:reward_components}
-	\begin{tabular}{p{0.20\linewidth} p{0.22\linewidth} p{0.50\linewidth}}
+	\begin{tabular}{L{0.20\linewidth} L{0.22\linewidth} L{0.50\linewidth}}
 		\toprule
 		\textbf{Component} & \textbf{Applied when} & \textbf{Effect}\\
 		\midrule
 		$R_1$ survival reward & Continue and safe & Encourages utilization while below threshold.\\
-		$R_2$ violation penalty & Continue and violate & Strongly discourages threshold violation.\\
+		$R_2$ violation penalty & Violated wear threshold and continued & Strongly discourages threshold violation.\\
 		$R_3$ replacement cost & Replace action & Regularizes against replacing too early.\\
 		$R_4$ near-threshold bonus & Replace near $\tau$ & Rewards timely replacement close to threshold.\\
 		Stepwise bonuses & Wear ratio $\,\ge 0.7, 0.8, 0.9$ & Increases incentive as wear approaches threshold.\\
@@ -239,12 +242,6 @@ Schema abstraction is achieved by keeping the MDP ``skeleton'' fixed while allow
 	\item \textbf{Fixed across schemas:} episode structure, binary replace/continue action semantics, and wear-threshold reward/termination logic (Section~\ref{sec:mdp_components}).
 	\item \textbf{Schema-dependent:} the sensor channels used to form $\mathbf{x}_t$ (and therefore $d$) vary with the available instrumentation.
 \end{itemize}
-
-\textbf{Schema detection:}
-The schema is identified from the types of available sensor channels (e.g., force/vibration/acoustic-emission signals vs. vibration/sound/load/current signals). If no known schema signature is found, we fall back to using all available numeric sensor channels.
-
-\textbf{Practical requirement for new datasets:}
-To apply the same environment logic to a new milling dataset, the data must include a tool-wear measurement (used internally for termination and reward) and one or more numeric in-process sensor channels (used as observations). Non-causal identifiers such as a time index or operator labels are excluded from the observation vector.
 
 \paragraph{Training procedure and policy architecture:}
 All agents are trained using Stable-Baselines3 and a Gymnasium-compatible environment wrapper. Each training run uses a fixed number of episodes with early stopping based on the episode budget, and learning rate $\eta$ and discount factor $\gamma$ are swept as part of the AutoRL grid.
@@ -275,14 +272,14 @@ Temporal attention injects an explicit stage-of-life signal using sinusoidal pos
 
 In our implementation, temporal attention combines (i) soft feature reweighting over the sensor vector and (ii) a timestep encoding fused via a compact MLP:
 \begin{align}
-\boldsymbol{\alpha}_t &= \mathrm{softmax}\!\left(W_2\tanh\!\left(W_1\mathbf{x}_t\right)\right),
-\qquad \tilde{\mathbf{x}}_t = \mathbf{x}_t\odot\boldsymbol{\alpha}_t,\\
-\mathrm{PE}(t,2i) &= \sin\!\left(\frac{t}{10000^{2i/d_{\mathrm{temp}}}}\right),
-\qquad \mathrm{PE}(t,2i+1)=\cos\!\left(\frac{t}{10000^{2i/d_{\mathrm{temp}}}}\right),\\
-\mathbf{e}_t &= \mathrm{PE}(t) + \mathbf{b},
-\qquad \mathbf{z}_t = f_\theta\!\left([\tilde{\mathbf{x}}_t;\mathbf{e}_t]\right).
+	\boldsymbol{\alpha}_t &= \mathrm{softmax}\!\left(W_2\tanh\!\left(W_1\mathbf{x}_t\right)\right),
+	\qquad \tilde{\mathbf{x}}_t = \mathbf{x}_t\odot\boldsymbol{\alpha}_t,\\
+	\mathrm{PE}(t,2i) &= \sin\!\left(\frac{t}{{T_{max}}^{2i/d_{\mathrm{TP}}}}\right),
+	\qquad \mathrm{PE}(t,2i+1)=\cos\!\left(\frac{t}{{T_{max}}^{2i/d_{\mathrm{TP}}}}\right),\\
+	\mathbf{e}_t &= \mathrm{PE}(t) + \mathbf{b},
+	\qquad \mathbf{z}_t = f_\theta\!\left([\tilde{\mathbf{x}}_t;\mathbf{e}_t]\right).
 \end{align}
-Here $t$ is the within-episode timestep, $d_{\mathrm{temp}}$ is the temporal-encoding dimension, $\mathbf{b}$ is a learned temporal embedding, and $f_\theta(\cdot)$ is a lightweight fusion network that outputs the feature embedding consumed by the RL policy/value networks.
+Here $t$ is the within-episode timestep, $T_{max}$ is the maximum time-steps allowed before truncation, $d_{\mathrm{TP}}$ is the temporal-encoding dimension, $\mathbf{b}$ is a learned temporal embedding, and $f_\theta(\cdot)$ is a lightweight fusion network that outputs the feature embedding consumed by the RL policy/value networks.
 
 \paragraph{Multi-head attention (MH)}
 Multi-head attention uses multiple attention heads to represent different subspaces of sensor relationships \cite{Vaswani2017}.
@@ -463,7 +460,6 @@ H2 is supported by the cross-schema consistency of the hypothesis-test outcomes:
 
 \textbf{H3: attention mechanisms improve \textsc{REINFORCE} performance:}
 We do not include a no-attention ablation in this grid, so H3 is supported indirectly: (i) \textsc{REINFORCE} performance varies materially across attention extractors, and (ii) the best-performing \textsc{REINFORCE} configurations in both schemas use attention (Tables~\ref{tab:sit_top10} and \ref{tab:ieee_top10}).
-
 
 \paragraph{Visual summaries using analysis dashboards}
 Figure~\ref{fig:analysis_sit} and Figure~\ref{fig:analysis_ieee} provide consolidated dashboards for each schema. Figure~\ref{fig:heatmap_sit} and Figure~\ref{fig:heatmap_ieee} complement these dashboards with one-vs-all generalization heatmaps.
@@ -647,7 +643,7 @@ The code used to train and evaluate the agents (AutoRL pipeline and the Gymnasiu
 	\caption{Deep edge microcontrollers for predictive maintenance (256~kB to 2~MB SRAM)}
 	\label{tab:deep_edge_mcus}
 	\renewcommand{\arraystretch}{1.3}
-	\begin{tabular}{@{} l l l l p{5.5cm} @{}}
+	\begin{tabular}{@{} l l l l L{5.5cm} @{}}
 		\toprule
 		\textbf{MCU name} & \textbf{Architecture} & \textbf{Processor} & \textbf{Memory} & \textbf{Notes} \\
 		\midrule
