@@ -1,5 +1,5 @@
 % ------------------------------------------------------------------------------------------------
-% Journal of Intelligent Manufacturing
+% Journal of Remanufacturing
 % Ver. 4.0 -- JoRM - Submission manuscript
 % ------------------------------------------------------------------------------------------------
 
@@ -80,11 +80,11 @@
 \affil[3]{Swinburne University of Technology, Hawthorn VIC 3122, Australia}
 \affil[4]{\orgdiv{CTO Office}, \orgname{Birlasoft Ltd.}, \orgaddress{\city{Pune}, \postcode{411057}, \state{Maharashtra}, \country{India}}}
 
-\abstract{Edge-oriented predictive maintenance (PdM) requires decision policies that are credible under tight constraints on compute, memory, and operational simplicity. We study milling-tool replacement as an asymmetric-cost decision problem and evaluate if a lightweight Monte-Carlo policy-gradient method (\textsc{REINFORCE}) remains competitive with commonly used deep RL baselines.
+\abstract{Edge-oriented predictive maintenance requires decision policies that are credible under tight constraints on compute, memory, and operational simplicity. We study milling-tool replacement as an asymmetric-cost decision problem and evaluate if a lightweight Monte-Carlo policy-gradient method (\textsc{REINFORCE}) remains competitive with commonly used deep Reinforcement Learning (RL) baselines.
 
-We compare four RL algorithms (\textsc{A2C}, \textsc{DQN}, \textsc{PPO}, and \textsc{REINFORCE}) paired with four attention-style feature extractors (Nadaraya--Watson, temporal, multi-head, and self-attention) inside an industrial \emph{practitioner-friendly} AutoRL workflow that standardizes training, repeated evaluation, and reporting. A Gymnasium-compatible environment is built around sensor measurements available during cutting and is designed to be schema-adaptive.
+We compare four RL algorithms (\textsc{A2C}, \textsc{DQN}, \textsc{PPO}, and \textsc{REINFORCE}) paired with four attention-style feature extractors (Nadaraya--Watson, temporal, multi-head, and self-attention) inside an industrial \emph{practitioner-friendly} AutoRL workflow that standardizes training, repeated evaluation, and reporting. A Gymnasium (OpenSource) compatible environment is built around sensor measurements available during cutting and is designed to be schema-adaptive.
 
-Across two different milling datasets (public IEEE PHM~2010 and an in-house SIT testbed), the adopted evaluation protocol shows \textsc{REINFORCE} as a strong lightweight baseline: it consistently outperforms \textsc{A2C} and \textsc{DQN} and remains close to \textsc{PPO}. The same MDP formulation and environment design can be instantiated and trained on both schemas, while the most effective attention-style extractor is schema-dependent.}
+Across two different milling datasets (public IEEE PHM~2010 and an in-house University testbed), the adopted evaluation protocol shows \textsc{REINFORCE} as a strong lightweight baseline: it consistently outperforms \textsc{A2C} and \textsc{DQN} and remains close to \textsc{PPO}. The same RL formulation and environment design can be instantiated and trained on both schemas, while the most effective attention-style extractor is schema-dependent.}
 
 \keywords{Predictive maintenance, Industry 4.0, Edge computing, Reinforcement Learning, REINFORCE, Attention mechanisms, Sustainable AI, AutoRL}
 
@@ -103,7 +103,7 @@ The core research question we try to address is: \emph{Can a computationally lig
 
 \subsection{Contributions}
 
-This study builds on evidence that na\"{i}ve \textsc{REINFORCE} can perform strongly for PdM in untuned regimes \cite{Siraskar2025} and on prior PdM work using a Nadaraya--Watson estimator as a lightweight attention mechanism under edge constraints \cite{Siraskar2024}. AutoRL is used here as an experimental framework that standardizes training and evaluation across a grid of algorithmic and hyperparameter and attention mechanism choices, producing comparable result summaries for model selection when exhaustive manual tuning is impractical \cite{Schwartz2020, Strubell2019, Faust2019, Mussi2022}.
+This study builds on our earlier research that na\"{i}ve \textsc{REINFORCE} can perform strongly for PdM in untuned regimes \cite{Siraskar2025} and on prior PdM work using a Nadaraya--Watson estimator as a lightweight attention mechanism under edge constraints \cite{Siraskar2024}. AutoRL is used here as an experimental framework that standardizes training and evaluation across a grid of algorithmic and hyperparameter and attention mechanism choices, producing comparable result summaries for model selection when exhaustive manual tuning is impractical \cite{Schwartz2020, Strubell2019, Faust2019, Mussi2022}.
 
 \textbf{Research objectives and hypotheses:}
 The study addresses the following research objectives: (1) compare RL algorithms suitable for edge-oriented PdM, (2) evaluate whether \textsc{REINFORCE} is a competitive lightweight baseline, (3) assess attention-style feature extractors as an inductive bias and characterize whether their usefulness is schema-dependent, (4) design a Gymnasium-compatible RL environment that can be instantiated across differing sensor schemas, and (5) provide an AutoRL workflow for experimentation and training.
@@ -111,7 +111,7 @@ The study addresses the following research objectives: (1) compare RL algorithms
 We test three hypotheses:
 \begin{itemize}
     \item \textbf{H1 (primary):} Under the adopted evaluation protocol, a computationally light \textsc{REINFORCE} agent remains competitive with \textsc{A2C}, \textsc{DQN}, and \textsc{PPO} on the studied PdM task.
-    \item \textbf{H2:} The same MDP formulation, environment design, and reward logic can be instantiated and trained across two different milling-machine schemas (SIT and IEEE), without claiming direct transfer of a trained policy from one schema to the other.
+    \item \textbf{H2:} The same Markov Decision Process (MDP) formulation, environment design, and reward logic can be instantiated and trained across two different milling-machine schemas (SIT\footnote{Symbiosis Institute of Technology} and IEEE), without claiming direct transfer of a trained policy from one schema to the other.
     \item \textbf{H3:} Attention based feature extractors affect \textsc{REINFORCE} performance.
 \end{itemize}
 
@@ -140,7 +140,7 @@ While maintenance optimization contributes to energy and emissions objectives, P
 
 For heavier deep models to be suitable for edge deployment, additional compression steps (e.g., pruning or quantization) are often required \cite{Pandey2023, Jang2020, Xu2022}.
 
-Although RL is often motivated through generic benchmark environments, the evidence most useful for predictive maintenance comes from studies built on maintenance-specific data, assets, and decision constraints rather than abstract control tasks \cite{Andrade2021Aircraft,Dangut2022RareFailure,Zhao2024,Siraskar2025}. Public PdM benchmarks have helped move the field forward, but they still leave a gap to deployment because they cannot fully capture plant-specific degradation, sensing, and maintenance logic. By contrast, studies grounded in operational aircraft logs, fleet maintenance records, or physical manufacturing systems provide a stronger evidence tier for industrial relevance \cite{Andrade2021Aircraft,Dangut2022RareFailure,Chen2024DigitalTwin}. This matters even more for attention-based models, whose value depends on exploiting domain-specific temporal and cross-sensor structure \cite{Zhao2024}. In that sense, newly collected real machine data is a substantive contribution to PdM RL research rather than a mere implementation detail.
+Although RL has often been researched and reported through generic benchmark environments (OpenAI Gym, Gymnasium and MuJoCo), the evidence most useful for predictive maintenance comes from studies built on maintenance-specific data, assets, and decision constraints rather than abstract control tasks \cite{Andrade2021Aircraft,Dangut2022RareFailure,Zhao2024,Siraskar2025}. Public PdM benchmarks have helped move the field forward, but they still leave a gap to deployment because they cannot fully capture plant-specific degradation, sensing, and maintenance logic. By contrast, studies grounded in operational aircraft logs, fleet maintenance records, or physical manufacturing systems provide a stronger evidence tier for industrial relevance \cite{Andrade2021Aircraft,Dangut2022RareFailure,Chen2024DigitalTwin}. This matters even more for attention-based models, whose value depends on exploiting domain-specific temporal and cross-sensor structure \cite{Zhao2024}. In that sense, newly collected real machine data is a substantive contribution to industry relevant and grounded PdM RL research.
 
 \subsection{Technical background: MDP setting and RL algorithms}
 \label{sec:tech_background}
@@ -619,7 +619,7 @@ Rajesh Siraskar, under the guidance of Sarish Kumar, conceptualized the study. R
 
 \begin{appendices}
 
-\section{Edge deployment context}\label{app:edge_context}
+\section{Microcontrollers for edge deployment}\label{app:edge_context}
 
 \begin{table}[htbp]
 	\centering
@@ -643,6 +643,8 @@ Rajesh Siraskar, under the guidance of Sarish Kumar, conceptualized the study. R
 	\end{tabular}
 \end{table}
 
+
+\clearpage
 \newpage
 \section{Progressive tool wear images - Samples}
 \begin{table}[h!]
@@ -666,7 +668,8 @@ Rajesh Siraskar, under the guidance of Sarish Kumar, conceptualized the study. R
 
 \end{appendices}
 
+\clearpage
 \newpage
-\bibliography{JoIM_references}
+\bibliography{references}
 
 \end{document}
