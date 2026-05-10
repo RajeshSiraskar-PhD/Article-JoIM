@@ -1,0 +1,307 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+\usepackage{amssymb}
+
+%% Images and Figures
+\graphicspath{{./University_Logos/}{./Figures/}{./Figures/A1_Literature_Survey/}{./Figures/A2_REINFORCE_for_PdM/}{./Figures/A3_Nadaraya_Watson_AM_for_PdM/}{./Figures/A4_RL_with_Attention_for_PdM/}}
+
+
+\begin{document}
+\section{Ablation Study}
+
+This section presents the results of the ablation study conducted to evaluate the impact of various attention mechanisms on the performance of Reinforcement Learning algorithms. We analyze the general effects across all algorithms and specifically focus on the best-performing algorithms (PPO and REINFORCE). Furthermore, we detail the algorithm-specific effects for both SIT and IEEE schemas.
+
+\subsection{General Effects}
+
+\subsubsection{All Algorithms}
+
+We first analyze the overall effect of incorporating attention mechanisms across all considered RL algorithms.
+
+\paragraph{SIT Schema}
+
+\begin{table}[ht]
+\centering
+\caption{Ablation Study Results (Algos: All) for Schema: SIT}
+\begin{tabular}{lrrll}
+\toprule
+Category & Mean & SEM & t\_stat & p\_value \\
+\midrule
+No Attention (Baseline) & 0.495305 & 0.011275 & - & - \\
+All Attention & 0.532894 & 0.001841 & 3.290335 & 0.000522 \\
+Nadaraya-Watson & 0.554509 & 0.003727 & 4.985689 & 0.000000 \\
+Temporal & 0.532249 & 0.003696 & 3.113611 & 0.000951 \\
+Self-Attention & 0.525334 & 0.003659 & 2.533276 & 0.005730 \\
+Multi-Head & 0.519486 & 0.003637 & 2.041130 & 0.020756 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Descriptive Summary:}
+The baseline (No Attention) achieved an average Eval\_Score of 0.4953.
+\begin{itemize}
+    \item \textbf{All Attention}: Significantly OUTPERFORMED the baseline. (Mean Score: 0.5329, p-value: 0.0005)
+    \item \textbf{Nadaraya-Watson}: Significantly OUTPERFORMED the baseline. (Mean Score: 0.5545, p-value: 0.0000)
+    \item \textbf{Temporal}: Significantly OUTPERFORMED the baseline. (Mean Score: 0.5322, p-value: 0.0010)
+    \item \textbf{Self-Attention}: Significantly OUTPERFORMED the baseline. (Mean Score: 0.5253, p-value: 0.0057)
+    \item \textbf{Multi-Head}: Significantly OUTPERFORMED the baseline. (Mean Score: 0.5195, p-value: 0.0208)
+\end{itemize}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{Ablation_Study_SIT_All_Algos.jpg}
+    \caption{Effect of Attention Mechanisms (All Algorithms) for SIT Schema}
+\end{figure}
+
+\paragraph{IEEE Schema}
+
+\begin{table}[ht]
+\centering
+\caption{Ablation Study Results (Algos: All) for Schema: IEEE}
+\begin{tabular}{lrrll}
+\toprule
+Category & Mean & SEM & t\_stat & p\_value \\
+\midrule
+No Attention (Baseline) & 0.695039 & 0.029357 & - & - \\
+All Attention & 0.648523 & 0.015239 & -1.406309 & 0.919194 \\
+Nadaraya-Watson & 0.665444 & 0.030213 & -0.702528 & 0.758412 \\
+Temporal & 0.572144 & 0.031917 & -2.833948 & 0.997461 \\
+Self-Attention & 0.621241 & 0.030543 & -1.741986 & 0.958467 \\
+Multi-Head & 0.735262 & 0.027096 & 1.006809 & 0.157632 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Descriptive Summary:}
+The baseline (No Attention) achieved an average Eval\_Score of 0.6950.
+\begin{itemize}
+    \item \textbf{All Attention}: Did NOT significantly outperform the baseline. (Mean Score: 0.6485, p-value: 0.9192)
+    \item \textbf{Nadaraya-Watson}: Did NOT significantly outperform the baseline. (Mean Score: 0.6654, p-value: 0.7584)
+    \item \textbf{Temporal}: Did NOT significantly outperform the baseline. (Mean Score: 0.5721, p-value: 0.9975)
+    \item \textbf{Self-Attention}: Did NOT significantly outperform the baseline. (Mean Score: 0.6212, p-value: 0.9585)
+    \item \textbf{Multi-Head}: Did NOT significantly outperform the baseline. (Mean Score: 0.7353, p-value: 0.1576)
+\end{itemize}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{Ablation_Study_IEEE_All_Algos.jpg}
+    \caption{Effect of Attention Mechanisms (All Algorithms) for IEEE Schema}
+\end{figure}
+
+
+\subsubsection{Focused PPO and REINFORCE}
+
+We refine our focus to the top-performing algorithms: PPO and REINFORCE.
+
+\paragraph{SIT Schema}
+
+\begin{table}[ht]
+\centering
+\caption{Ablation Study Results (Algos: PPO \& REINFORCE) for Schema: SIT}
+\begin{tabular}{lrrll}
+\toprule
+Category & Mean & SEM & t\_stat & p\_value \\
+\midrule
+No Attention (Baseline) & 0.709365 & 0.015886 & - & - \\
+All Attention & 0.793203 & 0.002177 & 5.228493 & 0.000000 \\
+Nadaraya-Watson & 0.831949 & 0.003859 & 7.498323 & 0.000000 \\
+Temporal & 0.793405 & 0.004400 & 5.098224 & 0.000000 \\
+Self-Attention & 0.779576 & 0.004482 & 4.253537 & 0.000013 \\
+Multi-Head & 0.767880 & 0.004576 & 3.539508 & 0.000221 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Descriptive Summary:}
+The baseline (No Attention) achieved an average Eval\_Score of 0.7094.
+\begin{itemize}
+    \item \textbf{All Attention}: Significantly OUTPERFORMED the baseline. (Mean Score: 0.7932, p-value: 0.0000)
+    \item \textbf{Nadaraya-Watson}: Significantly OUTPERFORMED the baseline. (Mean Score: 0.8319, p-value: 0.0000)
+    \item \textbf{Temporal}: Significantly OUTPERFORMED the baseline. (Mean Score: 0.7934, p-value: 0.0000)
+    \item \textbf{Self-Attention}: Significantly OUTPERFORMED the baseline. (Mean Score: 0.7796, p-value: 0.0000)
+    \item \textbf{Multi-Head}: Significantly OUTPERFORMED the baseline. (Mean Score: 0.7679, p-value: 0.0002)
+\end{itemize}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{Ablation_Study_SIT_PPO_REINFORCE.jpg}
+    \caption{Effect of Attention Mechanisms (PPO \& REINFORCE) for SIT Schema}
+\end{figure}
+
+\paragraph{IEEE Schema}
+
+\begin{table}[ht]
+\centering
+\caption{Ablation Study Results (Algos: PPO \& REINFORCE) for Schema: IEEE}
+\begin{tabular}{lrrll}
+\toprule
+Category & Mean & SEM & t\_stat & p\_value \\
+\midrule
+No Attention (Baseline) & 0.795054 & 0.032336 & - & - \\
+All Attention & 0.852212 & 0.010539 & 1.680642 & 0.049025 \\
+Nadaraya-Watson & 0.843947 & 0.023533 & 1.222552 & 0.112354 \\
+Temporal & 0.885848 & 0.009977 & 2.683033 & 0.004740 \\
+Self-Attention & 0.810929 & 0.028569 & 0.367920 & 0.356869 \\
+Multi-Head & 0.868125 & 0.016442 & 2.014330 & 0.023836 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Descriptive Summary:}
+The baseline (No Attention) achieved an average Eval\_Score of 0.7951.
+\begin{itemize}
+    \item \textbf{All Attention}: Significantly OUTPERFORMED the baseline. (Mean Score: 0.8522, p-value: 0.0490)
+    \item \textbf{Nadaraya-Watson}: Did NOT significantly outperform the baseline. (Mean Score: 0.8439, p-value: 0.1124)
+    \item \textbf{Temporal}: Significantly OUTPERFORMED the baseline. (Mean Score: 0.8858, p-value: 0.0047)
+    \item \textbf{Self-Attention}: Did NOT significantly outperform the baseline. (Mean Score: 0.8109, p-value: 0.3569)
+    \item \textbf{Multi-Head}: Significantly OUTPERFORMED the baseline. (Mean Score: 0.8681, p-value: 0.0238)
+\end{itemize}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{Ablation_Study_IEEE_PPO_REINFORCE.jpg}
+    \caption{Effect of Attention Mechanisms (PPO \& REINFORCE) for IEEE Schema}
+\end{figure}
+
+\subsection{Algorithm Specific Effects}
+
+\subsubsection{SIT Schema}
+
+\begin{table}[ht]
+\centering
+\caption{Ablation Study Results by Algorithm for Schema: SIT}
+\begin{tabular}{llrrll}
+\toprule
+Algorithm & Setup & Mean & SEM & t\_stat & p\_value \\
+\midrule
+A2C & No Attention (Baseline) & 0.266310 & 0.000340 & - & - \\
+A2C & All Attention & 0.274080 & 0.000687 & 10.138179 & 0.000000 \\
+A2C & Nadaraya-Watson & 0.283046 & 0.002135 & 7.739954 & 0.000000 \\
+A2C & Temporal & 0.271092 & 0.000990 & 4.569884 & 0.000003 \\
+A2C & Self-Attention & 0.271092 & 0.000990 & 4.569884 & 0.000003 \\
+A2C & Multi-Head & 0.271092 & 0.000990 & 4.569884 & 0.000003 \\
+DQN & No Attention (Baseline) & 0.296181 & 0.009344 & - & - \\
+DQN & All Attention & 0.271092 & 0.000495 & -2.681363 & 0.996021 \\
+DQN & Nadaraya-Watson & 0.271092 & 0.000990 & -2.670184 & 0.995897 \\
+DQN & Temporal & 0.271092 & 0.000990 & -2.670184 & 0.995897 \\
+DQN & Self-Attention & 0.271092 & 0.000990 & -2.670184 & 0.995897 \\
+DQN & Multi-Head & 0.271092 & 0.000990 & -2.670184 & 0.995897 \\
+PPO & No Attention (Baseline) & 0.775345 & 0.020116 & - & - \\
+PPO & All Attention & 0.747709 & 0.003373 & -1.354890 & 0.911532 \\
+PPO & Nadaraya-Watson & 0.830815 & 0.005450 & 2.661534 & 0.004170 \\
+PPO & Temporal & 0.840875 & 0.005324 & 3.149137 & 0.000931 \\
+PPO & Self-Attention & 0.713430 & 0.007021 & -2.905943 & 0.998002 \\
+PPO & Multi-Head & 0.605717 & 0.007479 & -7.903871 & 1.000000 \\
+REINFORCE & No Attention (Baseline) & 0.643385 & 0.023723 & - & - \\
+REINFORCE & All Attention & 0.838696 & 0.002657 & 8.181950 & 0.000000 \\
+REINFORCE & Nadaraya-Watson & 0.833082 & 0.005465 & 7.792336 & 0.000000 \\
+REINFORCE & Temporal & 0.745936 & 0.006841 & 4.153622 & 0.000023 \\
+REINFORCE & Self-Attention & 0.845722 & 0.005159 & 8.334439 & 0.000000 \\
+REINFORCE & Multi-Head & 0.930044 & 0.000994 & 12.073168 & 0.000000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{PPO \& REINFORCE Spotlight Summary (SIT):}
+
+Analyzing PPO:
+\begin{itemize}
+    \item Baseline Mean Score: 0.7753
+    \item Attention (in general) did NOT significantly outperform baseline on average.
+    \item AT LEAST ONE specific mechanism worked! Significant winners:
+    \begin{itemize}
+        \item Nadaraya-Watson (Mean: 0.8308, p=0.0042)
+        \item Temporal (Mean: 0.8409, p=0.0009)
+    \end{itemize}
+\end{itemize}
+
+Analyzing REINFORCE:
+\begin{itemize}
+    \item Baseline Mean Score: 0.6434
+    \item Attention in general significantly OUTPERFORMED baseline overall. (p=0.0000)
+    \item AT LEAST ONE specific mechanism worked! Significant winners:
+    \begin{itemize}
+        \item Nadaraya-Watson (Mean: 0.8331, p=0.0000)
+        \item Temporal (Mean: 0.7459, p=0.0000)
+        \item Self-Attention (Mean: 0.8457, p=0.0000)
+        \item Multi-Head (Mean: 0.9300, p=0.0000)
+    \end{itemize}
+\end{itemize}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{Ablation_Study_Algo_SIT.jpg}
+    \caption{Ablation Study Results by Algorithm for SIT Schema}
+\end{figure}
+
+\subsubsection{IEEE Schema}
+
+\begin{table}[ht]
+\centering
+\caption{Ablation Study Results by Algorithm for Schema: IEEE}
+\begin{tabular}{llrrll}
+\toprule
+Algorithm & Setup & Mean & SEM & t\_stat & p\_value \\
+\midrule
+A2C & No Attention (Baseline) & 0.680481 & 0.060449 & - & - \\
+A2C & All Attention & 0.505306 & 0.029950 & -2.596635 & 0.993268 \\
+A2C & Nadaraya-Watson & 0.661607 & 0.059676 & -0.222194 & 0.587447 \\
+A2C & Temporal & 0.258441 & 0.000318 & -6.981609 & 1.000000 \\
+A2C & Self-Attention & 0.405544 & 0.049234 & -3.526525 & 0.999518 \\
+A2C & Multi-Head & 0.695634 & 0.057741 & 0.181263 & 0.428463 \\
+DQN & No Attention (Baseline) & 0.509568 & 0.063413 & - & - \\
+DQN & All Attention & 0.384359 & 0.025498 & -1.831939 & 0.961885 \\
+DQN & Nadaraya-Watson & 0.312274 & 0.037233 & -2.682958 & 0.994665 \\
+DQN & Temporal & 0.258441 & 0.000318 & -3.960134 & 0.999709 \\
+DQN & Self-Attention & 0.457561 & 0.059855 & -0.596405 & 0.723142 \\
+DQN & Multi-Head & 0.509161 & 0.063320 & -0.004537 & 0.501801 \\
+PPO & No Attention (Baseline) & 0.805578 & 0.043473 & - & - \\
+PPO & All Attention & 0.826957 & 0.018524 & 0.452424 & 0.326951 \\
+PPO & Nadaraya-Watson & 0.833821 & 0.037583 & 0.491467 & 0.312691 \\
+PPO & Temporal & 0.886492 & 0.014153 & 1.769817 & 0.043631 \\
+PPO & Self-Attention & 0.736089 & 0.051612 & -1.029758 & 0.845784 \\
+PPO & Multi-Head & 0.851428 & 0.029441 & 0.873274 & 0.193729 \\
+REINFORCE & No Attention (Baseline) & 0.784530 & 0.048687 & - & - \\
+REINFORCE & All Attention & 0.877467 & 0.009512 & 1.873449 & 0.036176 \\
+REINFORCE & Nadaraya-Watson & 0.854073 & 0.028988 & 1.227302 & 0.113522 \\
+REINFORCE & Temporal & 0.885204 & 0.014358 & 1.983343 & 0.028582 \\
+REINFORCE & Self-Attention & 0.885769 & 0.014219 & 1.995999 & 0.027860 \\
+REINFORCE & Multi-Head & 0.884823 & 0.014625 & 1.972863 & 0.029176 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{PPO \& REINFORCE Spotlight Summary (IEEE):}
+
+Analyzing PPO:
+\begin{itemize}
+    \item Baseline Mean Score: 0.8056
+    \item Attention (in general) did NOT significantly outperform baseline on average.
+    \item AT LEAST ONE specific mechanism worked! Significant winners:
+    \begin{itemize}
+        \item Temporal (Mean: 0.8865, p=0.0436)
+    \end{itemize}
+\end{itemize}
+
+Analyzing REINFORCE:
+\begin{itemize}
+    \item Baseline Mean Score: 0.7845
+    \item Attention in general significantly OUTPERFORMED baseline overall. (p=0.0362)
+    \item AT LEAST ONE specific mechanism worked! Significant winners:
+    \begin{itemize}
+        \item Temporal (Mean: 0.8852, p=0.0286)
+        \item Self-Attention (Mean: 0.8858, p=0.0279)
+        \item Multi-Head (Mean: 0.8848, p=0.0292)
+    \end{itemize}
+\end{itemize}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{Ablation_Study_Algo_IEEE.jpg}
+    \caption{Ablation Study Results by Algorithm for IEEE Schema}
+\end{figure}
+
+\end{document}
