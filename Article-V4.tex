@@ -65,7 +65,7 @@
 
 \begin{document}
 
-\title[RL for PdM]{Reinforcement Learning for Predictive Maintenance: A study of Attention Mechanisms for Milling Tool Replacement (2.3)}
+\title[RL for PdM]{Reinforcement Learning for Predictive Maintenance: A study of Attention Mechanisms for Milling Tool Replacement (4.0 18-Jul-2026)}
 
 \author[1,4]{\fnm{Rajesh} \sur{Siraskar} \sfx{(\href{https://orcid.org/0000-0003-2341-8787}{ORCID: 0000-0003-2341-8787}})}\email{rajesh.siraskar@gmail.com}
 \author*[1,2]{\fnm{Satish} \sur{Kumar}}\email{satish.kumar@sitpune.edu.in}
@@ -347,8 +347,8 @@ so $S_{\text{tim}}$ penalizes timing error over the IAR window and is clipped at
 \paragraph{Multi-round evaluation, confidence intervals, and exploratory hypothesis tests:}
 SIT uses 20 evaluation rounds per held-out file to capture stochastic action variation. Welch tests are treated as exploratory because observations are nested within trained-model/held-out-file pairs. We report sample means and 95\% confidence intervals over held-out evaluations.
 
-\section{Results} \label{sec:results}
-This section reports refreshed results from the 17-Jul-2026 rerun. For each schema, four RL algorithms are evaluated with no attention (baseline) and four attention mechanisms (Nadaraya--Watson, temporal, self-attention, and multi-head).
+\section{Results} \label{sec:results} % 17-Jul-2026 retraining
+For each schema, four RL algorithms are evaluated with no attention (baseline) and four attention mechanisms (Nadaraya--Watson, temporal, self-attention, and multi-head).
 
 \subsection{Main performance tables and focused statistical tests}
 \label{sec:hypothesis_tests}
@@ -403,36 +403,34 @@ Tables~\ref{tab:sit_main_results} and \ref{tab:ieee_main_results} report mean $\
 	\end{tabular}
 \end{table}
 
-\paragraph{Result interpretation (updated):}
+\paragraph{Result interpretation:}
 Without attention, \textsc{PPO} has the highest mean in both schemas (SIT: 0.6313; IEEE: 0.8434). With attention, the best overall mean shifts to \textsc{REINFORCE} (SIT: 0.7492; IEEE: 0.8569). This is consistent with the focused tests in Table~\ref{tab:rf_vs_ppo_tests}: the claim \textsc{REINFORCE} $>$ \textsc{PPO} is unsupported at baseline and supported when attention is enabled.
 
-\subsection{Ablation study: attention versus no-attention}
-\label{sec:ablation_results}
+\subsection{Ablation study: attention versus no-attention} \label{sec:ablation_results} % 17-Jul-2026 retraining
 
-Table~\ref{tab:ablation_condensed} reports refreshed ablation outcomes from the 17-Jul-2026 run, including an algorithm-specific view for \textsc{REINFORCE} alongside the pooled comparisons.
+Table~\ref{tab:ablation_condensed} reports ablation study analysis. It includes a focussed algorithm-specific view for \textsc{REINFORCE} alongside the pooled comparisons.
 
 \begin{table}[htbp]
-\centering
-\caption{Condensed ablation study from the 17-Jul-2026 run (one-tailed tests).}
-\label{tab:ablation_condensed}
-\begin{tabular}{l l r r r}
-\toprule
-\textbf{Schema} & \textbf{Comparison} & \textbf{No attn.} & \textbf{Attention} & \textbf{$p$ (1-tail)}\\
-\midrule
-SIT & \textsc{REINFORCE} only & 0.4907 & 0.7492 & 0.0000\\
-IEEE & \textsc{REINFORCE} only & 0.7496 & 0.8569 & 0.0440\\
-SIT & PPO + \textsc{REINFORCE}, pooled & 0.5610 & 0.7120 & 0.0000\\
-IEEE & PPO + \textsc{REINFORCE}, pooled & 0.7965 & 0.8313 & 0.1757\\
-SIT & All algorithms, pooled & 0.4033 & 0.4830 & 0.0000\\
-IEEE & All algorithms, pooled & 0.7377 & 0.5906 & 1.0000\\
-\bottomrule
-\end{tabular}
+	\centering
+	\caption{Condensed ablation study analysis (one-tailed Wel t-tests).}
+	\label{tab:ablation_condensed}
+	\begin{tabular}{l l r r r}
+		\toprule
+		\textbf{Schema} & \textbf{Comparison} & \textbf{No attn.} & \textbf{Attention} & \textbf{$p$ (1-tail)}\\
+		\midrule
+		SIT & \textsc{REINFORCE} only & 0.4907 & 0.7492 & 0.0000\\
+		IEEE & \textsc{REINFORCE} only & 0.7496 & 0.8569 & 0.0440\\
+		SIT & PPO + \textsc{REINFORCE}, pooled & 0.5610 & 0.7120 & 0.0000\\
+		IEEE & PPO + \textsc{REINFORCE}, pooled & 0.7965 & 0.8313 & 0.1757\\
+		SIT & All algorithms, pooled & 0.4033 & 0.4830 & 0.0000\\
+		IEEE & All algorithms, pooled & 0.7377 & 0.5906 & 1.0000\\
+		\bottomrule
+	\end{tabular}
 \end{table}
 
 For \textsc{REINFORCE}, attention significantly improves over the no-attention baseline in both schemas (SIT: 0.4907 to 0.7492, $p=0.0000$; IEEE: 0.7496 to 0.8569, $p=0.0440$), supporting attention interoperability across schemas for this algorithm. The PPO+\textsc{REINFORCE} subset follows the same direction: SIT improves significantly (0.5610 to 0.7120, $p=0.0000$), and IEEE trends upward, though the gain is not significant at $\alpha=0.05$ (0.7965 to 0.8313, $p=0.1757$). Pooled across all four algorithms, SIT again improves significantly (0.4033 to 0.4830, $p=0.0000$); the IEEE all-algorithm pooled comparison shows a different pattern, reflecting the already-strong no-attention baselines of \textsc{A2C} and \textsc{DQN} on IEEE (Table~\ref{tab:ieee_main_results}). Overall, attention interoperability across schemas is clearest for \textsc{REINFORCE}, holds more weakly for the PPO+\textsc{REINFORCE} subset, and remains schema-dependent once pooled across all four algorithms.
 
-\subsection{Updated result figures}
-Figures~\ref{fig:analysis_reports_jul17}--\ref{fig:ablation_ppo_rf_jul17} give the refreshed visual summaries for the 17-Jul-2026 rerun, corresponding to Tables~\ref{tab:sit_main_results}--\ref{tab:ablation_condensed}.
+Figures~\ref{fig:analysis_reports}--\ref{fig:ablation_ppo_rf} provide visualizations of the summary analysis, corresponding to Tables~\ref{tab:sit_main_results}--\ref{tab:ablation_condensed}.
 
 \begin{figure}[t]
 	\centering
@@ -446,8 +444,8 @@ Figures~\ref{fig:analysis_reports_jul17}--\ref{fig:ablation_ppo_rf_jul17} give t
 		\includegraphics[width=\linewidth]{Analysis_Report_SIT.png}
 		\caption{SIT analysis report.}
 	\end{subfigure}
-	\caption{Refreshed overall analysis reports (17-Jul-2026 run).}
-	\label{fig:analysis_reports_jul17}
+	\caption{Overall analysis reports.}
+	\label{fig:analysis_reports}
 \end{figure}
 
 \begin{figure}[t]
@@ -463,7 +461,7 @@ Figures~\ref{fig:analysis_reports_jul17}--\ref{fig:ablation_ppo_rf_jul17} give t
 		\caption{SIT $t$-statistics.}
 	\end{subfigure}
 	\caption{Refreshed test statistics for pairwise comparisons.}
-	\label{fig:t_stats_jul17}
+	\label{fig:t_stats}
 \end{figure}
 
 \begin{figure}[t]
@@ -479,7 +477,7 @@ Figures~\ref{fig:analysis_reports_jul17}--\ref{fig:ablation_ppo_rf_jul17} give t
 		\caption{SIT $p$-values.}
 	\end{subfigure}
 	\caption{Refreshed one-tailed $p$-value plots.}
-	\label{fig:p_values_jul17}
+	\label{fig:p_values}
 \end{figure}
 
 \begin{figure}[t]
@@ -495,7 +493,7 @@ Figures~\ref{fig:analysis_reports_jul17}--\ref{fig:ablation_ppo_rf_jul17} give t
 		\caption{SIT ablation by algorithm.}
 	\end{subfigure}
 	\caption{Algorithm-level ablation summaries from the refreshed run.}
-	\label{fig:ablation_algo_jul17}
+	\label{fig:ablation_algo}
 \end{figure}
 
 \begin{figure}[t]
@@ -511,7 +509,7 @@ Figures~\ref{fig:analysis_reports_jul17}--\ref{fig:ablation_ppo_rf_jul17} give t
 		\caption{SIT: all algorithms pooled.}
 	\end{subfigure}
 	\caption{All-algorithm pooled ablation comparisons.}
-	\label{fig:ablation_all_jul17}
+	\label{fig:ablation_all}
 \end{figure}
 
 \begin{figure}[t]
@@ -527,7 +525,7 @@ Figures~\ref{fig:analysis_reports_jul17}--\ref{fig:ablation_ppo_rf_jul17} give t
 		\caption{SIT: PPO + \textsc{REINFORCE}.}
 	\end{subfigure}
 	\caption{Ablation comparisons focused on PPO and \textsc{REINFORCE}.}
-	\label{fig:ablation_ppo_rf_jul17}
+	\label{fig:ablation_ppo_rf}
 \end{figure}
 
 \subsection{Schema portability and attention sensitivity}
@@ -561,10 +559,10 @@ The task has a small action space and ends on replacement, but the policy still 
 A practical deployment lesson is to benchmark no-attention first, then add attention selectively. For SIT-like schemas, attention can provide clear gains for strong policy-gradient learners. For IEEE-like schemas, pooled attention gains are not guaranteed even when some individual mechanisms improve selected learners. Therefore, encoder choice should be treated as schema-specific model selection, validated with significance testing rather than assumed to transfer.
 
 
-\section{Conclusion}
-\label{sec:conclusion}
+\section{Conclusion} \label{sec:conclusion} % 17-Jul-2026 retraining
+
 \subsection{Summary of key findings}
-This paper studied \textsc{REINFORCE} with attention-style feature extractors for milling-tool replacement using refreshed 17-Jul-2026 results. Without attention, \textsc{PPO} is the best mean performer in both schemas. With attention, the best mean shifts to \textsc{REINFORCE} in both schemas. Focused Welch tests show that \textsc{REINFORCE} does not exceed \textsc{PPO} in baseline-only settings, but does so after adding attention. The same environment design works across SIT and IEEE, and attention interoperability across schemas is strongest for \textsc{REINFORCE}, which improves significantly over its no-attention baseline in both SIT (0.4907 to 0.7492, $p=0.0000$) and IEEE (0.7496 to 0.8569, $p=0.0440$). This gain is not universal, however: pooled across all four algorithms, attention does not improve mean performance on IEEE (0.7377 to 0.5906, $p=1.0000$), so encoder selection must remain schema- and algorithm-specific.
+This paper studied \textsc{REINFORCE} with attention-style feature extractors for milling-tool replacement. Without attention, \textsc{PPO} is the best mean performer in both schemas. With attention, the best mean shifts to \textsc{REINFORCE} in both schemas. Focused Welch tests show that \textsc{REINFORCE} does not exceed \textsc{PPO} in baseline-only settings, but does so after adding attention. The same environment design works across SIT and IEEE, and attention interoperability across schemas is strongest for \textsc{REINFORCE}, which improves significantly over its no-attention baseline in both SIT (0.4907 to 0.7492, $p=0.0000$) and IEEE (0.7496 to 0.8569, $p=0.0440$). This gain is not universal, however: pooled across all four algorithms, attention does not improve mean performance on IEEE (0.7377 to 0.5906, $p=1.0000$), so encoder selection must remain schema- and algorithm-specific.
 
 \subsection{Future work}
 Future work should test attention over short time windows, measure inference time and memory use, add richer maintenance costs, compare non-RL and lightweight no-attention encoders, and study robustness under sensor drift and cross-machine shift.
