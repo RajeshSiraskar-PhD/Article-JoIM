@@ -1,7 +1,9 @@
 % ----------------------------------------------------------------------------------------------------
 % V 4.1 - 18-Jul-2026: Review for publication
-% line 191 > REVIEW FROM HERE
 % V 4.2 - 20-Jul: Adding Attention Mechanism survey from Undermind
+% Added implementation details
+% From results - remove p and t tests plots 
+% Add the ablation bar charts
 % ----------------------------------------------------------------------------------------------------
 
 \PassOptionsToPackage{hypertexnames=false}{hyperref}
@@ -136,20 +138,20 @@ The RL literature uses attention for a different purpose: selective decision-mak
 
 The strict literature on attention plus RL for predictive maintenance remains comparatively small. TranDRL uses Transformer-based sensor encoding for remaining-useful-life estimation and then passes the resulting health representation to a deep RL maintenance policy, creating a system-level integration of attention and prescriptive decision-making \cite{Zhao2024}. More recent work moves attention closer to the policy side: Li et al. use an attention-enhanced DQN for finite-horizon maintenance optimization, while Guo and Liang use a Transformer-augmented DQN for partially observable maintenance under combined degradation and shock effects \cite{Li2025, Guo2026}. Even so, the corpus is heterogeneous and does not yet establish common benchmarks, standardized ablations, or a clear comparison across attention designs. The literature therefore suggests a specific unresolved gap: lightweight attention for PdM exists, and attention-linked RL maintenance optimization exists, but comparative evidence on attention-based state representations for sensor-driven maintenance policies is still limited. That gap motivates the present comparison of attention-style feature extractors with lightweight and deep RL baselines. Table~\ref{tab:attention_funnel_synthesis} summarizes this progression from general attention mechanisms to attention-enhanced RL for predictive maintenance.
 
-\begin{table}[htbp]
+\begin{table}[h]
 \centering
-\caption{Synthesis of the three-stage funnel from general attention to RL for predictive maintenance.}
+\caption{General attention to RL for predictive maintenance.}
 \label{tab:attention_funnel_synthesis}
-\begin{tabular}{L{0.18\linewidth} L{0.24\linewidth} L{0.30\linewidth} L{0.22\linewidth}}
-\toprule
-\textbf{Stage} & \textbf{Main function of attention} & \textbf{Representative evidence} & \textbf{Main limitation for the next stage}\\
-\midrule
-Attention mechanisms generally & Selectively weight inputs and model long-range dependencies & Bahdanau et al.; Luong et al.; Vaswani et al. & Standard self-attention can be computationally expensive for long sequences and edge devices\\
-Efficient and lightweight attention & Reduce memory and time costs while preserving useful interactions & Choromanski et al.; Siraskar et al.; Wang et al. & Efficient attention alone does not make maintenance decisions\\
-Attention combined with RL & Focus policy or value learning on relevant observations, history, or features & Blakeman and Mareschal; Mott et al.; Sorokin et al.; Wu et al. & Gains are task-dependent; interpretability and training stability remain unresolved\\
-Attention plus RL for PdM & Use attention-enhanced health representations or states to learn maintenance actions & Guo and Liang; Li et al.; Zhao et al. & The corpus is small, heterogeneous, and lacks lightweight edge-oriented RL attention\\
-\bottomrule
-\end{tabular}
+	\begin{tabular}{L{0.18\linewidth} L{0.30\linewidth} L{0.20\linewidth} L{0.30\linewidth}}
+	\toprule
+	\textbf{Stage} & \textbf{Main function of attention} & \textbf{Representative research articles} & \textbf{Main limitation for the next stage}\\
+	\midrule
+	Attention mechanisms generally & Selectively weight inputs and model long-range dependencies & \cite{Bahdanau2014,Vaswani2017,Luong2015} & Standard self-attention can be computationally expensive for long sequences and edge devices\\
+	Efficient and lightweight attention & Reduce memory and time costs while preserving useful interactions & \cite{Choromanski2020, Siraskar2024,Wang2020Linformer} & Efficient attention alone does not make maintenance decisions\\
+	Attention combined with RL & Focus policy or value learning on relevant observations, history, or features & \cite{BlakemanMareschal2022,Mott2019,Sorokin2015,Wu2021} & Gains are task-dependent; interpretability and training stability remain unresolved\\
+	Attention plus RL for PdM & Use attention-enhanced health representations or states to learn maintenance actions & \cite{Guo2026,Luong2015, Zhao2024} & The corpus is small, heterogeneous, and lacks lightweight edge-oriented RL attention\\
+	\bottomrule
+	\end{tabular}
 \end{table}
 
 \subsection{RL for predictive maintenance and lightweight baselines}
@@ -271,6 +273,8 @@ Accordingly, the attention modules studied here are representation blocks over t
 
 For the ablation study, the normalized sensor vector is also passed directly to the policy/value network as a no-attention baseline.
 
+Unless otherwise stated, extractor capacity was held fixed across algorithms and schemas to keep the comparison controlled rather than separately tuning each module. In particular, all extractors output a 64-dimensional feature vector; NW uses 32 learnable prototype slots; temporal attention uses a 32-dimensional temporal code with $T_{max}=1000$; and multi-head attention uses $H=8$ heads, giving $d_h=64/8=8$ per head.
+
 \paragraph{Nadaraya--Watson attention}
 Nadaraya--Watson (NW) attention works as kernel-based soft retrieval from learnable prototypes. We include it because it performed well in our earlier PdM attention work \cite{Siraskar2024}.
 
@@ -280,7 +284,7 @@ A standard Gaussian-kernel form is
         \alpha_i = \frac{\exp\left(-\beta\,\lVert \mathbf{k}_i-\mathbf{q}\rVert^2\right)}{\sum_j \exp\left(-\beta\,\lVert \mathbf{k}_j-\mathbf{q}\rVert^2\right)},
         \qquad \mathbf{z}=\sum_i\alpha_i\,\mathbf{v}_i.
 \end{equation}
-We use learnable prototypes $\{\mathbf{k}_i,\mathbf{v}_i\}$ and bandwidth $\beta>0$.
+We use learnable prototypes $\{\mathbf{k}_i,\mathbf{v}_i\}$ and bandwidth $\beta>0$. In the code, $\beta$ is enforced to be positive by optimizing $\log \beta$ and setting $\beta=\exp(\log \beta)$. The 32 prototype slots are a fixed design choice used as a lightweight surrogate memory rather than an external datastore.
 
 \paragraph{Temporal attention}
 Temporal attention (TP) adds a stage-of-life signal using sinusoidal positional encodings and a learnable temporal embedding \cite{Vaswani2017, Lim2020TFT}. It combines soft feature reweighting with a timestep encoding:
@@ -292,7 +296,7 @@ Temporal attention (TP) adds a stage-of-life signal using sinusoidal positional 
         \mathbf{e}_t &= \mathrm{PE}(t) + \mathbf{b},
         \qquad \mathbf{z}_t = f_\theta\!\left([\tilde{\mathbf{x}}_t;\mathbf{e}_t]\right).
 \end{align}
-Here $t$ is the within-episode timestep, $T_{max}$ is the truncation limit, $d_{\mathrm{TP}}$ is the encoding dimension, and $f_\theta(\cdot)$ gives the feature embedding.
+	Here $t$ is the monotone counter used by the extractor, $T_{max}$ is the truncation limit, $d_{\mathrm{TP}}$ is the encoding dimension, and $f_\theta(\cdot)$ gives the feature embedding. In the present implementation, the counter is incremented on each forward pass and wrapped modulo $T_{max}=1000$; it is intended to approximate stage-of-life progression, but it is not an explicit sequence model over a stored history window.
 
 \paragraph{Multi-head attention}
 Multi-head attention (MH) gates the single-timestep feature vector in parallel subspaces \cite{Vaswani2017}. The heads operate on projections of the current observation, not on a token sequence.
@@ -304,19 +308,24 @@ In our implementation,
         s_h&=\frac{\mathbf{q}_h^\top\mathbf{k}_h}{\sqrt{d_h}},\quad \alpha_h=\mathrm{softmax}(s)_h,\\
         \mathbf{z}&=W^O\,[\alpha_1\mathbf{v}_1;\ldots;\alpha_H\mathbf{v}_H].
 \end{align}
+	Because there is no token axis, each head contributes one scalar compatibility score $s_h$ for the current observation, and the softmax is applied across heads. This should therefore be interpreted as parallel head-wise gating of a single sensor vector, not as canonical multi-token self-attention.
 
 \paragraph{Self-attention}
 Self-attention (SA) is applied to the current observation vector. It is therefore a gated feature block with residual connections and layer normalization, not sequence self-attention over a time window.
 
 In our implementation,
 \begin{align}
-        \mathbf{x} &= W_{\mathrm{in}}\mathbf{x}_t,\\
-        \mathbf{q} &= W_Q\mathbf{x},\quad \mathbf{k}=W_K\mathbf{x},\quad \mathbf{v}=W_V\mathbf{x},\\
-        s &= \frac{\mathbf{q}^\top\mathbf{k}}{\sqrt{d}},\quad \tilde{\mathbf{x}} = g(s)\,\mathbf{v},\\
-        \mathbf{z}_1 &= \mathrm{LN}\!\left(\mathbf{x}+\tilde{\mathbf{x}}\right),\quad
-        \mathbf{z}=\mathrm{LN}\!\left(\mathbf{z}_1+\mathrm{FFN}(\mathbf{z}_1)\right).
+		\mathbf{x}^{(b)} &= W_{\mathrm{in}}\mathbf{x}_t^{(b)},\\
+		\mathbf{q}^{(b)} &= W_Q\mathbf{x}^{(b)},\quad \mathbf{k}^{(b)}=W_K\mathbf{x}^{(b)},\quad \mathbf{v}^{(b)}=W_V\mathbf{x}^{(b)},\\
+		s^{(b)} &= \frac{{\mathbf{q}^{(b)}}^\top\mathbf{k}^{(b)}}{\sqrt{d}},\quad
+		\alpha^{(b)}=\frac{\exp(s^{(b)})}{\sum_{b'}\exp(s^{(b')})},\\
+		\mathbf{z}_1^{(b)} &= \mathrm{LN}\!\left(\mathbf{x}^{(b)}+\alpha^{(b)}\mathbf{v}^{(b)}\right),\quad
+		\mathbf{z}^{(b)}=\mathrm{LN}\!\left(\mathbf{z}_1^{(b)}+\mathrm{FFN}(\mathbf{z}_1^{(b)})\right).
 \end{align}
-Here $g(\cdot)$ is the scalar softmax-based gate. Conceptually, the block transforms the current sensor vector at one point in time.
+	Here the gate is a scalar weight produced from the current observation and normalized over the active batch in the implementation. The feed-forward block expands from 64 to 128 hidden units and then projects back to 64. Conceptually, this is best viewed as an implementation-specific residual gating block over the current sensor vector, rather than canonical sequence self-attention.
+
+	\paragraph{Implementation assumptions and fixed scalars}
+	For reviewer clarity, the extractors rely on several fixed design assumptions. First, none of the four modules attends over an explicit temporal window of stored observations; they operate on the current sensor vector only, with temporal attention adding a deterministic positional code. Second, the capacity choices $(64,32,8,1000)$ were used as fixed lightweight settings for controlled comparison, not as separately optimized architecture hyperparameters. Third, temporal progression is approximated through the extractor's internal counter, and both multi-head and self-attention are single-observation gating modules rather than full Transformer layers over a sequence.
 \subsection{Datasets and evaluation protocol} \label{sec:experiment} 
 
 We evaluate AutoRL on two milling datasets: the public IEEE PHM~2010 dataset and an in-house SIT university testbed dataset. Both are mapped to the observation interface in Section~\ref{sec:mdp_components}.% %Sensor units are: force in N, vibration in $g$, acoustic-emission RMS in V, current in A, sound in V, and load-cell signals in kN (or V after conditioning).
