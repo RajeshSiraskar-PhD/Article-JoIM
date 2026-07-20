@@ -1,9 +1,6 @@
 % ----------------------------------------------------------------------------------------------------
-% V 3.0 
-% - V.2.2: Revised shortened version
-% - V.2.3: Modified tone and dropped HYPOTHESIS type statements
-% - V.3.0: 15-Jul -- Add NEW results 
-% - V.4.0: 18-Jul -- Add 17-Jul results. Added model size.
+% V 4.1 - 18-Jul-2026: Review for publication
+% line 191 > REVIEW FROM HERE
 % ----------------------------------------------------------------------------------------------------
 
 \PassOptionsToPackage{hypertexnames=false}{hyperref}
@@ -51,7 +48,7 @@
 \makeatother
 
 \onehalfspacing
-\renewcommand{\arraystretch}{1.44}
+\renewcommand{\arraystretch}{1.5}
 % \lstset{
 %         basicstyle=\ttfamily\footnotesize,
 %         columns=fullflexible,
@@ -65,7 +62,7 @@
 
 \begin{document}
 
-\title[RL for PdM]{Reinforcement Learning for Predictive Maintenance: A study of Attention Mechanisms for Milling Tool Replacement (4.0 18-Jul-2026)}
+\title[RL for PdM]{Reinforcement Learning for Predictive Maintenance: A study of Attention Mechanisms for Milling Tool Replacement}
 
 \author[1,4]{\fnm{Rajesh} \sur{Siraskar} \sfx{(\href{https://orcid.org/0000-0003-2341-8787}{ORCID: 0000-0003-2341-8787}})}\email{rajesh.siraskar@gmail.com}
 \author*[1,2]{\fnm{Satish} \sur{Kumar}}\email{satish.kumar@sitpune.edu.in}
@@ -80,13 +77,13 @@
 \affil[3]{Swinburne University of Technology, Hawthorn VIC 3122, Australia}
 \affil[4]{\orgdiv{CTO Office}, \orgname{Birlasoft Ltd.}, \orgaddress{\city{Pune}, \postcode{411057}, \state{Maharashtra}, \country{India}}}
 
-\abstract{Predictive maintenance helps decide when a machine component should be replaced before failure. This paper studies milling cutting-tool replacement. The decision is asymmetric: late replacement can affect quality or cause failure, while early replacement wastes tool life. We model this as a Reinforcement Learning (RL) problem and test whether \textsc{REINFORCE}, a Monte-Carlo policy-gradient method, remains competitive with common RL baselines.
+\abstract{Predictive maintenance helps decide when a machine component should be replaced before failure. This paper studies milling cutting-tool replacement. The decision is asymmetric: late replacement can affect quality or cause failure, while early replacement wastes tool life. We model this as a Reinforcement Learning (RL) problem and test whether \textsc{REINFORCE}, a Monte-Carlo policy-gradient method, remains competitive with common RL baselines.%
 
-We compare \textsc{A2C}, \textsc{DQN}, \textsc{PPO}, and \textsc{REINFORCE} with four attention-style feature extractors: Nadaraya--Watson, temporal, multi-head, and self-attention. We also add a no-attention ablation, where the normalized sensor vector is passed directly to the policy. The experiments use a Gymnasium-compatible milling environment and an AutoRL workflow for training and reporting.
+We compare \textsc{A2C}, \textsc{DQN}, \textsc{PPO}, and \textsc{REINFORCE} with four attention-style feature extractors: Nadaraya--Watson, temporal, multi-head, and self-attention. We created a Gymnasium-compatible milling environment and an AutoRL workflow for training and reporting.
 
-The method is evaluated on the public IEEE PHM~2010 milling dataset and an in-house university testbed dataset. In both schemas, the no-attention baseline winner is \textsc{PPO} (SIT: 0.6313, IEEE: 0.8434), while the best model with attention is \textsc{REINFORCE} (SIT: 0.7492, IEEE: 0.8569). For the focused comparison \textsc{REINFORCE} $>$ \textsc{PPO}, baseline differences are not supported (SIT: $t=-2.9224$, $p=0.9980$; IEEE: $t=-1.3711$, $p=0.9100$), but with attention the claim is supported (SIT: $t=3.1941$, $p=0.0007$; IEEE: $t=1.9865$, $p=0.0243$). Ablation results support attention interoperability across schemas for \textsc{REINFORCE}: attention significantly improves over the no-attention baseline in both SIT (0.4907 to 0.7492, $p=0.0000$) and IEEE (0.7496 to 0.8569, $p=0.0440$).}
+The method is evaluated on the public IEEE PHM~2010 milling dataset and an in-house university testbed dataset named `SIT' (for Symbiosis Institute of Technology). We conducted a ablation study, where the normalized sensor vector was passed directly to the policy. In both schemas, the no-attention baseline winner is \textsc{PPO} (SIT: 0.6313, IEEE: 0.8434), while the best model with attention is \textsc{REINFORCE} (SIT: 0.7492, IEEE: 0.8569). For the focused comparison \textsc{REINFORCE} $>$ \textsc{PPO}, baseline differences are not supported (SIT: $t=-2.9224$, $p=0.9980$; IEEE: $t=-1.3711$, $p=0.9100$), but with attention the claim is supported (SIT: $t=3.1941$, $p=0.0007$; IEEE: $t=1.9865$, $p=0.0243$). Ablation results support attention interoperability across schemas for \textsc{REINFORCE}: attention significantly improves over the no-attention baseline in both SIT (0.4907 to 0.7492, $p=0.0000$) and IEEE (0.7496 to 0.8569, $p=0.0440$).}
 
-\keywords{Predictive maintenance, Industry 4.0, Reinforcement Learning, REINFORCE, Attention mechanisms, Ablation study, Milling, AutoRL}
+\keywords{Predictive maintenance, Industry 4.0, Reinforcement Learning, REINFORCE, Attention mechanisms, Milling machines, AutoRL}
 
 \maketitle
 
@@ -95,23 +92,22 @@ The method is evaluated on the public IEEE PHM~2010 milling dataset and an in-ho
 Predictive maintenance (PdM) tries to replace or service a component before failure, while still using useful life effectively. Modern machines generate sensor data during operation, and this data can support maintenance decisions \cite{Zonta2020, Compare2020}. In milling, the cutting tool wears gradually. Since direct wear inspection usually interrupts machining, a practical method should use signals already available during cutting.
 
 \subsection{Problem statement}
-This paper studies a direct PdM question: when should a milling cutting tool be replaced? Late replacement can lead to defective parts or tool failure. Early replacement is safer, but wastes tool life and interrupts production. RL is a natural fit because the agent repeatedly chooses between two actions: replace or continue.
+This paper studies a direct PdM question: when should a milling cutting tool be replaced? Late replacement can lead to defective parts or tool failure. Early replacement is safer, but wastes tool life and interrupts production. Reinforcement Learning (RL) is a natural fit because the agent intelligently chooses between two actions: replace or continue.
 
-The main research question is: \emph{Can \textsc{REINFORCE} remain competitive with commonly used RL methods such as \textsc{DQN}, \textsc{A2C}, and \textsc{PPO} for milling PdM when it is paired with attention-based feature extraction, and does attention improve over a no-attention observation baseline?}
+The main research question is: Can the computationally lightweight \textsc{REINFORCE} remain competitive with more advanced RL methods such as \textsc{DQN} (Deep Q-Network), \textsc{A2C} (Advantage Actor-Critic), and \textsc{PPO} (Proximal Policy Optimization) -- for milling PdM when it is paired with attention-based feature extraction, and does attention improve over a no-attention observation baseline?
 
 \subsection{Contributions}
 
-This study builds on our earlier work on \textsc{REINFORCE} for PdM \cite{Siraskar2025} and on our prior use of Nadaraya--Watson attention for tool-wear prediction \cite{Siraskar2024}. Here, AutoRL gives a common workflow for training, evaluation, and reporting across algorithms, hyperparameters, and feature extractors \cite{Schwartz2020, Strubell2019, Faust2019, Mussi2022}.
+This study builds on our earlier work on \textsc{REINFORCE} for PdM \cite{Siraskar2025} and on our prior use of Nadaraya--Watson attention for tool-wear prediction \cite{Siraskar2024}. We also created an automated work-bench that can be useful for industrial practitioners, AutoRL, that provides a common workflow for training, evaluation, and reporting across algorithms, hyperparameters, and feature extractors, similar to those proposed by \cite{Faust2019} and \cite{Mussi2022}.
 
 \textbf{Research objectives and hypotheses:}
-The objectives are to compare RL algorithms for milling PdM, test whether \textsc{REINFORCE} is competitive, evaluate attention against no-attention baselines, use one Gymnasium-compatible environment across two schemas, and report the results through the same AutoRL workflow.
+Our research objectives cover are to compare RL algorithms for milling PdM, test whether \textsc{REINFORCE} is competitive, evaluate attention against no-attention baselines, use one Gymnasium-compatible environment across two schemas, and report the results through the same AutoRL workflow.
 
 We test three research themes:
 \begin{itemize}
     \item \textbf{REINFORCE:} For the given predictive maintenance task for a milling machine tool replacement -- how does the light weight \textsc{REINFORCE} algorithm perform in comparison with more advanced algorithms such as \textsc{A2C}, \textsc{DQN}, and \textsc{PPO}. This is a continued research theme from \cite{Siraskar2025}.
-    \item \textbf{Attention mechanisms:} How do attention based feature extractors affect RL agorithm \textsc{REINFORCE} performance and improve over a matched no-attention baseline in at least some schema--mechanism settings.
-	\item \textbf{H2:} The same Markov Decision Process (MDP), environment design, and reward logic can be used on two different milling-machine schemas (SIT\footnote{Symbiosis Institute of Technology} and IEEE), without claiming direct transfer of a trained policy from one schema to the other.
-  
+    \item \textbf{Attention mechanisms:} How do attention based feature extractors affect RL agorithm \textsc{REINFORCE} performance and improve over a matched no-attention baseline in at least some schema--mechanism settings. This is an extension of the research theme from \cite{Siraskar2024}.
+	\item \textbf{Environment design extensibility:} Can the same Markov Decision Process (MDP), environment design, and reward logic be used on two different milling-machine schemas (SIT\footnote{Symbiosis Institute of Technology} and IEEE). Can it accommodate different machine set-ups and sensor schemas. We do not claim direct transfer of a \emph{trained policy} from one schema to the other.
 \end{itemize}
 
 \textbf{Contributions:}
@@ -125,33 +121,39 @@ This paper contributes:
 
 \section{Literature Review and Technical Background}
 \label{sec:lit_tech}
-\subsection{PdM and industrial decision-making}
-PdM connects sensing, analytics, and maintenance decisions in production systems \cite{Compare2020, Zonta2020}. Prescriptive maintenance extends this by recommending an action, such as replace or continue \cite{Ansari2019}. In manufacturing, such recommendations are useful only when they can be linked to signals available on the machine.
+\subsection{Edge-oriented PdM and deployment constraints}
+PdM links sensing, analytics, and operational decision-making in cyber-physical production systems \cite{Compare2020, Zonta2020}. Prescriptive maintenance extends this by recommending actions (e.g., replace vs. continue) within the workflow \cite{Ansari2019}. Edge deployment improves latency and resilience but imposes feasibility constraints on compute, memory, and system integration, which can limit adoption of complex ML/RL pipelines \cite{Njor2024, Pandey2023}.
 
-\subsection{RL for predictive maintenance}
-RL has been studied for maintenance scheduling, inspection planning, and condition-based maintenance \cite{Siraskar2023, Ogunfowora2023, Zhang2024}. Simpler RL formulations are often useful when the state and action spaces are structured \cite{Adsule2020, Yousefi2020, Rasay2024, Dadash2024}. Deep RL methods, such as DQN and PPO, are common when observations or horizons are more complex \cite{Liu2020, Chen2023, Lee2022, Ong2022-02}. Recent review work also notes that \textsc{REINFORCE} has received less PdM attention than these methods \cite{Siraskar2025}.
+\subsection{RL for predictive maintenance and lightweight baselines}
+RL has been surveyed extensively in PdM, with evidence that a wide range of formulations have been explored across maintenance scheduling, inspection, and resource-constrained decision problems \cite{Siraskar2023, Ogunfowora2023, Zhang2024}. A consistent theme across these surveys is that the ``right'' RL complexity level depends on (i) the structure of the decision problem (action-space size, time horizon, and reward occurrence frequency within it) and (ii) deployment requirements (compute, memory, latency).
 
-Public PdM benchmarks are useful, but they do not capture all plant-specific degradation, sensors, and maintenance rules. Evidence from physical manufacturing systems therefore remains important \cite{Andrade2021Aircraft,Dangut2022RareFailure,Chen2024DigitalTwin}. Attention-based models may also depend on the sensor structure of the machine being studied \cite{Zhao2024}. This motivates testing both the public IEEE data and the in-house SIT data.
+The literature suggests a useful two-stream picture. Many PdM and condition-based maintenance studies learn effective policies using non-deep or otherwise lightweight RL, especially when state representations are structured and action spaces are modest \cite{Adsule2020, Yousefi2020, Rasay2024, Dadash2024}. Deep RL (e.g., DQN/PPO-style methods) becomes more prominent as environments become richer and harder: higher-dimensional sensing, long-horizon tradeoffs, multi-component scheduling, or coupled resource constraints \cite{Liu2020, Chen2023, Lee2022, Ong2022-02}. Recent review work also positions \textsc{REINFORCE} as comparatively underexplored in PdM \cite{Siraskar2025}.
 
-\subsection{Technical background: MDP setting and RL algorithms}
-\label{sec:tech_background}
+\paragraph{Lightweight RL for edge PdM:}
+Existing research indicates that lightweight methods are often a sound engineering choice when the PdM task is structured and edge constraints are first-order requirements \cite{Compare2020, Njor2024, Pandey2023}. In embedded RL more broadly, deep RL frequently requires additional techniques such as transfer learning, pruning, compression, or distillation, to fit constrained edge devices \cite{Jang2020, Szydlo2022, Xu2022}. For heavier deep models to be suitable for edge deployment, additional compression steps (e.g., pruning or quantization) are often required \cite{Pandey2023, Jang2020, Xu2022}.
+
+Maintenance optimization contributes to energy and emissions objectives. However these studies rarely report \emph{algorithm-level} energy or carbon for RL training and deployment and research in this direction will result in focussed energy studies; \cite{Banyai2021, Banyai2022, JasiulewiczKaczmarek2024}. 
+
+Although RL is often motivated through generic benchmark environments, the evidence most useful for predictive maintenance comes from studies built on maintenance-specific data, assets, and decision constraints rather than abstract control tasks \cite{Andrade2021Aircraft,Dangut2022RareFailure,Zhao2024,Siraskar2025}. Public PdM benchmarks have helped move the field forward, but they still leave a gap to deployment because they cannot fully capture plant-specific degradation, sensing, and maintenance logic. By contrast, studies grounded in operational aircraft logs, fleet maintenance records, or physical manufacturing systems provide a stronger evidence tier for industrial relevance \cite{Andrade2021Aircraft,Dangut2022RareFailure,Chen2024DigitalTwin}. This matters even more for attention-based models, whose value depends on exploiting domain-specific temporal and cross-sensor structure \cite{Zhao2024}. In that sense, newly collected real machine data is a substantive contribution to PdM RL research rather than a mere implementation detail.
+
+A detailed study of model sizes and carbon consumptions are out of scope of this article, we build on the prior research for milling PdM, that suggests that untuned \textsc{REINFORCE} can be a strong baseline while remaining compact in serialized size \cite{Siraskar2025}. \textsc{REINFORCE} is a light weight algorithm, and this study is an attempt to first establish its performance baseline for solving the PdM problem for milling operations.
+
+\section{Materials and Methods}\label{sec:method}
+
+\subsection{Technical background: MDP setting and RL algorithms}\label{sec:tech_background}
 \paragraph{MDP notation and observation model:}
-We model milling PdM as an episodic MDP $(\mathcal{S},\mathcal{A},P,R,\gamma)$, where the agent observes sensor state $s$, takes action $a$, receives reward $R$, and moves according to $P$. Section~\ref{sec:env} applies this form to tool replacement.
+We model milling PdM as an episodic MDP $(\mathcal{S},\mathcal{A},P,R,\gamma)$, where $s \in \mathcal{S}$ is the sensor state, $a \in \mathcal{A}$ is the action, $P(s'|s,a)$ is the state transition probability, $R(s,a)$ is the reward function, and $\gamma \in [0,1]$ is the discount factor. Section~\ref{sec:env} applies this form to tool replacement.
 
 \paragraph{RL algorithms compared:}
-We compare DQN, A2C, PPO, and \textsc{REINFORCE} using the same environment and observation interface \cite{Mnih2015, Schulman2017, Williams1992}.
+We compare DQN, A2C, PPO, and \textsc{REINFORCE} using the same environment and observation interface.
 
-\section{Materials and Methods}
-\label{sec:method}
-
-\subsection{Problem formulation: RL for PdM with attention}
-\label{sec:env} \label{app:env_reward}
+\subsection{Problem formulation: RL for PdM with attention} \label{sec:env} \label{app:env_reward}
 \paragraph{Milling machines:}
 Milling tools gradually wear during machining and are replaced near the end of useful life. We use $\tau = 300\,\mu\mathrm{m}$, as suggested in Section 7.4 of ISO 8688-2:1989 \citep{ISO8688-2-1989}, as the wear threshold for training, reward shaping, and evaluation.
 
 At each decision step $t$, the agent selects $a_t\in\{0,1\}$, where $a_t=0$ means \emph{replace} and $a_t=1$ means \emph{continue}. Replacement ends the episode; continuing keeps the process running.
 
-True wear is not available online because it requires inspection. The agent therefore uses in-process sensor data $\mathbf{x}_t\in\mathbb{R}^d$. Measured wear is used inside the environment only for threshold checks, termination, and rewards.
+True wear is not available online because it requires offline inspection and measurement. The agent therefore uses in-process sensor data $\mathbf{x}_t\in\mathbb{R}^d$. Measured wear is used inside the environment only for termination and computation of rewards.
 
 \paragraph{Attention as representation learning for sensor-driven PdM:}
 Because decisions use $\mathbf{x}_t$ rather than direct wear inspection, each RL algorithm is paired with an attention-style extractor $\phi_\theta(\mathbf{x}_t)$ before the policy/value network.
@@ -177,6 +179,10 @@ The information state is the sensor vector $\mathbf{x}_t$. The two schemas diffe
 	\end{tabular}
 \end{table}
 
+Observation vector for SIT schema: \texttt{Vib\_Spindle, Vib\_Table, Sound\_Spindle, Sound\_table, X\_Load\_Cell, Y\_Load\_Cell, Z\_Load\_Cell, Current}\\
+
+Observation vector for IEEE schema: \texttt{force\_x, force\_y, force\_z, vibration\_x, vibration\_y, vibration\_z, acoustic\_emission\_rms}
+
 \paragraph{Action space:}
 The action space is discrete: $a_t=0$ means \emph{replace}, and $a_t=1$ means \emph{continue}.
 
@@ -185,24 +191,25 @@ PdM decisions are asymmetric. Late replacement may cause quality loss or failure
 
 \begin{table}[htbp]
 	\centering
-	\caption{Conceptual interpretation of PdM decisions}
+	\caption{Conceptual interpretation of PdM decisions with respect to flank wear VB}
 	\label{tab:cost_view}
 	\begin{tabular}{L{0.18\linewidth} L{0.32\linewidth} L{0.42\linewidth}}
 		\toprule
 		\textbf{Case} & \textbf{Condition} & \textbf{PdM interpretation}\\
 		\midrule
-		Timely replace & $a_t=0$ near $VB\approx\tau$ & Desired: high utilization and low violation risk.\\
-		Early replace & $a_t=0$ when $VB\ll\tau$ & Safe but wasteful: reduces risk while discarding useful life.\\
-		Late action / violation & $a_t=1$ while $VB>\tau$ & Worst case: elevated risk of quality loss or failure; strongly penalized.\\
-		Continue safely & $a_t=1$ with $VB<\tau$ & Encouraged: extracts remaining useful life when safe.\\
+		Timely replace & $a_t=0$ near VB $\approx\tau$ & Desired: high utilization and low violation risk.\\
+		Early replace & $a_t=0$ when VB $\ll\tau$ & Safe but wasteful: reduces risk while discarding useful life.\\
+		Late action / violation & $a_t=1$ while VB $>\tau$ & Worst case: elevated risk of quality loss or failure; strongly penalized.\\
+		Continue safely & $a_t=1$ with VB $<\tau$ & Encouraged: extracts remaining useful life when safe.\\
 		\bottomrule
 	\end{tabular}
 \end{table}
 
-\paragraph{Reward shaping components:}
+\paragraph{Reward shaping components:} The reward function uses 4 scalar quantities that allow the agent to learn an optimal tool replacement policy. Table \ref{tab:reward_components} lists $R_1$ through $R_4$ and how it shapes the policy.
+
 \begin{table}[htbp]
 	\centering
-	\caption{Reward shaping components in the milling PdM environment (qualitative summary).}
+	\caption{Reward shaping components in the milling PdM environment.}
 	\label{tab:reward_components}
 	\begin{tabular}{L{0.20\linewidth} L{0.22\linewidth} L{0.50\linewidth}}
 		\toprule
@@ -288,7 +295,7 @@ We evaluate AutoRL on two milling datasets: the public IEEE PHM~2010 dataset and
 The IEEE dataset \cite{PHMdata2010} comes from the PHM Society 2010 Data Challenge for high-speed CNC milling. We use seven channels from the release format: three-axis cutting force, three-axis vibration, and acoustic-emission RMS. Five files are used in the experiments.
 
 \paragraph{SIT in-house dataset (university milling testbed):}
-The SIT dataset is collected on a Vertical Milling Centre (Jyoti NVU PX10) using an NI data acquisition system. Tool wear is measured with a tool-makers microscope. The experiments span spindle speeds of 800--1{,}200~rpm and feed rates of 20--40~mm/min, with measured flank wear up to 0.32~mm. The eight-channel SIT schema contains spindle/table vibration, spindle/table sound, three-axis load-cell signals, and spindle current. Figure~\ref{fig:schema_feature_plots_ieee_sit} shows representative IEEE and SIT sensor traces.
+The SIT dataset is collected on a Vertical Milling Centre (Jyoti NVU PX10) using an NI data acquisition system. Tool wear is measured with a tool-makers microscope. The experiments span spindle speeds of 800--1{,}200~rpm and feed rates of 20--40~mm/min, with measured flank wear, denoted by $VB$,  up to 0.32~mm. The eight-channel SIT schema contains spindle/table vibration, spindle/table sound, three-axis load-cell signals, and spindle current. Figure~\ref{fig:schema_feature_plots_ieee_sit} shows representative IEEE and SIT sensor traces.
 
 \begin{figure}[t]
 	\centering
