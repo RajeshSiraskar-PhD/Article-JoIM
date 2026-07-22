@@ -1,0 +1,49 @@
+Panel,Competitor,Metric,T-Statistic,P-Value (1-tail),Significance,Sig (α=0.05),REINFORCE wins?,REINFORCE Sample Size,Others Sample Size
+A. All Attn - With Self-eval,A2C,Eval Score,+11.1087,0.0000,***,YES,Yes,120,120
+A. All Attn - With Self-eval,A2C,Tool Usage %,+9.9014,0.0000,***,YES,Yes,120,120
+A. All Attn - With Self-eval,A2C,Lambda,+9.9582,0.0000,***,YES,Yes,120,120
+A. All Attn - With Self-eval,A2C,Violations,+9.7164,0.0000,***,YES,Yes,120,120
+A. All Attn - With Self-eval,DQN,Eval Score,+22.3860,0.0000,***,YES,Yes,120,120
+A. All Attn - With Self-eval,DQN,Tool Usage %,+21.5109,0.0000,***,YES,Yes,120,120
+A. All Attn - With Self-eval,DQN,Lambda,+20.4978,0.0000,***,YES,Yes,120,120
+A. All Attn - With Self-eval,DQN,Violations,+16.1367,0.0000,***,YES,Yes,120,120
+A. All Attn - With Self-eval,PPO,Eval Score,+1.2083,0.1141,ns,no,—,120,120
+A. All Attn - With Self-eval,PPO,Tool Usage %,+1.2016,0.1154,ns,no,—,120,120
+A. All Attn - With Self-eval,PPO,Lambda,+1.1413,0.1275,ns,no,—,120,120
+A. All Attn - With Self-eval,PPO,Violations,+1.3826,0.0842,ns,no,—,120,120
+B. Best Attn (Self-Attention) - With Self-eval,A2C,Eval Score,+13.3678,0.0000,***,YES,Yes,25,120
+B. Best Attn (Self-Attention) - With Self-eval,A2C,Tool Usage %,+12.0033,0.0000,***,YES,Yes,25,120
+B. Best Attn (Self-Attention) - With Self-eval,A2C,Lambda,+11.8806,0.0000,***,YES,Yes,25,120
+B. Best Attn (Self-Attention) - With Self-eval,A2C,Violations,+10.8740,0.0000,***,YES,Yes,25,120
+B. Best Attn (Self-Attention) - With Self-eval,DQN,Eval Score,+26.1683,0.0000,***,YES,Yes,25,120
+B. Best Attn (Self-Attention) - With Self-eval,DQN,Tool Usage %,+27.6163,0.0000,***,YES,Yes,25,120
+B. Best Attn (Self-Attention) - With Self-eval,DQN,Lambda,+24.9747,0.0000,***,YES,Yes,25,120
+B. Best Attn (Self-Attention) - With Self-eval,DQN,Violations,+17.8172,0.0000,***,YES,Yes,25,120
+B. Best Attn (Self-Attention) - With Self-eval,PPO,Eval Score,+3.8303,0.0001,***,YES,Yes,25,120
+B. Best Attn (Self-Attention) - With Self-eval,PPO,Tool Usage %,+3.6763,0.0002,***,YES,Yes,25,120
+B. Best Attn (Self-Attention) - With Self-eval,PPO,Lambda,+3.1779,0.0009,***,YES,Yes,25,120
+B. Best Attn (Self-Attention) - With Self-eval,PPO,Violations,+3.1121,0.0012,**,YES,Yes,25,120
+C. All Attn - Unseen Only,A2C,Eval Score,+9.0567,0.0000,***,YES,Yes,100,100
+C. All Attn - Unseen Only,A2C,Tool Usage %,+8.2670,0.0000,***,YES,Yes,100,100
+C. All Attn - Unseen Only,A2C,Lambda,+8.4385,0.0000,***,YES,Yes,100,100
+C. All Attn - Unseen Only,A2C,Violations,+8.4846,0.0000,***,YES,Yes,100,100
+C. All Attn - Unseen Only,DQN,Eval Score,+18.5917,0.0000,***,YES,Yes,100,100
+C. All Attn - Unseen Only,DQN,Tool Usage %,+17.8179,0.0000,***,YES,Yes,100,100
+C. All Attn - Unseen Only,DQN,Lambda,+17.0262,0.0000,***,YES,Yes,100,100
+C. All Attn - Unseen Only,DQN,Violations,+13.9686,0.0000,***,YES,Yes,100,100
+C. All Attn - Unseen Only,PPO,Eval Score,+0.8377,0.2016,ns,no,—,100,100
+C. All Attn - Unseen Only,PPO,Tool Usage %,+0.7995,0.2125,ns,no,—,100,100
+C. All Attn - Unseen Only,PPO,Lambda,+0.7298,0.2332,ns,no,—,100,100
+C. All Attn - Unseen Only,PPO,Violations,+1.0195,0.1547,ns,no,—,100,100
+D. Best Attn (Self-Attention) - Unseen Only,A2C,Eval Score,+11.5130,0.0000,***,YES,Yes,20,100
+D. Best Attn (Self-Attention) - Unseen Only,A2C,Tool Usage %,+10.4600,0.0000,***,YES,Yes,20,100
+D. Best Attn (Self-Attention) - Unseen Only,A2C,Lambda,+10.5096,0.0000,***,YES,Yes,20,100
+D. Best Attn (Self-Attention) - Unseen Only,A2C,Violations,+9.7147,0.0000,***,YES,Yes,20,100
+D. Best Attn (Self-Attention) - Unseen Only,DQN,Eval Score,+22.7012,0.0000,***,YES,Yes,20,100
+D. Best Attn (Self-Attention) - Unseen Only,DQN,Tool Usage %,+23.5025,0.0000,***,YES,Yes,20,100
+D. Best Attn (Self-Attention) - Unseen Only,DQN,Lambda,+21.3923,0.0000,***,YES,Yes,20,100
+D. Best Attn (Self-Attention) - Unseen Only,DQN,Violations,+15.7027,0.0000,***,YES,Yes,20,100
+D. Best Attn (Self-Attention) - Unseen Only,PPO,Eval Score,+3.6696,0.0002,***,YES,Yes,20,100
+D. Best Attn (Self-Attention) - Unseen Only,PPO,Tool Usage %,+3.4008,0.0005,***,YES,Yes,20,100
+D. Best Attn (Self-Attention) - Unseen Only,PPO,Lambda,+2.8858,0.0023,**,YES,Yes,20,100
+D. Best Attn (Self-Attention) - Unseen Only,PPO,Violations,+2.8457,0.0027,**,YES,Yes,20,100

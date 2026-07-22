@@ -1,0 +1,49 @@
+Panel,Competitor,Metric,T-Statistic,P-Value (1-tail),Significance,Sig (α=0.05),REINFORCE wins?,REINFORCE Sample Size,Others Sample Size
+A. All Attn - With Self-eval,A2C,Eval Score,+28.0307,0.0000,***,YES,Yes,450,450
+A. All Attn - With Self-eval,A2C,Tool Usage %,+30.5562,0.0000,***,YES,Yes,450,450
+A. All Attn - With Self-eval,A2C,Lambda,+26.6987,0.0000,***,YES,Yes,450,450
+A. All Attn - With Self-eval,A2C,Violations,+16.9591,0.0000,***,YES,Yes,450,450
+A. All Attn - With Self-eval,DQN,Eval Score,+30.1480,0.0000,***,YES,Yes,450,450
+A. All Attn - With Self-eval,DQN,Tool Usage %,+33.0556,0.0000,***,YES,Yes,450,450
+A. All Attn - With Self-eval,DQN,Lambda,+28.6979,0.0000,***,YES,Yes,450,450
+A. All Attn - With Self-eval,DQN,Violations,+17.6670,0.0000,***,YES,Yes,450,450
+A. All Attn - With Self-eval,PPO,Eval Score,+1.4540,0.0731,ns,no,—,450,450
+A. All Attn - With Self-eval,PPO,Tool Usage %,+1.5574,0.0599,ns,no,—,450,450
+A. All Attn - With Self-eval,PPO,Lambda,+1.5299,0.0632,ns,no,—,450,450
+A. All Attn - With Self-eval,PPO,Violations,+1.4690,0.0711,ns,no,—,450,450
+B. Best Attn (Nadaraya-Watson) - With Self-eval,A2C,Eval Score,+27.6677,0.0000,***,YES,Yes,90,450
+B. Best Attn (Nadaraya-Watson) - With Self-eval,A2C,Tool Usage %,+29.6453,0.0000,***,YES,Yes,90,450
+B. Best Attn (Nadaraya-Watson) - With Self-eval,A2C,Lambda,+26.7628,0.0000,***,YES,Yes,90,450
+B. Best Attn (Nadaraya-Watson) - With Self-eval,A2C,Violations,+19.4007,0.0000,***,YES,Yes,90,450
+B. Best Attn (Nadaraya-Watson) - With Self-eval,DQN,Eval Score,+28.8914,0.0000,***,YES,Yes,90,450
+B. Best Attn (Nadaraya-Watson) - With Self-eval,DQN,Tool Usage %,+31.0735,0.0000,***,YES,Yes,90,450
+B. Best Attn (Nadaraya-Watson) - With Self-eval,DQN,Lambda,+27.9360,0.0000,***,YES,Yes,90,450
+B. Best Attn (Nadaraya-Watson) - With Self-eval,DQN,Violations,+19.9754,0.0000,***,YES,Yes,90,450
+B. Best Attn (Nadaraya-Watson) - With Self-eval,PPO,Eval Score,+7.5195,0.0000,***,YES,Yes,90,450
+B. Best Attn (Nadaraya-Watson) - With Self-eval,PPO,Tool Usage %,+7.5926,0.0000,***,YES,Yes,90,450
+B. Best Attn (Nadaraya-Watson) - With Self-eval,PPO,Lambda,+7.6110,0.0000,***,YES,Yes,90,450
+B. Best Attn (Nadaraya-Watson) - With Self-eval,PPO,Violations,+6.5025,0.0000,***,YES,Yes,90,450
+C. All Attn - Unseen Only,A2C,Eval Score,+28.0307,0.0000,***,YES,Yes,450,450
+C. All Attn - Unseen Only,A2C,Tool Usage %,+30.5562,0.0000,***,YES,Yes,450,450
+C. All Attn - Unseen Only,A2C,Lambda,+26.6987,0.0000,***,YES,Yes,450,450
+C. All Attn - Unseen Only,A2C,Violations,+16.9591,0.0000,***,YES,Yes,450,450
+C. All Attn - Unseen Only,DQN,Eval Score,+30.1480,0.0000,***,YES,Yes,450,450
+C. All Attn - Unseen Only,DQN,Tool Usage %,+33.0556,0.0000,***,YES,Yes,450,450
+C. All Attn - Unseen Only,DQN,Lambda,+28.6979,0.0000,***,YES,Yes,450,450
+C. All Attn - Unseen Only,DQN,Violations,+17.6670,0.0000,***,YES,Yes,450,450
+C. All Attn - Unseen Only,PPO,Eval Score,+1.4540,0.0731,ns,no,—,450,450
+C. All Attn - Unseen Only,PPO,Tool Usage %,+1.5574,0.0599,ns,no,—,450,450
+C. All Attn - Unseen Only,PPO,Lambda,+1.5299,0.0632,ns,no,—,450,450
+C. All Attn - Unseen Only,PPO,Violations,+1.4690,0.0711,ns,no,—,450,450
+D. Best Attn (Nadaraya-Watson) - Unseen Only,A2C,Eval Score,+27.6677,0.0000,***,YES,Yes,90,450
+D. Best Attn (Nadaraya-Watson) - Unseen Only,A2C,Tool Usage %,+29.6453,0.0000,***,YES,Yes,90,450
+D. Best Attn (Nadaraya-Watson) - Unseen Only,A2C,Lambda,+26.7628,0.0000,***,YES,Yes,90,450
+D. Best Attn (Nadaraya-Watson) - Unseen Only,A2C,Violations,+19.4007,0.0000,***,YES,Yes,90,450
+D. Best Attn (Nadaraya-Watson) - Unseen Only,DQN,Eval Score,+28.8914,0.0000,***,YES,Yes,90,450
+D. Best Attn (Nadaraya-Watson) - Unseen Only,DQN,Tool Usage %,+31.0735,0.0000,***,YES,Yes,90,450
+D. Best Attn (Nadaraya-Watson) - Unseen Only,DQN,Lambda,+27.9360,0.0000,***,YES,Yes,90,450
+D. Best Attn (Nadaraya-Watson) - Unseen Only,DQN,Violations,+19.9754,0.0000,***,YES,Yes,90,450
+D. Best Attn (Nadaraya-Watson) - Unseen Only,PPO,Eval Score,+7.5195,0.0000,***,YES,Yes,90,450
+D. Best Attn (Nadaraya-Watson) - Unseen Only,PPO,Tool Usage %,+7.5926,0.0000,***,YES,Yes,90,450
+D. Best Attn (Nadaraya-Watson) - Unseen Only,PPO,Lambda,+7.6110,0.0000,***,YES,Yes,90,450
+D. Best Attn (Nadaraya-Watson) - Unseen Only,PPO,Violations,+6.5025,0.0000,***,YES,Yes,90,450

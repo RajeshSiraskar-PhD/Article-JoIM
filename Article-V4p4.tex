@@ -1,15 +1,6 @@
 % ----------------------------------------------------------------------------------------------------
-% V 4.1 - 18-Jul-2026: Review for publication
-% V 4.2 - 20-Jul: Adding Attention Mechanism survey from Undermind
-% V 4.3 - 21-Jul: Modified t_max to 10K as per Vaswani
-% done -- Added implementation details
-% done -- From results - remove p and t tests plots 
-% done -- Add the ablation bar charts
-% done -- Add plots of tool wear
-% done -- Separate sensor plots to larger sizes
-% done -- Add LAMBDA plot
-% done -- corrected the much neeed scoring mechanisms
-% TO-DO -- add evaluation plots
+% V.4.4 - 22-Jul-2026: Major revision
+% - Added what AM worked best with RF and PPO 
 % ----------------------------------------------------------------------------------------------------
 
 \PassOptionsToPackage{hypertexnames=false}{hyperref}
@@ -45,11 +36,6 @@
 
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 
-% % % Usage: \faintcmidrule{2-4} % Optional thickness: \faintcmidrule[0.2pt]{2-4}
-% \newcommand{\faintcmidrule}[2][0.25pt]{%
-%   \cmidrule[#1](lr){#2}%
-% }
-
 \graphicspath{{figures/}}
 
 \makeatletter
@@ -59,16 +45,6 @@
 
 \onehalfspacing
 \renewcommand{\arraystretch}{1.5}
-% \lstset{
-%         basicstyle=\ttfamily\footnotesize,
-%         columns=fullflexible,
-%         breaklines=true,
-%         frame=single,
-%         xleftmargin=0.5em,
-%         xrightmargin=0.5em,
-%         aboveskip=0.8em,
-%         belowskip=0.8em
-% }
 
 \begin{document}
 
@@ -91,7 +67,7 @@
 
 We compare \textsc{A2C}, \textsc{DQN}, \textsc{PPO}, and \textsc{REINFORCE} with four attention-style feature extractors: Nadaraya--Watson, temporal, multi-head, and self-attention. We created a Gymnasium-compatible milling environment and an industrial practitioner friendly, AutoRL workflow for training and reporting.
 
-The method is evaluated on the public IEEE PHM~2010 milling dataset and an in-house university testbed dataset named `SIT' (for Symbiosis Institute of Technology). We conducted a ablation study, where the normalized sensor vector was passed directly to the policy. In both schemas, the no-attention baseline winner is \textsc{PPO} (SIT: 0.6313, IEEE: 0.8434), while the best model with attention is \textsc{REINFORCE} (SIT: 0.7492, IEEE: 0.8569). For the focused comparison \textsc{REINFORCE} $>$ \textsc{PPO}, baseline differences are not supported (SIT: $t=-2.9224$, $p=0.9980$; IEEE: $t=-1.3711$, $p=0.9100$), but with attention the claim is supported (SIT: $t=3.1941$, $p=0.0007$; IEEE: $t=1.9865$, $p=0.0243$). Ablation results support attention interoperability across schemas for \textsc{REINFORCE}: attention significantly improves over the no-attention baseline in both SIT (0.4907 to 0.7492, $p=0.0000$) and IEEE (0.7496 to 0.8569, $p=0.0440$).}
+The method is evaluated on the public IEEE PHM~2010 milling dataset and an in-house university testbed dataset named `SIT' (for Symbiosis Institute of Technology). We conducted a ablation study, where the normalized sensor vector was passed directly to the policy. In both schemas, the no-attention baseline winner is \textsc{PPO} (SIT: 0.6313, IEEE: 0.8434), while the best model with attention is \textsc{REINFORCE} (SIT: 0.7492, IEEE: 0.8569). Mechanism-level synthesis shows the strongest \textsc{REINFORCE} variant is Nadaraya--Watson on SIT (0.8646 $\pm$ 0.2032) and self-attention on IEEE (0.8860 $\pm$ 0.0708), while \textsc{PPO} peaks with multi-head on SIT (0.8004 $\pm$ 0.2694) and Nadaraya--Watson on IEEE (0.8343 $\pm$ 0.1867). For the focused comparison \textsc{REINFORCE} $>$ \textsc{PPO}, baseline differences are not supported (SIT: $t=-2.9224$, $p=0.9980$; IEEE: $t=-1.3711$, $p=0.9100$), but with attention the claim is supported (SIT: $t=3.1941$, $p=0.0007$; IEEE: $t=1.9865$, $p=0.0243$). Ablation results support attention interoperability across schemas for \textsc{REINFORCE}: attention significantly improves over the no-attention baseline in both SIT (0.4907 to 0.7492, $p=0.0000$) and IEEE (0.7496 to 0.8569, $p=0.0440$).}
 
 \keywords{Predictive maintenance, Industry 4.0, Reinforcement Learning, REINFORCE, Attention mechanisms, Milling machines, AutoRL}
 
@@ -133,8 +109,8 @@ This paper contributes:
 
 \section{Literature Review and Technical Background}
 \label{sec:lit_tech}
-\subsection{Edge-oriented PdM and deployment constraints}
-PdM links sensing, analytics, and operational decision-making in cyber-physical production systems \cite{Compare2020, Zonta2020}. Prescriptive maintenance extends this by recommending actions (e.g., replace vs. continue) within the workflow \cite{Ansari2019}. Edge deployment improves latency and resilience but imposes feasibility constraints on compute, memory, and system integration, which can limit adoption of complex ML/RL pipelines \cite{Njor2024, Pandey2023}.
+
+Modern predictive maintenance systems links sensing, analytics, and operational decision-making in cyber-physical production systems \cite{Compare2020, Zonta2020}. Prescriptive maintenance extends this by recommending actions (e.g., replace vs. continue) within the workflow \cite{Ansari2019}. 
 
 \subsection{Attention mechanisms for predictive maintenance and RL}
 Attention originated as a way to relax the fixed-length bottleneck in encoder--decoder models by letting predictions depend selectively on the most relevant parts of the input \cite{Bahdanau2014, Luong2015}. The Transformer generalized this idea through self-attention and multi-head interactions, making it possible to model long-range dependencies without recurrence \cite{Vaswani2017}. For predictive-maintenance data this is attractive because sensor channels can be cross-correlated, delayed, and regime-dependent. In sequence models, the main limitation is computational: standard self-attention scales quadratically with sequence length, which becomes problematic for long sensor histories. Efficient variants such as Linformer and Performers reduce this burden and show how attention mechanisms can be adapted when temporal structure and computational budget must both be considered \cite{Wang2020Linformer, Choromanski2020}.
@@ -173,7 +149,11 @@ Maintenance optimization contributes to energy and emissions objectives. However
 
 Although RL is often motivated through generic benchmark environments, the evidence most useful for predictive maintenance comes from studies built on maintenance-specific data, assets, and decision constraints rather than abstract control tasks \cite{Andrade2021Aircraft,Dangut2022RareFailure,Zhao2024,Siraskar2025}. Public PdM benchmarks have helped move the field forward, but they still leave a gap to deployment because they cannot fully capture plant-specific degradation, sensing, and maintenance logic. By contrast, studies grounded in operational aircraft logs, fleet maintenance records, or physical manufacturing systems provide a stronger evidence tier for industrial relevance \cite{Andrade2021Aircraft,Dangut2022RareFailure,Chen2024DigitalTwin}. This matters even more for attention-based models, whose value depends on exploiting domain-specific temporal and cross-sensor structure \cite{Zhao2024}. In that sense, newly collected real machine data is a substantive contribution to PdM RL research rather than a mere implementation detail.
 
-Vanilla \textsc{REINFORCE} is a comparatively lightweight policy-gradient method because it updates the policy directly from Monte Carlo returns and does not require a separately parameterized critic network; this reduces architectural overhead relative to actor--critic methods \cite{Williams1992,Sutton1999,Sutton2001}. However, ``lightweight'' here refers to algorithmic structure, rather than guaranteed lower wall-clock training time, energy use, or carbon emissions: Monte Carlo policy-gradient estimates can have high variance, so stable learning may still require more episodes or updates \cite{Greensmith2005}. In our earlier PdM work, \textsc{REINFORCE} was also characterized as computationally simple and lightweight, although its training time could still exceed that of more sophisticated implementations \cite{Siraskar2025}. Accordingly, this article treats \textsc{REINFORCE} and attention as a focused research subject -- we study whether attention-style feature extractors can preserve REINFORCE's simplicity while improving policy quality for milling tool-replacement decisions.
+Vanilla \textsc{REINFORCE} is a comparatively lightweight policy-gradient method because it updates the policy directly from Monte Carlo returns and does not require a separately parameterized critic network; this reduces architectural overhead relative to actor--critic methods \cite{Williams1992,Sutton1999,Sutton2001}. However, ``lightweight'' here refers to algorithmic structure, rather than guaranteed lower wall-clock training time, energy use, or carbon emissions: Monte Carlo policy-gradient estimates can have high variance, so stable learning may still require more episodes or updates \cite{Greensmith2005}. 
+
+For Industry 4.0 aligned intelligent predictive maintenance systems edge deployment improves latency and resilience but imposes feasibility constraints on compute, memory, and system integration, which can limit adoption of complex ML/RL pipelines \cite{Njor2024, Pandey2023}. Research in the direction of lightweight ML or RL models help in forwarding Industry 4.0 and 5.0 initiatives.
+
+In our earlier PdM work, \textsc{REINFORCE} was also characterized as computationally simple and lightweight, although its training time could still exceed that of more sophisticated implementations \cite{Siraskar2025}. Accordingly, this article treats \textsc{REINFORCE} and attention as a focused research subject -- we study whether attention-style feature extractors can preserve REINFORCE's simplicity while improving policy quality for milling tool-replacement decisions.
 
 \section{Materials and Methods}\label{sec:method}
 
@@ -266,24 +246,6 @@ PdM decisions are asymmetric. Late replacement may cause quality loss or failure
 \paragraph{AutoRL workflow:}\label{sec:autorl}
 The AutoRL workbench allows for configuring the hyperparameter and other settings, such as the model scoring weightages. It allows for choosing which RL algorithms and attention mechanisms feature extractor to try out. It can then establish the training queue, run the combinations, automatically score and evaluate models. It allows for viewing training history and logs and even has a built crash recovery using model and training checkpoints, allowing long runs to resume. Figure \ref{fig:AutoRL} shows a couple of screens from the application. 
 
-% \begin{figure}[htbp!]
-% 	\centering
-% 	\begin{subfigure}[t]{0.48\textwidth}
-% 		\centering
-% 		\includegraphics[width=\linewidth]{IEEE_06_SensorPlot.png}
-% 		\caption{IEEE schema features.}
-% 		\label{fig:schema_ieee}
-% 	\end{subfigure}\hfill
-% 	\begin{subfigure}[t]{0.48\textwidth}
-% 		\centering
-% 		\includegraphics[width=\linewidth]{SIT_20_SensorPlot.png}
-% 		\caption{SIT schema features.}
-% 		\label{fig:schema_sit}
-% 	\end{subfigure}
-% 	\caption{Representative IEEE and SIT sensor traces showing schema differences.}
-% 	\label{fig:schema_feature_plots_ieee_sit}
-% \end{figure}
-
 \begin{figure}[htbp!]
 	\centering
 	\begin{subfigure}[t]{0.8\textwidth}
@@ -302,7 +264,7 @@ The AutoRL workbench allows for configuring the hyperparameter and other setting
 \end{figure}
 
 \paragraph{Simulation environment (Gymnasium-compatible milling PdM):}
-We define a Gymnasium-compatible environment for milling-tool replacement \cite{Foundation2023}. Episode structure, actions, and reward logic are fixed; only the observation channels vary by schema.
+We define a custom Gymnasium-compatible environment for milling-tool replacement \cite{Foundation2023}. Episode structure, actions, and reward logic are fixed; only the observation channels vary by schema.
 
 \paragraph{Training procedure and policy architecture:}
 All agents are trained using Stable-Baselines3 and a Gymnasium-compatible wrapper. Learning rate $\eta$ and discount factor $\gamma$ are swept because they are shared across algorithms and strongly affect performance \cite{Henderson2019, Shala2022AutoRL, Eimer2023}.
@@ -462,11 +424,13 @@ The evaluation score $\mathrm{S}$ then is computed as below in equation (\ref{eq
 
 $\tau$ is the configured wear threshold (default setting is $300\,\mu\mathrm{m}$) and $\mathrm{RM}$ is an allowable replacement margin (default setting is 5\% on either side of the wear threshold). We set the scoring component weightages as follows $W_1 = 0.50$, $W_2 = 0.30$ and $W_3 = 0.20$. The AutoRL bench allows the practitioners to overriding all of these defaults, ensuring a trained agent that meets their specific needs. 
 
+The score allows model evaluation based on industrial parameters rather than RL specific metrics such as average episode rewards. It therefore provides an \emph{explainable} model selection.  
+
 \paragraph{Multi-round evaluation, confidence intervals, and exploratory hypothesis tests:}
 SIT uses 20 evaluation rounds per held-out file to capture stochastic action variation. Welch tests are treated as exploratory because observations are nested within trained-model/held-out-file pairs. We report sample means and 95\% confidence intervals over held-out evaluations.
 
 \section{Results} \label{sec:results} % 17-Jul-2026 retraining
-For each schema, four RL algorithms are evaluated with no attention (baseline) and four attention mechanisms (Nadaraya--Watson, temporal, self-attention, and multi-head).
+For each schema, four RL algorithms are evaluated with no attention (baseline) and four attention mechanisms -- Nadaraya--Watson, temporal, self-attention, and multi-head.
 
 \subsection{Main performance tables and focused statistical tests}
 \label{sec:hypothesis_tests}
@@ -479,7 +443,7 @@ Tables~\ref{tab:sit_main_results} and \ref{tab:ieee_main_results} report mean $\
 	\label{tab:sit_main_results}
 	\begin{tabular}{l l l l l l}
 	\toprule
-	\textbf{RL Algo} & \textbf{Baseline} & \textbf{NW} & \textbf{TP} & \textbf{SA} & \textbf{MH}\\
+	\textbf{RL Algo} & \textbf{Baseline} & \textbf{Nadaraya--Watson} & \textbf{Temporal} & \textbf{Self-attention} & \textbf{Multi-head}\\
 	\midrule
 	A2C & 0.2456 $\pm$ 0.0043 & 0.2456 $\pm$ 0.0043 & 0.2456 $\pm$ 0.0043 & 0.3130 $\pm$ 0.2040 & 0.2456 $\pm$ 0.0043\\
 	DQN & 0.2456 $\pm$ 0.0043 & 0.2456 $\pm$ 0.0043 & 0.2456 $\pm$ 0.0043 & 0.2456 $\pm$ 0.0043 & 0.2456 $\pm$ 0.0043\\
@@ -495,7 +459,7 @@ Tables~\ref{tab:sit_main_results} and \ref{tab:ieee_main_results} report mean $\
 	\label{tab:ieee_main_results}
 	\begin{tabular}{l l l l l l}
 	\toprule
-	\textbf{RL Algo} & \textbf{Baseline} & \textbf{NW} & \textbf{TP} & \textbf{SA} & \textbf{MH}\\
+	\textbf{RL Algo} & \textbf{Baseline} & \textbf{Nadaraya--Watson} & \textbf{Temporal} & \textbf{Self-attention} & \textbf{Multi-head}\\
 	\midrule
 	A2C & 0.6880 $\pm$ 0.3098 & 0.4322 $\pm$ 0.2753 & 0.3565 $\pm$ 0.2496 & 0.2729 $\pm$ 0.1281 & 0.7424 $\pm$ 0.2695\\
 	DQN & 0.6696 $\pm$ 0.3002 & 0.2360 $\pm$ 0.0016 & 0.2360 $\pm$ 0.0016 & 0.2360 $\pm$ 0.0016 & 0.2878 $\pm$ 0.1811\\
@@ -523,6 +487,45 @@ Tables~\ref{tab:sit_main_results} and \ref{tab:ieee_main_results} report mean $\
 
 \paragraph{Result interpretation:}
 Without attention, \textsc{PPO} has the highest mean in both schemas (SIT: 0.6313; IEEE: 0.8434). With attention, the best overall mean shifts to \textsc{REINFORCE} (SIT: 0.7492; IEEE: 0.8569). This is consistent with the focused tests in Table~\ref{tab:rf_vs_ppo_tests}: the claim \textsc{REINFORCE} $>$ \textsc{PPO} is unsupported at baseline and supported when attention is enabled.
+
+\paragraph{Mechanism-level synthesis for \textsc{REINFORCE} and \textsc{PPO}:}
+Table~\ref{tab:best_mech_ppo_rf} summarizes the best attention mechanism for \textsc{REINFORCE} and \textsc{PPO} in each schema using mean $\pm$ standard deviation. In SIT, \textsc{REINFORCE} is strongest with Nadaraya--Watson (0.8646 $\pm$ 0.2032), while \textsc{PPO} is strongest with multi-head attention (0.8004 $\pm$ 0.2694). In IEEE, \textsc{REINFORCE} is strongest with self-attention (0.8860 $\pm$ 0.0708), while \textsc{PPO} is strongest with Nadaraya--Watson (0.8343 $\pm$ 0.1867).
+
+\begin{table}[htbp]
+\centering
+	\caption{Best attention mechanism by schema for \textsc{REINFORCE} and \textsc{PPO} (mean $\pm$ std. dev. evaluation score).}
+	\label{tab:best_mech_ppo_rf}
+	\begin{tabular}{l l l l}
+	\toprule
+	\textbf{Schema} & \textbf{Algorithm} & \textbf{Best attention mechanism} & \textbf{Eval. score (mean $\pm$ std. dev.)}\\
+	\midrule
+	SIT & \textsc{REINFORCE} & Nadaraya--Watson & 0.8646 $\pm$ 0.2032\\
+	SIT & \textsc{PPO} & Multi-head & 0.8004 $\pm$ 0.2694\\
+	IEEE & \textsc{REINFORCE} & Self-attention & 0.8860 $\pm$ 0.0708\\
+	IEEE & \textsc{PPO} & Nadaraya--Watson & 0.8343 $\pm$ 0.1867\\
+	\bottomrule
+	\end{tabular}
+\end{table}
+
+\textcolor{blue}{----------------------------------}
+\textcolor{red}{UPDATE HERE}
+\textcolor{blue}{----------------------------------}
+%% $$$ Gemini summary
+
+B. Environment/Schema Drives Attention Dynamics
+There is no single "best" attention mechanism across the board:
+
+In SIT: Simpler, localized mechanisms win out. Nadaraya–Watson gives REINFORCE its absolute peak (0.865), while Multi-Head works best for PPO (0.800).
+
+In IEEE: Temporal relationships matter much more. Self-Attention (0.886) and Temporal Attention (0.885) provide optimal performance for REINFORCE, while Nadaraya–Watson (0.834) and Multi-Head (0.823) perform best for PPO.
+
+Match the mechanism to temporal complexity: Use Self/Temporal attention for complex state sequences (IEEE) and lighter kernel-based attention (Nadaraya–Watson) for simpler schemas (SIT).
+
+% $$$ Model performance plots
+% PPO_MH_IEEE_01_04
+% PPO_MH_SIT_8_12
+% REINFORCE_MH_IEEE_04_01
+% REINFORCE_MH_SIT_12_10
 
 \subsection{Ablation study: attention versus no-attention} \label{sec:ablation_results} % 17-Jul-2026 retraining
 
@@ -644,6 +647,7 @@ As a practical aside, the trained \textsc{REINFORCE} policies are also small in 
 \label{sec:discussion}
 \subsection{Why REINFORCE performed well in this PdM setup}
 The task has a small action space and ends on replacement, but the policy still has to infer timing from sensor trajectories. In this rerun, \textsc{REINFORCE} becomes the best mean performer once attention is enabled in both schemas (SIT mean with attention 0.7492, IEEE mean with attention 0.8569), whereas it does not beat \textsc{PPO} in baseline-only comparisons. This pattern indicates that representation quality is a primary driver for \textsc{REINFORCE} in this PdM setting.
+The best mechanism is schema-dependent: \textsc{REINFORCE} peaks with Nadaraya--Watson on SIT but with self-attention on IEEE, while \textsc{PPO} peaks with multi-head on SIT and Nadaraya--Watson on IEEE (Table~\ref{tab:best_mech_ppo_rf}).
 
 \subsection{Implications for industrial practitioners}
 A practical deployment lesson is to benchmark no-attention first, then add attention selectively. For SIT-like schemas, attention can provide clear gains for strong policy-gradient learners. For IEEE-like schemas, pooled attention gains are not guaranteed even when some individual mechanisms improve selected learners. Therefore, encoder choice should be treated as schema-specific model selection, validated with significance testing rather than assumed to transfer.
@@ -655,7 +659,7 @@ The literature review suggests that most prior predictive-maintenance studies pl
 \section{Conclusion} \label{sec:conclusion} % 17-Jul-2026 retraining
 
 \subsection{Summary of key findings}
-This paper studied \textsc{REINFORCE} with attention-style feature extractors for milling-tool replacement. The literature review first clarified a narrower research gap than ``attention for PdM'' in general: the unresolved issue is how attention-based state representations affect RL maintenance performance, not merely upstream prognostics. Empirically, without attention, \textsc{PPO} is the best mean performer in both schemas. With attention, the best mean shifts to \textsc{REINFORCE} in both schemas. Focused Welch tests show that \textsc{REINFORCE} does not exceed \textsc{PPO} in baseline-only settings, but does so after adding attention. The same environment design works across SIT and IEEE, and attention interoperability across schemas is strongest for \textsc{REINFORCE}, which improves significantly over its no-attention baseline in both SIT (0.4907 to 0.7492, $p=0.0000$) and IEEE (0.7496 to 0.8569, $p=0.0440$). This gain is not universal, however: pooled across all four algorithms, attention does not improve mean performance on IEEE (0.7377 to 0.5906, $p=1.0000$), so encoder selection must remain schema- and algorithm-specific.
+This paper studied \textsc{REINFORCE} with attention-style feature extractors for milling-tool replacement. The literature review first clarified a narrower research gap than ``attention for PdM'' in general: the unresolved issue is how attention-based state representations affect RL maintenance performance, not merely upstream prognostics. Empirically, without attention, \textsc{PPO} is the best mean performer in both schemas. With attention, the best mean shifts to \textsc{REINFORCE} in both schemas. Focused Welch tests show that \textsc{REINFORCE} does not exceed \textsc{PPO} in baseline-only settings, but does so after adding attention. Mechanism-level synthesis shows schema-dependent winners: for \textsc{REINFORCE}, Nadaraya--Watson is best on SIT (0.8646 $\pm$ 0.2032) and self-attention is best on IEEE (0.8860 $\pm$ 0.0708); for \textsc{PPO}, multi-head is best on SIT (0.8004 $\pm$ 0.2694) and Nadaraya--Watson is best on IEEE (0.8343 $\pm$ 0.1867). The same environment design works across SIT and IEEE, and attention interoperability across schemas is strongest for \textsc{REINFORCE}, which improves significantly over its no-attention baseline in both SIT (0.4907 to 0.7492, $p=0.0000$) and IEEE (0.7496 to 0.8569, $p=0.0440$). This gain is not universal, however: pooled across all four algorithms, attention does not improve mean performance on IEEE (0.7377 to 0.5906, $p=1.0000$), so encoder selection must remain schema- and algorithm-specific.
 
 \subsection{Future work}
 Future work should test attention over short time windows, measure inference time and memory use, add richer maintenance costs, compare non-RL and lightweight no-attention encoders, and study robustness under sensor drift and cross-machine shift.
