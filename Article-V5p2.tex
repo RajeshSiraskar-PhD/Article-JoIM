@@ -1,6 +1,6 @@
 % ----------------------------------------------------------------------------------------------------
 % V.5.1 - 23-Jul-2026: New results. Added what AM worked best with RF and PPO 
-% V.5.2 - Harmonize Abstract and unify lanuage 
+% V.5.2 - Harmonize Abstract and unify language 
 % ----------------------------------------------------------------------------------------------------
 
 \PassOptionsToPackage{hypertexnames=false}{hyperref}
@@ -65,11 +65,9 @@
 \affil[3]{Swinburne University of Technology, Hawthorn VIC 3122, Australia}
 \affil[4]{\orgdiv{CTO Office}, \orgname{Birlasoft Ltd.}, \orgaddress{\city{Pune}, \postcode{411057}, \state{Maharashtra}, \country{India}}}
 
-\abstract{Predictive maintenance helps decide when a machine component should be replaced before failure. This paper studies milling cutting-tool replacement. The decision is asymmetric: late replacement can affect quality or cause failure, while early replacement wastes tool life. We model this as a Reinforcement Learning (RL) problem and test whether \textsc{REINFORCE}, a Monte-Carlo policy-gradient method, remains competitive with common RL baselines.%
+\abstract{Predictive maintenance helps decide when a machine component should be replaced. This paper studies milling cutting-tool replacement as a Reinforcement Learning (RL) problem. The decision is asymmetric: late replacement affects quality, while early replacement wastes tool life. We test whether \textsc{REINFORCE}, a Monte-Carlo policy-gradient method, can be competitive with more advanced RL baselines when paired with attention-based feature extractors. We compare \textsc{A2C}, \textsc{DQN}, \textsc{PPO}, and \textsc{REINFORCE} with four attention mechanisms on a Gymnasium-compatible milling environment, evaluated on the public IEEE PHM~2010 dataset and an in-house `SIT' dataset.
 
-We compare \textsc{A2C}, \textsc{DQN}, \textsc{PPO}, and \textsc{REINFORCE} with four attention-style feature extractors: Nadaraya--Watson, temporal, multi-head, and self-attention. We created a Gymnasium-compatible milling environment and an industrial practitioner friendly, AutoRL workflow for training and reporting.
-
-The method is evaluated on the public IEEE PHM~2010 milling dataset and an in-house university testbed dataset named `SIT' (for Symbiosis Institute of Technology). We conducted a ablation study, where the normalized sensor vector was passed directly to the policy. In both schemas, the no-attention baseline winner is \textsc{PPO} (SIT: 0.6313, IEEE: 0.8434), while the best model with attention is \textsc{REINFORCE} (SIT: 0.7492, IEEE: 0.8569). Mechanism-level synthesis shows the strongest \textsc{REINFORCE} variant is Nadaraya--Watson on SIT (0.8646 $\pm$ 0.2032) and self-attention on IEEE (0.8860 $\pm$ 0.0708), while \textsc{PPO} peaks with multi-head on SIT (0.8004 $\pm$ 0.2694) and Nadaraya--Watson on IEEE (0.8343 $\pm$ 0.1867). For the focused comparison \textsc{REINFORCE} $>$ \textsc{PPO}, baseline differences are not supported (SIT: $t=-2.9224$, $p=0.9980$; IEEE: $t=-1.3711$, $p=0.9100$), but with attention the claim is supported (SIT: $t=3.1941$, $p=0.0007$; IEEE: $t=1.9865$, $p=0.0243$). Ablation results support attention interoperability across schemas for \textsc{REINFORCE}: attention significantly improves over the no-attention baseline in both SIT (0.4907 to 0.7492, $p=0.0000$) and IEEE (0.7496 to 0.8569, $p=0.0440$).}
+Our results reveal a clear performance hierarchy based on algorithmic family. Without attention, \textsc{PPO} is the top performer (SIT: 0.6313, IEEE: 0.7484). With attention, \textsc{REINFORCE} achieves the highest mean score in the tested settings (SIT: 0.8646 with Nadaraya--Watson; IEEE: 0.8860 with self-attention). The focused comparison shows that \textsc{REINFORCE} is not superior to \textsc{PPO} at baseline, but the difference becomes statistically supported under attention (SIT: $p=0.0007$; IEEE: $p=0.0243$). An ablation study confirms that attention significantly improves policy-gradient methods (\textsc{REINFORCE} and \textsc{PPO}) but causes performance degradation in value-based learners like \textsc{DQN}. These findings suggest that, for this PdM task, pairing policy-gradient algorithms with attention-based feature extractors is effective, with \textsc{REINFORCE} performing strongly under the tested attention settings.}
 
 \keywords{Predictive maintenance, Industry 4.0, Reinforcement Learning, REINFORCE, Attention mechanisms, Milling machines, AutoRL}
 
@@ -532,7 +530,7 @@ Table~\ref{tab:ablation_condensed} provides a condensed ablation analysis across
 	\end{tabular}
 \end{table}
 
-A critical empirical discovery is the \emph{Algorithm Masking Effect} observed in the IEEE schema. When evaluating all four algorithms in aggregate on IEEE, attention appears to significantly degrade overall performance ($0.6589 \rightarrow 0.5906, t = -2.2584, p = 0.9873$). However, this negative statistical signal is entirely driven by the catastrophic failure of value-based methods (\textsc{DQN} collapses from a $0.5996$ baseline down to $0.2360$) and actor-critic instability in \textsc{A2C} ($0.6180 \rightarrow 0.4510$). 
+A critical empirical pattern is the \emph{Algorithm Masking Effect} observed in the IEEE schema. When evaluating all four algorithms in aggregate on IEEE, attention appears to reduce overall performance ($0.6589 \rightarrow 0.5906, t = -2.2584, p = 0.9873$). However, this aggregate signal is driven by the poor performance of value-based methods (\textsc{DQN} drops from $0.5996$ to $0.2360$) and actor-critic instability in \textsc{A2C} ($0.6180 \rightarrow 0.4510$). 
 
 Once policy gradient architectures (\textsc{PPO} + \textsc{REINFORCE}) are isolated, attention mechanisms demonstrate robust, statistically significant performance enhancements across both schemas:
 \begin{itemize}
@@ -762,33 +760,25 @@ To explain the drastic performance divergence between algorithm families, we org
 \end{figure}
 
 \subsection{Theoretical Justification via Algorithmic Taxonomy}
-The empirical split between \textbf{Group 1} (TD Learners) and \textbf{Group 2} (Direct Policy Optimizers) stems directly from how their update mechanisms handle non-stationary state feature projections (Figure~\ref{fig:rl_attention_interaction}):
+The empirical split between \textbf{Group 1} (TD Learners) and \textbf{Group 2} (Direct Policy Optimizers) appears to stem from how their update mechanisms handle non-stationary state feature projections (Figure~\ref{fig:rl_attention_interaction}):
 
 \begin{enumerate}
-    \item \textbf{Group 1: TD Learners (\textsc{DQN} \& \textsc{A2C}):} These algorithms rely on Temporal Difference bootstrapping to update state-action value estimates $Q(s,a)$ or state values $V(s)$:
-    \begin{equation}
-        Y_t^{\text{TD}} = r_t + \gamma \max_{a'} Q(s_{t+1}, a'; \theta^-)
-    \end{equation}
-    When dynamic attention layers sit upstream of value networks, the state representation matrix shifts dynamically across training iterations. This introduces severe target non-stationarity into the bootstrapped Bellman target $Y_t^{\text{TD}}$. Minor updates in attention weights alter the feature geometry, causing $Q$-value estimates to overestimate or diverge. This explains why \textsc{DQN} suffers catastrophic representation collapse, flatlining near the minimum score floor ($0.2360$) across virtually all attention setups.
+	\item \textbf{Group 1: TD Learners (\textsc{DQN} \& \textsc{A2C}):} These algorithms rely on Temporal Difference bootstrapping to update state-action value estimates $Q(s,a)$ or state values $V(s)$. When dynamic attention layers are placed upstream of the value networks, the state representation can shift during training. This may introduce non-stationarity into the bootstrapped Bellman target $Y_t^{\text{TD}}$. Such instability can make $Q$-value estimates unreliable. This may help explain why \textsc{DQN} shows a substantial performance drop, reaching the minimum score floor ($0.2360$) in most attention setups.
     
-    \item \textbf{Group 2: Direct Policy Optimizers (\textsc{REINFORCE} \& \textsc{PPO}):} These algorithms directly parameterize a policy $\pi_\theta(a|s)$ to maximize expected trajectory returns $J(\theta) = \mathbb{E}_{\pi_\theta}[R]$:
-    \begin{equation}
-        \nabla_\theta J(\theta) = \mathbb{E}_{\pi_\theta} \left[ \nabla_\theta \log \pi_\theta(a_t|s_t) G_t \right]
-    \end{equation}
-    Because Monte Carlo methods like \textsc{REINFORCE} utilize un-bootstrapped full-trajectory returns $G_t$, they are completely immune to target non-stationarity. Dynamic attention layers act as adaptive spatiotemporal filters that isolate degradation features from high-dimensional sensor streams. By presenting a low-noise state representation directly to the policy head, attention simplifies gradient ascent, enabling \textsc{REINFORCE} to achieve top-tier performance (\textbf{0.8646} on SIT, \textbf{0.8860} on IEEE). \textsc{PPO} similarly benefits due to its clipped surrogate objective, which enforces trust-region bounds that prevent destructive policy updates when attention features shift rapidly.
+	\item \textbf{Group 2: Direct Policy Optimizers (\textsc{REINFORCE} \& \textsc{PPO}):} These algorithms directly parameterize a policy $\pi_\theta(a|s)$ to maximize expected trajectory returns $J(\theta) = \mathbb{E}_{\pi_\theta}[R]$. Because Monte Carlo methods like \textsc{REINFORCE} utilize un-bootstrapped full-trajectory returns $G_t$, they are not affected by target non-stationarity in the same way. Dynamic attention layers can act as adaptive filters that help isolate degradation features from the high-dimensional sensor stream. By presenting a potentially cleaner state representation to the policy, attention may simplify the learning process, which may explain how \textsc{REINFORCE} achieves strong performance (\textbf{0.8646} on SIT, \textbf{0.8860} on IEEE). \textsc{PPO} also appears to benefit, possibly because its clipped surrogate objective enforces trust-region bounds that help manage policy updates when attention features shift.
 \end{enumerate}
 
-\subsection{Why \textsc{REINFORCE} Outperforms \textsc{PPO} Under Attention}
-In standard, unaugmented RL setups, \textsc{PPO} is widely considered superior due to its variance-reduction mechanisms and trust-region constraints. Our baseline results confirm this, showing \textsc{PPO} beating \textsc{REINFORCE} ($0.6313$ vs. $0.4907$ in SIT; $0.7484$ vs. $0.6696$ in IEEE). 
+\subsection{Why \textsc{REINFORCE} may outperform \textsc{PPO} under attention}
+In standard, unaugmented RL setups, \textsc{PPO} is often considered a strong baseline due to its variance-reduction mechanisms and trust-region constraints. Our baseline results are consistent with this, showing \textsc{PPO} performing better than \textsc{REINFORCE} ($0.6313$ vs. $0.4907$ in SIT; $0.7484$ vs. $0.6696$ in IEEE). 
 
-However, \textsc{PPO}'s clipped objective inherently restricts step sizes in parameter space. When paired with expressive feature extractors like attention, \textsc{REINFORCE}'s unconstrained policy updates allow it to aggressively exploit high-quality feature representations, achieving significantly higher peak performance ($p = 0.0007$ in SIT; $p = 0.0243$ in IEEE). In short, while \textsc{PPO} provides higher baseline stability, \textsc{REINFORCE} exhibits a significantly higher performance ceiling when supplied with clean, task-relevant state abstractions.
+However, \textsc{PPO}'s clipped objective is designed to restrict large policy updates. When paired with expressive feature extractors like attention, it is possible that \textsc{REINFORCE}'s unconstrained policy updates allow it to more readily adapt to the feature representations, which could contribute to its higher peak performance in our experiments ($p = 0.0007$ in SIT; $p = 0.0243$ in IEEE). This suggests that while \textsc{PPO} may offer more stability at the baseline, \textsc{REINFORCE} might have a higher performance ceiling when supplied with well-structured state representations.
 
-\subsection{Implications for Industrial Practitioners}
-Our findings offer clear design guidelines for RL deployment in predictive maintenance (PdM):
+\subsection{Implications for industrial practitioners}
+Our findings offer several guidelines for RL deployment in predictive maintenance (PdM):
 \begin{itemize}
-    \item \textbf{Avoid Pooling across RL Families:} Evaluating attention encoders by aggregating across value-based and policy-gradient paradigms creates misleading statistical artifacts. 
-    \item \textbf{Pair Attention Exclusively with Policy Gradients:} Value-based architectures (\textsc{DQN}) should not be combined with dynamic spatial/temporal attention layers due to target bootstrapping instability. Policy gradient methods (\textsc{REINFORCE}, \textsc{PPO}) should be the default choice.
-    \item \textbf{Select Multi-Head Attention for Stability:} If the RL algorithm is unknown or includes actor-critic architectures (\textsc{A2C}), Multi-Head Attention represents the safest choice, providing multi-subspace projections that prevent value collapse.
+    \item \textbf{Avoid pooling across RL families:} Evaluating attention encoders by aggregating across value-based and policy-gradient paradigms can produce misleading statistical results. 
+    \item \textbf{Pair attention with policy gradients:} Value-based architectures (\textsc{DQN}) may not be the best choice for combination with dynamic attention layers due to potential instabilities. Policy gradient methods (\textsc{REINFORCE}, \textsc{PPO}) appear to be a more suitable default choice in our experiments.
+    \item \textbf{Consider multi-head attention for stability:} If the RL algorithm choice is open or includes actor-critic architectures (\textsc{A2C}), Multi-Head Attention appears to be a robust choice, providing multi-subspace projections that may help prevent value collapse.
 \end{itemize}
 
 % =================================================================
@@ -798,12 +788,12 @@ Our findings offer clear design guidelines for RL deployment in predictive maint
 \section{Conclusion} \label{sec:conclusion}
 
 \subsection{Summary of key findings}
-This study evaluated the impact of attention-based feature extraction on reinforcement learning policies for milling-tool maintenance across two feature schemas (SIT and IEEE). Our findings confirm a taxonomy-level dichotomy:
+This study evaluated the impact of attention-based feature extraction on reinforcement learning policies for milling-tool maintenance across two feature schemas (SIT and IEEE). The findings indicate a consistent taxonomy-level split:
 \begin{enumerate}
     \item Without attention, \textsc{PPO} provides the strongest baseline performance (SIT: $0.6313$; IEEE: $0.7484$).
-    \item Under optimal attention augmentation, \textsc{REINFORCE} achieves statistically significant overall dominance (SIT: \textbf{0.8646} with Nadaraya--Watson, $p = 0.0001$; IEEE: \textbf{0.8860} with Self-Attention, $p = 0.0424$).
-    \item Value-based TD learners (\textsc{DQN}) suffer catastrophic representation collapse under dynamic attention ($0.2360$), whereas policy optimizers (\textsc{REINFORCE}, \textsc{PPO}) leverage attention filters to achieve significant performance gains ($p = 0.0002$ on IEEE; $p = 0.0000$ on SIT).
-    \item Multi-Head Attention proves to be the most resilient overall encoder mechanism, delivering top-tier policy gradient scores and stabilizing actor-critic learning in \textsc{A2C} (\textbf{0.7424}).
+	\item With attention, \textsc{REINFORCE} achieves statistically significant performance, becoming the top performer in the tested settings (SIT: \textbf{0.8646} with Nadaraya--Watson; IEEE: \textbf{0.8860} with Self-Attention).
+    \item Value-based TD learners (\textsc{DQN}) showed performance degradation under dynamic attention, whereas policy optimizers (\textsc{REINFORCE}, \textsc{PPO}) leveraged attention to achieve significant performance gains.
+	\item Multi-Head Attention proved to be a robust encoder mechanism, delivering strong policy-gradient scores and stabilizing actor-critic learning in \textsc{A2C}.
 \end{enumerate}
 
 \subsection{Future work}

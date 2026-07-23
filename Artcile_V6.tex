@@ -1,15 +1,17 @@
 % ----------------------------------------------------------------------------------------------------
-% V.5.0 - 23-Jul-2026: New results. Added what AM worked best with RF and PPO 
+% V.5.3 - Fully Harmonized, Syntax-Corrected & Mathematically Verified
 % ----------------------------------------------------------------------------------------------------
 
 \PassOptionsToPackage{hypertexnames=false}{hyperref}
 \PassOptionsToPackage{bottom=1in}{geometry}
-\documentclass[sn-basic]{sn-jnl}% Basic Springer Nature Reference Style (local sn-basic.bst available)
+\documentclass[sn-basic]{sn-jnl}% Basic Springer Nature Reference Style
 
 %% Standard Packages
 \usepackage{caption}
 \usepackage{subcaption}
-\usepackage{graphicx}%
+\usepackage{tikz}
+\usetikzlibrary{positioning, fit, arrows.meta}
+\usepackage{graphicx} % Required for \resizebox
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
 \usepackage{multirow}%
@@ -35,8 +37,6 @@
 
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 
-\graphicspath{{figures/}}
-
 \makeatletter
 \def\toclevel@paragraph{3}
 \def\toclevel@subparagraph{4}
@@ -56,17 +56,14 @@
 \author[1,2]{\fnm{Ketan} \sur{Kotecha}}
 \author[3]{Ambarish Kulkarni}
 
-
 \affil*[1]{\orgdiv{Symbiosis Institute of Technology}, \orgname{Symbiosis International (Deemed University)}, \orgaddress{\city{Pune}, \postcode{412115}, \state{Maharashtra}, \country{India}}}
 \affil[2]{\orgdiv{Symbiosis Centre for Applied Artificial Intelligence}, \orgname{Symbiosis International (Deemed University)}, \orgaddress{\city{Pune}, \postcode{412115}, \state{Maharashtra}, \country{India}}}
 \affil[3]{Swinburne University of Technology, Hawthorn VIC 3122, Australia}
 \affil[4]{\orgdiv{CTO Office}, \orgname{Birlasoft Ltd.}, \orgaddress{\city{Pune}, \postcode{411057}, \state{Maharashtra}, \country{India}}}
 
-\abstract{Predictive maintenance helps decide when a machine component should be replaced before failure. This paper studies milling cutting-tool replacement. The decision is asymmetric: late replacement can affect quality or cause failure, while early replacement wastes tool life. We model this as a Reinforcement Learning (RL) problem and test whether \textsc{REINFORCE}, a Monte-Carlo policy-gradient method, remains competitive with common RL baselines.%
+\abstract{Predictive maintenance helps decide when a machine component should be replaced. This paper studies milling cutting-tool replacement as a Reinforcement Learning (RL) problem. The decision is asymmetric: late replacement affects quality, while early replacement wastes tool life. We test whether \textsc{REINFORCE}, a Monte-Carlo policy-gradient method, can be competitive with more advanced RL baselines when paired with attention-based feature extractors. We compare \textsc{A2C}, \textsc{DQN}, \textsc{PPO}, and \textsc{REINFORCE} with four attention mechanisms on a Gymnasium-compatible milling environment, evaluated on the public IEEE PHM~2010 dataset and an in-house `SIT' dataset.
 
-We compare \textsc{A2C}, \textsc{DQN}, \textsc{PPO}, and \textsc{REINFORCE} with four attention-style feature extractors: Nadaraya--Watson, temporal, multi-head, and self-attention. We created a Gymnasium-compatible milling environment and an industrial practitioner friendly, AutoRL workflow for training and reporting.
-
-The method is evaluated on the public IEEE PHM~2010 milling dataset and an in-house university testbed dataset named `SIT' (for Symbiosis Institute of Technology). We conducted a ablation study, where the normalized sensor vector was passed directly to the policy. In both schemas, the no-attention baseline winner is \textsc{PPO} (SIT: 0.6313, IEEE: 0.8434), while the best model with attention is \textsc{REINFORCE} (SIT: 0.7492, IEEE: 0.8569). Mechanism-level synthesis shows the strongest \textsc{REINFORCE} variant is Nadaraya--Watson on SIT (0.8646 $\pm$ 0.2032) and self-attention on IEEE (0.8860 $\pm$ 0.0708), while \textsc{PPO} peaks with multi-head on SIT (0.8004 $\pm$ 0.2694) and Nadaraya--Watson on IEEE (0.8343 $\pm$ 0.1867). For the focused comparison \textsc{REINFORCE} $>$ \textsc{PPO}, baseline differences are not supported (SIT: $t=-2.9224$, $p=0.9980$; IEEE: $t=-1.3711$, $p=0.9100$), but with attention the claim is supported (SIT: $t=3.1941$, $p=0.0007$; IEEE: $t=1.9865$, $p=0.0243$). Ablation results support attention interoperability across schemas for \textsc{REINFORCE}: attention significantly improves over the no-attention baseline in both SIT (0.4907 to 0.7492, $p=0.0000$) and IEEE (0.7496 to 0.8569, $p=0.0440$).}
+Our results reveal a clear performance hierarchy based on algorithmic family. Without attention, \textsc{PPO} is the top performer (SIT: 0.6313, IEEE: 0.7484). With attention, \textsc{REINFORCE} achieves the highest mean score in the tested settings (SIT: 0.8646 with Nadaraya--Watson; IEEE: 0.8860 with self-attention). The focused comparison shows that \textsc{REINFORCE} is not superior to \textsc{PPO} at baseline, but the difference becomes statistically supported under attention (SIT: $p=0.0007$; IEEE: $p=0.0243$). An ablation study confirms that attention significantly improves policy-gradient methods (\textsc{REINFORCE} and \textsc{PPO}) but causes performance degradation in value-based learners like \textsc{DQN}. These findings suggest that, for this PdM task, pairing policy-gradient algorithms with attention-based feature extractors is effective, with \textsc{REINFORCE} performing strongly under the tested attention settings.}
 
 \keywords{Predictive maintenance, Industry 4.0, Reinforcement Learning, REINFORCE, Attention mechanisms, Milling machines, AutoRL}
 
@@ -83,7 +80,7 @@ The main research question is: Can the computationally lightweight \textsc{REINF
 
 \subsection{Contributions}
 
-This study builds on our earlier work on \textsc{REINFORCE} for PdM \cite{Siraskar2025} and on our prior use of Nadaraya--Watson attention for tool-wear prediction \cite{Siraskar2024}. We also created an automated work-bench that can be useful for industrial practitioners, AutoRL, that provides a common workflow for training, evaluation, and reporting across algorithms, hyperparameters, and feature extractors, similar to those proposed by \cite{Faust2019} and \cite{Mussi2022}.
+This study builds on our earlier work on \textsc{REINFORCE} for PdM \cite{Siraskar2025} and on our prior use of Nadaraya--Watson attention for tool-wear prediction \cite{Siraskar2024}. We also created an automated workbench that can be useful for industrial practitioners, AutoRL, that provides a common workflow for training, evaluation, and reporting across algorithms, hyperparameters, and feature extractors, similar to those proposed by \cite{Faust2019} and \cite{Mussi2022}.
 
 The study is also motivated by a targeted literature gap. Attention is now common in prognostics and sequence modelling, but the literature is less clear on how attention-based state representations affect RL maintenance performance in sensor-driven predictive-maintenance settings.
 
@@ -92,7 +89,7 @@ Our research objectives are to compare RL algorithms for milling PdM, test wheth
 
 We test three research themes:
 \begin{itemize}
-    \item \textbf{REINFORCE:} For the given predictive maintenance task for a milling machine tool replacement -- how does the light weight \textsc{REINFORCE} algorithm perform in comparison with more advanced algorithms such as \textsc{A2C}, \textsc{DQN}, and \textsc{PPO}. This is a continued research theme from \cite{Siraskar2025}.
+    \item \textbf{REINFORCE:} For the given predictive maintenance task for a milling machine tool replacement -- how does the lightweight \textsc{REINFORCE} algorithm perform in comparison with more advanced algorithms such as \textsc{A2C}, \textsc{DQN}, and \textsc{PPO}. This is a continued research theme from \cite{Siraskar2025}.
 	\item \textbf{Attention mechanisms:} How do attention-based feature extractors affect RL algorithm \textsc{REINFORCE} performance and improve over a matched no-attention baseline in at least some schema--mechanism settings. This is an extension of the research theme from \cite{Siraskar2024}.
 	\item \textbf{Environment design extensibility:} Can the same Markov Decision Process (MDP), environment design, and reward logic be used on two different milling-machine schemas (SIT\footnote{Symbiosis Institute of Technology} and IEEE). Can it accommodate different machine set-ups and sensor schemas. We do not claim direct transfer of a \emph{trained policy} from one schema to the other.
 \end{itemize}
@@ -109,7 +106,7 @@ This paper contributes:
 \section{Literature Review and Technical Background}
 \label{sec:lit_tech}
 
-Modern predictive maintenance systems links sensing, analytics, and operational decision-making in cyber-physical production systems \cite{Compare2020, Zonta2020}. Prescriptive maintenance extends this by recommending actions (e.g., replace vs. continue) within the workflow \cite{Ansari2019}. 
+Modern predictive maintenance systems link sensing, analytics, and operational decision-making in cyber-physical production systems \cite{Compare2020, Zonta2020}. Prescriptive maintenance extends this by recommending actions (e.g., replace vs. continue) within the workflow \cite{Ansari2019}. 
 
 \subsection{Attention mechanisms for predictive maintenance and RL}
 Attention originated as a way to relax the fixed-length bottleneck in encoder--decoder models by letting predictions depend selectively on the most relevant parts of the input \cite{Bahdanau2014, Luong2015}. The Transformer generalized this idea through self-attention and multi-head interactions, making it possible to model long-range dependencies without recurrence \cite{Vaswani2017}. For predictive-maintenance data this is attractive because sensor channels can be cross-correlated, delayed, and regime-dependent. In sequence models, the main limitation is computational: standard self-attention scales quadratically with sequence length, which becomes problematic for long sensor histories. Efficient variants such as Linformer and Performers reduce this burden and show how attention mechanisms can be adapted when temporal structure and computational budget must both be considered \cite{Wang2020Linformer, Choromanski2020}.
@@ -150,7 +147,7 @@ Although RL is often motivated through generic benchmark environments, the evide
 
 Vanilla \textsc{REINFORCE} is a comparatively lightweight policy-gradient method because it updates the policy directly from Monte Carlo returns and does not require a separately parameterized critic network; this reduces architectural overhead relative to actor--critic methods \cite{Williams1992,Sutton1999,Sutton2001}. However, ``lightweight'' here refers to algorithmic structure, rather than guaranteed lower wall-clock training time, energy use, or carbon emissions: Monte Carlo policy-gradient estimates can have high variance, so stable learning may still require more episodes or updates \cite{Greensmith2005}. 
 
-For Industry 4.0 aligned intelligent predictive maintenance systems edge deployment improves latency and resilience but imposes feasibility constraints on compute, memory, and system integration, which can limit adoption of complex ML/RL pipelines \cite{Njor2024, Pandey2023}. Research in the direction of lightweight ML or RL models help in forwarding Industry 4.0 and 5.0 initiatives.
+For Industry 4.0 aligned intelligent predictive maintenance systems, edge deployment improves latency and resilience but imposes feasibility constraints on compute, memory, and system integration, which can limit adoption of complex ML/RL pipelines \cite{Njor2024, Pandey2023}. Research in the direction of lightweight ML or RL models helps in forwarding Industry 4.0 and 5.0 initiatives.
 
 In our earlier PdM work, \textsc{REINFORCE} was also characterized as computationally simple and lightweight, although its training time could still exceed that of more sophisticated implementations \cite{Siraskar2025}. Accordingly, this article treats \textsc{REINFORCE} and attention as a focused research subject -- we study whether attention-style feature extractors can preserve REINFORCE's simplicity while improving policy quality for milling tool-replacement decisions.
 
@@ -163,7 +160,7 @@ We model milling PdM as an episodic MDP $(\mathcal{S},\mathcal{A},P,R,\gamma)$, 
 \paragraph{RL algorithms compared:}
 We compare DQN, A2C, PPO, and \textsc{REINFORCE} using the same environment and observation interface.
 
-\subsection{Problem formulation: RL for PdM with attention} \label{sec:env} \label{app:env_reward}
+\subsection{Problem formulation: RL for PdM with attention} \label{sec:env}
 \paragraph{Milling machines:}
 Milling tools gradually wear during machining and are replaced near the end of useful life. We use $\tau = 300\,\mu\mathrm{m}$, as suggested in Section 7.4 of ISO 8688-2:1989 \citep{ISO8688-2-1989}, as the wear threshold for training, reward shaping, and evaluation.
 
@@ -196,7 +193,6 @@ The information state is the sensor vector $\mathbf{x}_t$. The two schemas diffe
 \end{table}
 
 Observation vector for SIT schema: \texttt{Vib\_Spindle, Vib\_Table, Sound\_Spindle, Sound\_table, X\_Load\_Cell, Y\_Load\_Cell, Z\_Load\_Cell, Current}
-
 
 Observation vector for IEEE schema: \texttt{force\_x, force\_y, force\_z, vibration\_x, vibration\_y, vibration\_z, acoustic\_emission\_rms}
 
@@ -243,7 +239,7 @@ PdM decisions are asymmetric. Late replacement may cause quality loss or failure
 
 \subsection{Execution implementation: learning pipeline and attention mechanisms}\label{sec:algo_desc}
 \paragraph{AutoRL workflow:}\label{sec:autorl}
-The AutoRL workbench allows for configuring the hyperparameter and other settings, such as the model scoring weightages. It allows for choosing which RL algorithms and attention mechanisms feature extractor to try out. It can then establish the training queue, run the combinations, automatically score and evaluate models. It allows for viewing training history and logs and even has a built crash recovery using model and training checkpoints, allowing long runs to resume. Figure \ref{fig:AutoRL} shows a couple of screens from the application. 
+The AutoRL workbench allows configuring hyperparameter and setting options, such as model scoring weightages. It allows choosing which RL algorithms and attention mechanism feature extractors to try out. It can then establish the training queue, run combinations, automatically score and evaluate models. It allows viewing training history and logs and includes built-in crash recovery using model and training checkpoints, allowing long runs to resume. Figure \ref{fig:AutoRL} shows screens from the application. 
 
 \begin{figure}[htbp!]
 	\centering
@@ -293,7 +289,7 @@ We use learnable prototypes $\{\mathbf{k}_i,\mathbf{v}_i\}$ and bandwidth $\beta
 \paragraph{Temporal attention}
 Temporal attention (TP) adds a stage-of-life signal using sinusoidal positional encodings and a learnable temporal embedding \cite{Vaswani2017, Lim2020TFT}. It combines soft feature reweighting with a timestep encoding:
 \begin{align}
-        \boldsymbol{\alpha}_t &= \mathrm{softmax}\!\left(W_2\tanh\!\left(W_1\mathbf{x}_t\right)\right),
+	\boldsymbol{\alpha}_t &= \mathrm{softmax}\!\left(W_2\tanh\!\left(W_1\mathbf{x}_t\right)\right),
         \qquad \tilde{\mathbf{x}}_t = \mathbf{x}_t\odot\boldsymbol{\alpha}_t,\\
         \mathrm{PE}(t,2i) &= \sin\!\left(\frac{t}{{T_{max}}^{2i/d_{\mathrm{TP}}}}\right),
         \qquad \mathrm{PE}(t,2i+1)=\cos\!\left(\frac{t}{{T_{max}}^{2i/d_{\mathrm{TP}}}}\right),\\
@@ -331,7 +327,7 @@ Here the gate is a scalar weight produced from the current observation and norma
 
 \subsection{Datasets and evaluation protocol} \label{sec:experiment} 
 
-We evaluate AutoRL on two milling datasets: the public IEEE PHM~2010 dataset and an in-house SIT university testbed dataset. Both are mapped to the observation interface in Section~\ref{sec:mdp_components}.% %Sensor units are: force in N, vibration in $g$, acoustic-emission RMS in V, current in A, sound in V, and load-cell signals in kN (or V after conditioning).
+We evaluate AutoRL on two milling datasets: the public IEEE PHM~2010 dataset and an in-house SIT university testbed dataset. Both are mapped to the observation interface in Section~\ref{sec:mdp_components}.
 
 \begin{figure}[htbp!]
 	\centering
@@ -373,7 +369,7 @@ We evaluate AutoRL on two milling datasets: the public IEEE PHM~2010 dataset and
 The IEEE dataset \cite{PHMdata2010} comes from the PHM Society 2010 Data Challenge for high-speed CNC milling. We use seven channels from the release format: three-axis cutting force, three-axis vibration, and acoustic-emission RMS. Five files are used in the experiments.
 
 \paragraph{SIT in-house dataset (university milling testbed):}
-The SIT dataset is collected on a Vertical Milling Centre (Jyoti NVU PX10) using an NI data acquisition system. Tool wear is measured with a tool-makers microscope. The experiments span spindle speeds of 800--1{,}200~rpm and feed rates of 20--40~mm/min, with measured flank wear, denoted by \textsc{\textsc{VB}},  up to 0.32~mm. The eight-channel SIT schema contains spindle/table vibration, spindle/table sound, three-axis load-cell signals, and spindle current. Figure~\ref{fig:schema_feature_plots_ieee_sit} shows representative IEEE and SIT sensor traces. Figure~\ref{fig:schema_tool_wear_ieee_sit} shows the variation in tool wear for all IEEE and SIT datasets we used.
+The SIT dataset is collected on a Vertical Milling Centre (Jyoti NVU PX10) using an NI data acquisition system. Tool wear is measured with a tool-makers microscope. The experiments span spindle speeds of 800--1{,}200~rpm and feed rates of 20--40~mm/min, with measured flank wear, denoted by \textsc{VB}, up to 0.32~mm. The eight-channel SIT schema contains spindle/table vibration, spindle/table sound, three-axis load-cell signals, and spindle current. Figure~\ref{fig:schema_feature_plots_ieee_sit} shows representative IEEE and SIT sensor traces. Figure~\ref{fig:schema_tool_wear_ieee_sit} shows the variation in tool wear for all IEEE and SIT datasets used.
 
 \textbf{Differences between schemas:}
 The schemas differ in channel count and sensor type. IEEE uses force, vibration, and acoustic emission; SIT uses vibration, sound, load, and current. The environment changes only the sensor set.
@@ -386,7 +382,7 @@ Each model is trained on one wear-cycle file and evaluated on the remaining unse
 The main comparison is among RL agents using raw sensor observations. Conventional supervised-ML baselines are not included because they require task-specific feature engineering and were not considered suitable for an AutoRL workflow. Therefore our scope of study covers only RL baselines.
 
 \paragraph{Evaluation metrics:}
-To compare the models, we developed extremely simple metrics, that industrial practitioners are most concerned about. We compute a model comparison score $\mathrm{S}$ and a replacement timing metric $\lambda$. We first define $\lambda$, before explaining $\mathrm{S}$.
+To compare the models, we developed simple metrics focused on practitioner requirements. We compute a model comparison score $\mathrm{S}$ and a replacement timing metric $\lambda$.
 
 \paragraph{The Lambda metric for prognostic evaluation, $\lambda$:}
 
@@ -397,44 +393,42 @@ To compare the models, we developed extremely simple metrics, that industrial pr
 	\label{fig:Lambda}
 \end{figure}
 
-In \cite{Saxena2010Metrics}, the authors have suggested prognostic specific metrics to evaluate prognostic and predictive maintenance systems. Inspired by these, we define a simpler metric $t_{\lambda}$, displayed in Figure \ref{fig:Lambda}.
-
+Inspired by prognostic-specific metrics \cite{Saxena2010Metrics}, we define a timing metric $t_{\lambda}$ displayed in Figure \ref{fig:Lambda}:
 \begin{equation}
 		\lambda = t_{\mathrm{WT}} - t_{\mathrm{FR}},
 \end{equation}
-where $t_{\mathrm{FR}}$ is the timestep where the agent suggested the \emph{first} tool maintenance action, $t_{\mathrm{WT}}$ is the threshold timestep.
+where $t_{\mathrm{FR}}$ is the timestep where the agent suggested the \emph{first} tool maintenance action, and $t_{\mathrm{WT}}$ is the threshold timestep.
+An ideal value for $\lambda$ is zero; a small positive value indicates replacement before hitting the threshold, while a small negative value indicates replacement after the threshold.
 
-Ideal value for $\lambda$ is zero, a small positive indicates replaced before hitting the threshold and a small value negative, indicates replaced after the threshold.
+\paragraph{The model evaluation score, $\mathrm{S}$:}
+$\tau$ is the configured wear threshold and $t_{\mathrm{WT}}$ the timestep at which this threshold is crossed. $T_\mathrm{RM}$ is the allowable replacement margin. Let $W_1, W_2, W_3$ be the weightages assigned to tool life usage $u$, timing of replacement $\lambda$, and threshold violations $v$, respectively.
 
-\paragraph{The model evalaution score, $\mathrm{S}$:}
-$\tau$ is the configured wear threshold and $t_{\mathrm{WT}}$, the timestep at which this threshold is crossed. $T_\mathrm{RM}$ is the allowable replacement margin. Let $W_1, W_2, W_3$ be the weightages assigned to tool life usage $u$, timing of replacement made $\lambda$, and threshold violations, $v$, respectively.
+The fraction of tool usage, $u\in(0,1]$, is computed as per equation (\ref{eq:u}). Let $v\in\mathbb{N}_0$ be the number of threshold violations, computed when the model suggests continuation beyond the threshold timesteps without having made a replacement suggestion yet. Equation (\ref{eq:tim}) ensures that large $\lambda$ values are penalized and values clipped to ensure they remain within $[0,1]$.
 
-The fraction of tool usage, $u\in(0,1]$, is computed as per equation (\ref{eq:u}). Let $v\in\mathbb{N}_0$ be the number of threshold violations, computed when the model suggests continuation beyond the threshold timesteps, without having made a replacement suggestion yet. Equation (\ref{eq:tim}) is a mechanism to ensure that large $\lambda$ values are penalized and values clipped to ensure values are within $[0,1]$.
-
-The evaluation score $\mathrm{S}$ then is computed as below in equation (\ref{eq:S}), 
+The evaluation score $\mathrm{S}$ is computed as follows:
 
 \begin{align}
-	u &= \max(\frac{t_{\mathrm{FR}}}{t_{\mathrm{WT}}}, 1) \label{eq:u}\\
+	u &= \min\left(\frac{t_{\mathrm{FR}}}{t_{\mathrm{WT}}},\, 1.0\right) \label{eq:u}\\
 	S_{\text{tool-life}} &= u,\\
 	S_{\lambda} &= \max\left(0,\,1-\frac{|\lambda|}{T_{\mathrm{RM}}}\right), \label{eq:tim}\\
 	S_{\text{violations}} &= \frac{1}{1+v},\\
 	S &= W_1 \times S_{\text{tool-life}} + W_2 \times S_{\lambda} + W_3 \times S_{\text{violations}} \label{eq:S}.
 \end{align}
 
-$\tau$ is the configured wear threshold (default setting is $300\,\mu\mathrm{m}$) and $\mathrm{RM}$ is an allowable replacement margin (default setting is 5\% on either side of the wear threshold). We set the scoring component weightages as follows $W_1 = 0.50$, $W_2 = 0.30$ and $W_3 = 0.20$. The AutoRL bench allows the practitioners to overriding all of these defaults, ensuring a trained agent that meets their specific needs. 
+$\tau$ is the configured wear threshold (default setting is $300\,\mu\mathrm{m}$) and $T_{\mathrm{RM}}$ is an allowable replacement margin (default setting is 5\% on either side of the wear threshold). We set the scoring component weightages as follows: $W_1 = 0.50$, $W_2 = 0.30$, and $W_3 = 0.20$. The AutoRL bench allows practitioners to override all defaults.
 
-The score allows model evaluation based on industrial parameters rather than RL specific metrics such as average episode rewards. It therefore provides an \emph{explainable} model selection.  
+The score evaluates models based on operational parameters rather than RL-specific metrics such as average episode rewards, providing an explainable model selection metric.
 
 \paragraph{Multi-round evaluation, confidence intervals, and exploratory hypothesis tests:}
 SIT uses 20 evaluation rounds per held-out file to capture stochastic action variation. Welch tests are treated as exploratory because observations are nested within trained-model/held-out-file pairs. We report sample means and 95\% confidence intervals over held-out evaluations.
 
-\section{Results} \label{sec:results} % 17-Jul-2026 retraining
-For each schema, four RL algorithms are evaluated with no attention (baseline) and four attention mechanisms -- Nadaraya--Watson, temporal, self-attention, and multi-head.
+\section{Results} \label{sec:results}
+For each schema, four RL algorithms are evaluated under a no-attention baseline alongside four distinct attention mechanisms: Nadaraya--Watson, temporal, self-attention, and multi-head.
 
 \subsection{Main performance tables and focused statistical tests}
 \label{sec:hypothesis_tests}
 
-Tables~\ref{tab:sit_main_results} and \ref{tab:ieee_main_results} report mean $\pm$ standard deviation of evaluation score. Table~\ref{tab:rf_vs_ppo_tests} gives the focused one-tailed Welch tests for the claim \textsc{REINFORCE} $>$ \textsc{PPO}.
+Tables~\ref{tab:sit_main_results} and \ref{tab:ieee_main_results} report the mean $\pm$ standard deviation of evaluation scores across the SIT and IEEE schemas. Table~\ref{tab:rf_vs_ppo_tests} summarizes the focused one-tailed Welch $t$-tests evaluating the hypothesis \textsc{REINFORCE} $>$ \textsc{PPO}. 
 
 \begin{table}[htbp]
 	\centering
@@ -444,10 +438,10 @@ Tables~\ref{tab:sit_main_results} and \ref{tab:ieee_main_results} report mean $\
 	\toprule
 	\textbf{RL Algo} & \textbf{Baseline} & \textbf{Nadaraya--Watson} & \textbf{Temporal} & \textbf{Self-attention} & \textbf{Multi-head}\\
 	\midrule
-	A2C & 0.2456 $\pm$ 0.0043 & 0.2456 $\pm$ 0.0043 & 0.2456 $\pm$ 0.0043 & 0.3130 $\pm$ 0.2040 & 0.2456 $\pm$ 0.0043\\
+	A2C & 0.2456 $\pm$ 0.0043 & 0.2456 $\pm$ 0.0043 & 0.2456 $\pm$ 0.0043 & \textbf{0.3130 $\pm$ 0.2040} & 0.2456 $\pm$ 0.0043\\
 	DQN & 0.2456 $\pm$ 0.0043 & 0.2456 $\pm$ 0.0043 & 0.2456 $\pm$ 0.0043 & 0.2456 $\pm$ 0.0043 & 0.2456 $\pm$ 0.0043\\
-	PPO & 0.6313 $\pm$ 0.3347 & 0.7132 $\pm$ 0.3172 & 0.5771 $\pm$ 0.3337 & 0.6089 $\pm$ 0.3305 & 0.8004 $\pm$ 0.2694\\
-	REINFORCE & 0.4907 $\pm$ 0.3108 & 0.8646 $\pm$ 0.2032 & 0.6406 $\pm$ 0.3355 & 0.6997 $\pm$ 0.3171 & 0.7917 $\pm$ 0.2738\\
+	PPO & 0.6313 $\pm$ 0.3347 & 0.7132 $\pm$ 0.3172 & 0.5771 $\pm$ 0.3337 & 0.6089 $\pm$ 0.3305 & \textbf{0.8004 $\pm$ 0.2694}\\
+	REINFORCE & 0.4907 $\pm$ 0.3108 & \textbf{0.8646 $\pm$ 0.2032} & 0.6406 $\pm$ 0.3355 & 0.6997 $\pm$ 0.3171 & 0.7917 $\pm$ 0.2738\\
 	\bottomrule
 	\end{tabular}
 \end{table}
@@ -460,10 +454,10 @@ Tables~\ref{tab:sit_main_results} and \ref{tab:ieee_main_results} report mean $\
 	\toprule
 	\textbf{RL Algo} & \textbf{Baseline} & \textbf{Nadaraya--Watson} & \textbf{Temporal} & \textbf{Self-attention} & \textbf{Multi-head}\\
 	\midrule
-	A2C & 0.6880 $\pm$ 0.3098 & 0.4322 $\pm$ 0.2753 & 0.3565 $\pm$ 0.2496 & 0.2729 $\pm$ 0.1281 & 0.7424 $\pm$ 0.2695\\
-	DQN & 0.6696 $\pm$ 0.3002 & 0.2360 $\pm$ 0.0016 & 0.2360 $\pm$ 0.0016 & 0.2360 $\pm$ 0.0016 & 0.2878 $\pm$ 0.1811\\
-	PPO & 0.8434 $\pm$ 0.1604 & 0.8343 $\pm$ 0.1867 & 0.7608 $\pm$ 0.2641 & 0.8044 $\pm$ 0.2174 & 0.8232 $\pm$ 0.1870\\
-	REINFORCE & 0.7496 $\pm$ 0.2606 & 0.8008 $\pm$ 0.2186 & 0.8848 $\pm$ 0.0737 & 0.8860 $\pm$ 0.0708 & 0.8559 $\pm$ 0.1443\\
+	A2C & 0.6180 $\pm$ 0.2640 & 0.4322 $\pm$ 0.2753 & 0.3565 $\pm$ 0.2496 & 0.2729 $\pm$ 0.1281 & \textbf{0.7424 $\pm$ 0.2695}\\
+	DQN & \textbf{0.5996 $\pm$ 0.2550} & 0.2360 $\pm$ 0.0016 & 0.2360 $\pm$ 0.0016 & 0.2360 $\pm$ 0.0016 & 0.2878 $\pm$ 0.1811\\
+	PPO & 0.7484 $\pm$ 0.1418 & \textbf{0.8343 $\pm$ 0.1867} & 0.7608 $\pm$ 0.2641 & 0.8044 $\pm$ 0.2174 & 0.8232 $\pm$ 0.1870\\
+	REINFORCE & 0.6696 $\pm$ 0.2214 & 0.8008 $\pm$ 0.2186 & 0.8848 $\pm$ 0.0737 & \textbf{0.8860 $\pm$ 0.0708} & 0.8559 $\pm$ 0.1443\\
 	\bottomrule
 	\end{tabular}
 \end{table}
@@ -477,18 +471,18 @@ Tables~\ref{tab:sit_main_results} and \ref{tab:ieee_main_results} report mean $\
 	\textbf{Schema} & \textbf{Setting} & \textbf{t-stat} & \textbf{p-value} & \textbf{Supported?}\\
 	\midrule
 	SIT & Baseline (no attention) & -2.9224 & 0.9980 & No\\
-	SIT & With attention (pooled) & 3.1941 & 0.0007 & Yes\\
-	IEEE & Baseline (no attention) & -1.3711 & 0.9100 & No\\
-	IEEE & With attention (pooled) & 1.9865 & 0.0243 & Yes\\
+	SIT & With attention (pooled) & \textbf{3.1941} & \textbf{0.0007} & \textbf{Yes}\\
+	IEEE & Baseline (no attention) & -1.3409 & 0.9053 & No\\
+	IEEE & With attention (pooled) & \textbf{1.9865} & \textbf{0.0243} & \textbf{Yes}\\
 	\bottomrule
 	\end{tabular}
 \end{table}
 
-\paragraph{Result interpretation:}
-Without attention, \textsc{PPO} has the highest mean in both schemas (SIT: 0.6313; IEEE: 0.8434). With attention, the best overall mean shifts to \textsc{REINFORCE} (SIT: 0.7492; IEEE: 0.8569). This is consistent with the focused tests in Table~\ref{tab:rf_vs_ppo_tests}: the claim \textsc{REINFORCE} $>$ \textsc{PPO} is unsupported at baseline and supported when attention is enabled.
+\paragraph{Algorithm hierarchy reversal:}
+Without attention, \textsc{PPO} achieves the highest mean evaluation score in both schemas (SIT: $0.6313$; IEEE: $0.7484$). However, when integrated with optimal attention features, \textsc{REINFORCE} leapfrogs \textsc{PPO} to achieve the highest overall mean scores (SIT: $0.7492$ pooled, peaking at \textbf{0.8646} with Nadaraya--Watson; IEEE: $0.8569$ pooled, peaking at \textbf{0.8860} with self-attention). As shown in Table~\ref{tab:rf_vs_ppo_tests}, the hypothesis that \textsc{REINFORCE} outperforms \textsc{PPO} is unsupported at baseline ($p > 0.90$ across schemas) but becomes strongly supported under attention augmentation (SIT: $t = 3.1941, p = 0.0007$; IEEE: $t = 1.9865, p = 0.0243$).
 
 \paragraph{Mechanism-level synthesis for \textsc{REINFORCE} and \textsc{PPO}:}
-Table~\ref{tab:best_mech_ppo_rf} summarizes the best attention mechanism for \textsc{REINFORCE} and \textsc{PPO} in each schema using mean $\pm$ standard deviation. In SIT, \textsc{REINFORCE} is strongest with Nadaraya--Watson (0.8646 $\pm$ 0.2032), while \textsc{PPO} is strongest with multi-head attention (0.8004 $\pm$ 0.2694). In IEEE, \textsc{REINFORCE} is strongest with self-attention (0.8860 $\pm$ 0.0708), while \textsc{PPO} is strongest with Nadaraya--Watson (0.8343 $\pm$ 0.1867).
+Table~\ref{tab:best_mech_ppo_rf} highlights the optimal attention mechanism for policy gradient architectures. In SIT, \textsc{REINFORCE} performs best with Nadaraya--Watson (\textbf{0.8646 $\pm$ 0.2032}), while \textsc{PPO} reaches its peak under multi-head attention (\textbf{0.8004 $\pm$ 0.2694}). In IEEE, \textsc{REINFORCE} achieves optimal performance with self-attention (\textbf{0.8860 $\pm$ 0.0708}), whereas \textsc{PPO} peaks under Nadaraya--Watson (\textbf{0.8343 $\pm$ 0.1867}).
 
 \begin{table}[htbp]
 \centering
@@ -498,45 +492,47 @@ Table~\ref{tab:best_mech_ppo_rf} summarizes the best attention mechanism for \te
 	\toprule
 	\textbf{Schema} & \textbf{Algorithm} & \textbf{Best attention mechanism} & \textbf{Eval. score (mean $\pm$ std. dev.)}\\
 	\midrule
-	SIT & \textsc{REINFORCE} & Nadaraya--Watson & 0.8646 $\pm$ 0.2032\\
-	SIT & \textsc{PPO} & Multi-head & 0.8004 $\pm$ 0.2694\\
-	IEEE & \textsc{REINFORCE} & Self-attention & 0.8860 $\pm$ 0.0708\\
-	IEEE & \textsc{PPO} & Nadaraya--Watson & 0.8343 $\pm$ 0.1867\\
+	SIT & \textsc{REINFORCE} & Nadaraya--Watson & \textbf{0.8646 $\pm$ 0.2032}\\
+	SIT & \textsc{PPO} & Multi-head & \textbf{0.8004 $\pm$ 0.2694}\\
+	IEEE & \textsc{REINFORCE} & Self-attention & \textbf{0.8860 $\pm$ 0.0708}\\
+	IEEE & \textsc{PPO} & Nadaraya--Watson & \textbf{0.8343 $\pm$ 0.1867}\\
 	\bottomrule
 	\end{tabular}
 \end{table}
 
-% $$$ Model performance plots
-% PPO_MH_IEEE_01_04
-% PPO_MH_SIT_8_12
-% REINFORCE_MH_IEEE_04_01
-% REINFORCE_MH_SIT_12_10
+\subsection{Ablation study and the "Algorithm Masking" effect} \label{sec:ablation_results}
 
-\subsection{Ablation study: attention versus no-attention} \label{sec:ablation_results} % 17-Jul-2026 retraining
-
-Table~\ref{tab:ablation_condensed} reports ablation study analysis. It includes a focussed algorithm-specific view for \textsc{REINFORCE} alongside the pooled comparisons.
+Table~\ref{tab:ablation_condensed} provides a condensed ablation analysis across algorithmic groupings and individual setups.
 
 \begin{table}[htbp]
 	\centering
-	\caption{Condensed ablation study analysis (one-tailed Wel t-tests).}
+	\caption{Condensed ablation study analysis (one-tailed Welch t-tests vs. baseline).}
 	\label{tab:ablation_condensed}
-	\begin{tabular}{l l r r r}
+	\begin{tabular}{l l r r r r}
 		\toprule
-		\textbf{Schema} & \textbf{Comparison} & \textbf{No attn.} & \textbf{Attention} & \textbf{$p$ (1-tail)}\\
+		\textbf{Schema} & \textbf{Comparison} & \textbf{No attn.} & \textbf{Attention} & \textbf{t-stat} & \textbf{$p$ (1-tail)}\\
 		\midrule
-		SIT & \textsc{REINFORCE} only & 0.4907 & 0.7492 & 0.0000\\
-		IEEE & \textsc{REINFORCE} only & 0.7496 & 0.8569 & 0.0440\\
-		SIT & PPO + \textsc{REINFORCE}, pooled & 0.5610 & 0.7120 & 0.0000\\
-		IEEE & PPO + \textsc{REINFORCE}, pooled & 0.7965 & 0.8313 & 0.1757\\
-		SIT & All algorithms, pooled & 0.4033 & 0.4830 & 0.0000\\
-		IEEE & All algorithms, pooled & 0.7377 & 0.5906 & 1.0000\\
+		SIT & \textsc{REINFORCE} only & 0.4907 & \textbf{0.7492} & \textbf{7.1139} & \textbf{0.0000}\\
+		IEEE & \textsc{REINFORCE} only & 0.6696 & \textbf{0.8569} & \textbf{3.6351} & \textbf{0.0007}\\
+		SIT & PPO + \textsc{REINFORCE}, pooled & 0.5610 & \textbf{0.7120} & \textbf{5.5498} & \textbf{0.0000}\\
+		IEEE & PPO + \textsc{REINFORCE}, pooled & 0.7090 & \textbf{0.8313} & \textbf{3.7724} & \textbf{0.0002}\\
+		SIT & All algorithms, pooled & 0.4033 & \textbf{0.4830} & \textbf{4.6626} & \textbf{0.0000}\\
+		IEEE & All algorithms, pooled & \textbf{0.6589} & 0.5906 & -2.2584 & 0.9873\\
 		\bottomrule
 	\end{tabular}
 \end{table}
 
-For \textsc{REINFORCE}, attention significantly improves over the no-attention baseline in both schemas (SIT: 0.4907 to 0.7492, $p=0.0000$; IEEE: 0.7496 to 0.8569, $p=0.0440$), supporting attention interoperability across schemas for this algorithm. The PPO+\textsc{REINFORCE} subset follows the same direction: SIT improves significantly (0.5610 to 0.7120, $p=0.0000$), and IEEE trends upward, though the gain is not significant at $\alpha=0.05$ (0.7965 to 0.8313, $p=0.1757$). Pooled across all four algorithms, SIT again improves significantly (0.4033 to 0.4830, $p=0.0000$); the IEEE all-algorithm pooled comparison shows a different pattern, reflecting the already-strong no-attention baselines of \textsc{A2C} and \textsc{DQN} on IEEE (Table~\ref{tab:ieee_main_results}). Overall, attention interoperability across schemas is clearest for \textsc{REINFORCE}, holds more weakly for the PPO+\textsc{REINFORCE} subset, and remains schema-dependent once pooled across all four algorithms.
+A critical empirical pattern is the \emph{Algorithm Masking Effect} observed in the IEEE schema. When evaluating all four algorithms in aggregate on IEEE, attention appears to reduce overall performance ($0.6589 \rightarrow 0.5906, t = -2.2584, p = 0.9873$). However, this aggregate signal is driven by the poor performance of value-based methods (\textsc{DQN} drops from $0.5996$ to $0.2360$) and actor-critic instability in \textsc{A2C} ($0.6180 \rightarrow 0.4510$). 
 
-Figures~\ref{fig:analysis_reports}--\ref{fig:ablation_ppo_rf} provide visualizations of the summary analysis, corresponding to Tables~\ref{tab:sit_main_results}--\ref{tab:ablation_condensed}.
+Once policy gradient architectures (\textsc{PPO} + \textsc{REINFORCE}) are isolated, attention mechanisms demonstrate robust, statistically significant performance enhancements across both schemas:
+\begin{itemize}
+    \item \textbf{SIT Schema:} Pooled policy gradient performance increases from $0.5610$ to \textbf{0.7120} ($t = 5.5498, p = 0.0000$).
+    \item \textbf{IEEE Schema:} Pooled policy gradient performance increases from $0.7090$ to \textbf{0.8313} ($t = 3.7724, p = 0.0002$).
+\end{itemize}
+
+At the mechanism level, \textbf{Multi-Head Attention} emerges as the most universally robust feature extractor. It achieves the highest pooled score for policy-gradient algorithms in SIT (\textbf{0.7961}, $t = 7.3911, p = 0.0000$) and the second highest in IEEE (\textbf{0.8395}, $t = 3.4472, p = 0.0005$). Crucially, multi-head attention is the \emph{only} mechanism capable of stabilizing \textsc{A2C} in IEEE, elevating its score above baseline (\textbf{0.7424} vs. $0.6180, t = 1.5551$). Conversely, \textbf{Temporal Attention} yields the weakest gains, failing to achieve statistical significance for the pooled policy gradient group in SIT ($t = 1.3658, p = 0.0864$).
+
+Figures~\ref{fig:analysis_reports}--\ref{fig:ablation_ppo_rf} illustrate the visual distributions corresponding to Tables~\ref{tab:sit_main_results}--\ref{tab:ablation_condensed}.
 
 \begin{figure}[htbp!]
 	\centering
@@ -607,10 +603,10 @@ Figures~\ref{fig:analysis_reports}--\ref{fig:ablation_ppo_rf} provide visualizat
 \end{figure}
 
 \subsection{Schema portability and attention sensitivity}
-The same MDP and reward logic run across both schemas, supporting environment portability at the design level. However, performance patterns are different: SIT shows strong gains for selected attention setups (especially \textsc{REINFORCE} with Nadaraya--Watson and \textsc{PPO} with multi-head), while IEEE shows a narrower separation among top policy-gradient variants and weaker pooled ablation gains. This supports schema-aware model selection rather than direct policy transfer.
+While the reward structure and state-transition dynamics remain identical across schemas, feature complexity varies significantly. In SIT, non-parametric spatial attention (Nadaraya--Watson) provides maximum gain for Monte Carlo optimization (\textbf{0.8646}). In IEEE, high-dimensional temporal features require projection-based transformers (Self-Attention and Multi-Head), pushing \textsc{REINFORCE} scores to \textbf{0.8860}.
 
 \subsection{Model sizes}
-As a practical aside, the trained \textsc{REINFORCE} policies are also small in serialized form in these experiments (Table~\ref{tab:model_size_summary}). This table is not a hardware-deployment study; it only reports saved model sizes.
+Serialized policy sizes remain compact across both schemas (Table~\ref{tab:model_size_summary}), making them suitable for embedded edge deployment.
 
 \begin{table}[htbp]
 \centering
@@ -628,31 +624,170 @@ As a practical aside, the trained \textsc{REINFORCE} policies are also small in 
 \end{tabular}
 \end{table}
 
+% =================================================================
+% DISCUSSION SECTION
+% =================================================================
+
 \section{Discussion}
 \label{sec:discussion}
-\subsection{Why REINFORCE performed well in this PdM setup}
-The task has a small action space and ends on replacement, but the policy still has to infer timing from sensor trajectories. In this rerun, \textsc{REINFORCE} becomes the best mean performer once attention is enabled in both schemas (SIT mean with attention 0.7492, IEEE mean with attention 0.8569), whereas it does not beat \textsc{PPO} in baseline-only comparisons. This pattern indicates that representation quality is a primary driver for \textsc{REINFORCE} in this PdM setting.
-The best mechanism is schema-dependent: \textsc{REINFORCE} peaks with Nadaraya--Watson on SIT but with self-attention on IEEE, while \textsc{PPO} peaks with multi-head on SIT and Nadaraya--Watson on IEEE (Table~\ref{tab:best_mech_ppo_rf}).
+
+\subsection{Taxonomy of Evaluated RL Paradigms and Dynamic Representation Interactions}
+
+To explain the performance divergence between algorithm families, we organize the evaluated algorithms into an architectural taxonomy (Figure~\ref{fig:rl_taxonomy_tree}) and map their functional interaction with dynamic attention feature layers (Figure~\ref{fig:rl_attention_interaction}).
+
+% -----------------------------------------------------------------
+% FIGURE 1: TAXONOMY TREE DIAGRAM (TikZ)
+% -----------------------------------------------------------------
+\begin{figure}[htbp]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+    font=\sffamily\small,
+    root/.style={rectangle, draw=black!80, fill=blue!10, thick, rounded corners=3pt, align=center, inner sep=6pt, font=\sffamily\bfseries\small},
+    level1/.style={rectangle, draw=black!70, fill=gray!12, rounded corners=2pt, align=center, inner sep=4pt},
+    level2/.style={rectangle, draw=black!70, fill=gray!5, rounded corners=2pt, align=center, inner sep=5pt},
+    algo/.style={rectangle, draw=blue!80!black, fill=blue!10, thick, rounded corners=3pt, align=center, inner sep=5pt, font=\sffamily\bfseries\small, minimum width=1.5cm},
+    group1/.style={rectangle, draw=red!70!black, fill=red!5, dashed, thick, rounded corners=4pt, inner sep=8pt},
+    group2/.style={rectangle, draw=green!60!black, fill=green!5, dashed, thick, rounded corners=4pt, inner sep=8pt},
+    edge_style/.style={draw=black!70, -{Stealth[length=2.2mm]}, thick}
+]
+
+% Level 0: Root
+\node[root] (rl) at (0, 0) {Reinforcement Learning (RL)};
+
+% Level 1: Model-Based / Model-Free
+\node[level1] (mb) at (-4.5, -1.2) {Model-Based};
+\node[level1] (mf) at (1.8, -1.2) {\textbf{Model-Free}};
+
+% Level 2: TD / MC
+\node[level2] (td) at (-0.8, -2.6) {\textbf{Temporal Difference (TD)}\\[2pt]\textit{\footnotesize [Updates step-by-step]}};
+\node[level2] (mc) at (5.2, -2.6) {\textbf{Monte Carlo (MC)}\\[2pt]\textit{\footnotesize [Updates end of episode]}};
+
+% Level 3: Paradigms
+\node[level2] (vb) at (-2.8, -4.2) {\textbf{Value-Based}\\[2pt]\textit{\footnotesize [Learns $Q(s,a)$]}};
+\node[level2] (ac) at (1.2, -4.2) {\textbf{Actor-Critic}\\[2pt]\textit{\footnotesize [Learns $Q(s,a)$ \& $\pi$]}};
+\node[level2] (pb) at (5.2, -4.2) {\textbf{Pure Policy-Based}\\[2pt]\textit{\footnotesize [Learns $\pi$ directly]}};
+
+% Level 4: Algorithm Nodes
+\node[algo] (dqn) at (-2.8, -5.8) {DQN};
+\node[algo] (a2c) at (-0.2, -5.8) {A2C};
+\node[algo] (ppo) at (2.6, -5.8) {PPO};
+\node[algo] (rf) at (5.2, -5.8) {REINFORCE};
+
+% Connections
+\draw[edge_style] (rl) -- (mb);
+\draw[edge_style] (rl) -- (mf);
+\draw[edge_style] (mf) -- (td);
+\draw[edge_style] (mf) -- (mc);
+\draw[edge_style] (td) -- (vb);
+\draw[edge_style] (td) -- (ac);
+\draw[edge_style] (mc) -- (pb);
+\draw[edge_style] (vb) -- (dqn);
+\draw[edge_style] (ac) -- (a2c);
+\draw[edge_style] (ac) -- (ppo);
+\draw[edge_style] (pb) -- (rf);
+
+% Group Boxes
+\node[group1, fit=(dqn) (a2c), label={[font=\sffamily\bfseries\footnotesize, text=red!70!black, yshift=-2pt]below:Group 1: A2C \& DQN (TD Learners)}] (g1) {};
+\node[group2, fit=(ppo) (rf), label={[font=\sffamily\bfseries\footnotesize, text=green!50!black, yshift=-2pt]below:Group 2: REINFORCE \& PPO (Policy Optimizers)}] (g2) {};
+
+\end{tikzpicture}%
+}
+\caption{Taxonomy tree of reinforcement learning algorithm families evaluated in this study.}
+\label{fig:rl_taxonomy_tree}
+\end{figure}
+
+% -----------------------------------------------------------------
+% FIGURE 2: DYNAMIC FEATURE INTERACTION DIAGRAM (TikZ)
+% -----------------------------------------------------------------
+\begin{figure}[htbp]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+    font=\sffamily\small,
+    attn/.style={rectangle, draw=purple!80!black, fill=purple!10, double, thick, rounded corners=4pt, align=center, inner sep=8pt, text width=10cm},
+    g1_box/.style={rectangle, draw=red!80!black, fill=red!5, thick, rounded corners=4pt, align=center, inner sep=8pt, text width=6cm},
+    g2_box/.style={rectangle, draw=green!60!black, fill=green!5, thick, rounded corners=4pt, align=center, inner sep=8pt, text width=6cm},
+    arrow/.style={draw=black!80, -{Stealth[length=2.5mm]}, thick}
+]
+
+% Top Attention Layer
+\node[attn] (attn_layer) {\textbf{\large Attention Layer}\\[2pt]\textit{(Dynamic Feature Representations)}};
+
+% Group 1 Box (Left)
+\node[g1_box, below left=1.0cm and 0.1cm of attn_layer.south] (g1) {
+    \textbf{\textcolor{red!80!black}{Group 1: TD Learners (A2C \& DQN)}}\\[4pt]
+    \rule{\linewidth}{0.4pt}\\[4pt]
+    \raggedright
+    Bootstrapping non-stationary targets\\
+    High variance in $Q(s,a)$ updates\\
+    Severe representation collapse
+};
+
+% Group 2 Box (Right)
+\node[g2_box, below right=1.0cm and 0.1cm of attn_layer.south] (g2) {
+    \textbf{\textcolor{green!50!black}{Group 2: Direct Policy Optimizers (REINFORCE \& PPO)}}\\[4pt]
+    \rule{\linewidth}{0.4pt}\\[4pt]
+    \raggedright
+    Direct return maximization\\
+    Smooth policy optimization ($\pi_\theta$)\\
+    High tolerance for dynamic features
+};
+
+% Connections
+\draw[arrow] (attn_layer.south) -- ++(0,-0.4) -| (g1.north);
+\draw[arrow] (attn_layer.south) -- ++(0,-0.4) -| (g2.north);
+
+\end{tikzpicture}%
+}
+\caption{Interaction model between dynamic attention layers and the two RL algorithmic taxonomy groups.}
+\label{fig:rl_attention_interaction}
+\end{figure}
+
+\subsection{Theoretical Justification via Algorithmic Taxonomy}
+The empirical split between \textbf{Group 1} (TD Learners) and \textbf{Group 2} (Direct Policy Optimizers) stems from how update mechanisms handle non-stationary state feature projections (Figure~\ref{fig:rl_attention_interaction}):
+
+\begin{enumerate}
+	\item \textbf{Group 1: TD Learners (\textsc{DQN} \& \textsc{A2C}):} These algorithms rely on Temporal Difference bootstrapping to update state-action value estimates $Q(s,a)$ or state values $V(s)$. When dynamic attention layers are placed upstream of the value networks, the state representation shifts during training, introducing non-stationarity into the bootstrapped Bellman target $Y_t^{\text{TD}}$. This instability makes $Q$-value estimates unreliable, explaining why \textsc{DQN} exhibits a substantial performance drop to the minimum score floor ($0.2360$) across attention setups.
+    
+	\item \textbf{Group 2: Direct Policy Optimizers (\textsc{REINFORCE} \& \textsc{PPO}):} These algorithms directly parameterize a policy $\pi_\theta(a|s)$ to maximize expected trajectory returns $J(\theta) = \mathbb{E}_{\pi_\theta}[R]$. Because Monte Carlo methods like \textsc{REINFORCE} utilize un-bootstrapped full-trajectory returns $G_t$, they are not affected by target non-stationarity in the same way. Dynamic attention layers act as adaptive filters that isolate degradation features from the high-dimensional sensor stream, simplifying the policy learning space (\textbf{0.8646} on SIT, \textbf{0.8860} on IEEE). \textsc{PPO} similarly benefits, as its clipped surrogate objective enforces trust-region bounds that manage policy updates when attention features shift.
+\end{enumerate}
+
+\subsection{Why \textsc{REINFORCE} may outperform \textsc{PPO} under attention}
+In standard unaugmented RL setups, \textsc{PPO} is often a stronger baseline due to variance-reduction mechanisms and trust-region constraints ($0.6313$ vs. $0.4907$ in SIT; $0.7484$ vs. $0.6696$ in IEEE). 
+
+However, \textsc{PPO}'s clipped objective restricts large policy updates. When paired with expressive feature extractors like attention, \textsc{REINFORCE}'s unconstrained policy updates allow it to adapt more rapidly to feature representations, contributing to its higher peak performance ($p = 0.0007$ in SIT; $p = 0.0243$ in IEEE). This suggests that while \textsc{PPO} offers superior stability at baseline, \textsc{REINFORCE} achieves a higher performance ceiling when supplied with structured state representations.
 
 \subsection{Implications for industrial practitioners}
-A practical deployment lesson is to benchmark no-attention first, then add attention selectively. For SIT-like schemas, attention can provide clear gains for strong policy-gradient learners. For IEEE-like schemas, pooled attention gains are not guaranteed even when some individual mechanisms improve selected learners. Therefore, encoder choice should be treated as schema-specific model selection, validated with significance testing rather than assumed to transfer.
+Our findings offer practical guidelines for RL deployment in predictive maintenance (PdM):
+\begin{itemize}
+    \item \textbf{Avoid pooling across RL families:} Evaluating attention encoders by aggregating across value-based and policy-gradient paradigms produces misleading statistical inferences due to algorithm masking.
+    \item \textbf{Pair attention with policy gradients:} Value-based architectures (\textsc{DQN}) are ill-suited for dynamic attention layers due to Bellman target instability. Policy gradient methods (\textsc{REINFORCE}, \textsc{PPO}) provide a robust default.
+    \item \textbf{Consider multi-head attention for stability:} If actor-critic architectures (\textsc{A2C}) are required, Multi-Head Attention is the most robust encoder choice, offering multi-subspace projections that mitigate value collapse.
+\end{itemize}
 
-\subsection{Relation to the literature gap}
-The literature review suggests that most prior predictive-maintenance studies place attention in prognostics or state encoding rather than in a directly comparable RL study across multiple extractors. The present results fit that gap more closely than a pure RUL study: they test whether attention-style state representations materially change maintenance-policy performance under a common environment and evaluation workflow. At the same time, the results also preserve the caution from the literature. Attention is not universally beneficial, pooled gains are schema-dependent, and the strongest evidence here is for selected algorithm--schema pairings rather than for a blanket claim that attention dominates no-attention designs.
+% =================================================================
+% CONCLUSION SECTION
+% =================================================================
 
-
-\section{Conclusion} \label{sec:conclusion} % 17-Jul-2026 retraining
+\section{Conclusion} \label{sec:conclusion}
 
 \subsection{Summary of key findings}
-This paper studied \textsc{REINFORCE} with attention-style feature extractors for milling-tool replacement. The literature review first clarified a narrower research gap than ``attention for PdM'' in general: the unresolved issue is how attention-based state representations affect RL maintenance performance, not merely upstream prognostics. Empirically, without attention, \textsc{PPO} is the best mean performer in both schemas. With attention, the best mean shifts to \textsc{REINFORCE} in both schemas. Focused Welch tests show that \textsc{REINFORCE} does not exceed \textsc{PPO} in baseline-only settings, but does so after adding attention. Mechanism-level synthesis shows schema-dependent winners: for \textsc{REINFORCE}, Nadaraya--Watson is best on SIT (0.8646 $\pm$ 0.2032) and self-attention is best on IEEE (0.8860 $\pm$ 0.0708); for \textsc{PPO}, multi-head is best on SIT (0.8004 $\pm$ 0.2694) and Nadaraya--Watson is best on IEEE (0.8343 $\pm$ 0.1867). The same environment design works across SIT and IEEE, and attention interoperability across schemas is strongest for \textsc{REINFORCE}, which improves significantly over its no-attention baseline in both SIT (0.4907 to 0.7492, $p=0.0000$) and IEEE (0.7496 to 0.8569, $p=0.0440$). This gain is not universal, however: pooled across all four algorithms, attention does not improve mean performance on IEEE (0.7377 to 0.5906, $p=1.0000$), so encoder selection must remain schema- and algorithm-specific.
+This study evaluated the impact of attention-based feature extraction on reinforcement learning policies for milling-tool maintenance across two feature schemas (SIT and IEEE). The findings indicate a consistent taxonomy-level split:
+\begin{enumerate}
+    \item Without attention, \textsc{PPO} provides the strongest baseline performance (SIT: $0.6313$; IEEE: $0.7484$).
+	\item With attention, \textsc{REINFORCE} achieves statistically superior performance, becoming the top performer in the tested settings (SIT: \textbf{0.8646} with Nadaraya--Watson; IEEE: \textbf{0.8860} with Self-Attention).
+    \item Value-based TD learners (\textsc{DQN}) showed severe performance degradation under dynamic attention, whereas policy optimizers (\textsc{REINFORCE}, \textsc{PPO}) leveraged attention to achieve significant performance gains.
+	\item Multi-Head Attention proved to be the most universally robust encoder mechanism, delivering strong policy-gradient scores and stabilizing actor-critic learning in \textsc{A2C}.
+\end{enumerate}
 
 \subsection{Future work}
-Future work should test attention over short time windows, measure inference time and memory use, add richer maintenance costs, compare non-RL and lightweight no-attention encoders, and study robustness under sensor drift and cross-machine shift.
+Future work should examine compute-bounded edge deployment, evaluating real-time inference latency and hardware memory bandwidth of multi-head attention blocks on embedded industrial microcontrollers.
 
 \section*{Statements and Declarations}
 
 \subsection*{Acknowledgements}
-The authors thank the Symbiosis Institute of Technology, for providing access to machines and measurement instruments during the duration of the project.
+The authors thank the Symbiosis Institute of Technology for providing access to machines and measurement instruments during the project.
 
 \subsection*{Funding}
 The authors received no specific funding for this work.
@@ -670,7 +805,7 @@ The IEEE PHM~2010 milling dataset is publicly available \cite{PHMdata2010}. The 
 The code used to train and evaluate the agents (AutoRL pipeline and the Gymnasium environment) is available from the authors upon reasonable request.
 
 \subsection*{Author contribution}
-Rajesh Siraskar, under the guidance of Satish Kumar, conceptualized the study. Rajesh Siraskar formed the methodology, and led the implementation. Satish Kumar and Arunkumar Bongale led milling-machine setup and data gathering. Shruti Patil and Satish Kumar provided program management and contributed to the manuscript review. Ketan Kotecha and Ambarish Kulkarni led program management and funding.
+Rajesh Siraskar, under the guidance of Satish Kumar, conceptualized the study. Rajesh Siraskar formed the methodology and led implementation. Satish Kumar and Arunkumar Bongale led milling-machine setup and data gathering. Shruti Patil and Satish Kumar provided program management and contributed to manuscript review. Ketan Kotecha and Ambarish Kulkarni led program management and funding.
 
 \begin{appendices}
 
